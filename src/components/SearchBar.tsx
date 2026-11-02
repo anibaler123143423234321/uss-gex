@@ -121,9 +121,9 @@ export default function SearchBar({ estudiantes, loading = false, onSelect }: Pr
       <div className="relative group">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
           {loading ? (
-            <Loader2 className="w-5 h-5 text-[#073299] animate-spin" />
+            <Loader2 className="w-5 h-5 text-uss-blue animate-spin" />
           ) : (
-            <Search className="w-5 h-5 text-slate-400 group-focus-within:text-[#073299] transition-colors" />
+            <Search className="w-5 h-5 text-slate-400 group-focus-within:text-uss-blue transition-colors" />
           )}
         </div>
         <input
@@ -132,8 +132,8 @@ export default function SearchBar({ estudiantes, loading = false, onSelect }: Pr
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder="Consultar por código, apellidos, nombres o correo institucional..."
-          className="w-full pl-12 pr-12 py-4 rounded-2xl border-2 border-slate-200 bg-white text-base text-slate-900 placeholder:text-slate-400 focus:border-[#073299] focus:ring-4 focus:ring-[#073299]/10 outline-none transition-all shadow-sm hover:shadow-md"
+          placeholder="Código, nombre o correo"
+          className="w-full h-14 sm:h-16 pl-12 pr-20 rounded-2xl border-2 border-white bg-white text-base text-slate-900 placeholder:text-slate-400 focus:border-uss-blue focus:ring-4 focus:ring-uss-blue/15 outline-none transition-all shadow-xl shadow-uss-navy/15"
           role="combobox"
           aria-expanded={open}
           aria-autocomplete="list"
@@ -168,7 +168,7 @@ export default function SearchBar({ estudiantes, loading = false, onSelect }: Pr
         <ul
           ref={listRef}
           role="listbox"
-          className="absolute z-50 mt-2 w-full max-h-80 overflow-auto rounded-xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150 divide-y divide-slate-100"
+          className="absolute z-50 mt-2 w-full max-h-[60vh] sm:max-h-80 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150 divide-y divide-slate-100"
         >
           {filtered.length === 0 && query.trim().length >= 2 ? (
             <li className="px-4 py-6 text-center text-sm text-slate-400">
@@ -182,24 +182,25 @@ export default function SearchBar({ estudiantes, loading = false, onSelect }: Pr
                 aria-selected={i === highlightIndex}
                 onClick={() => handleSelect(est)}
                 onMouseEnter={() => setHighlightIndex(i)}
-                className={`px-4 py-3.5 cursor-pointer transition-colors ${
+                className={`px-4 py-3 cursor-pointer transition-colors ${
                   i === highlightIndex
-                    ? 'bg-[#073299]/10'
+                    ? 'bg-uss-blue/[0.07]'
                     : 'hover:bg-slate-50'
                 }`}
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-start sm:items-center justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-900 truncate">
+                    {/* En el celular el nombre usa dos líneas en vez de cortarse a la mitad */}
+                    <p className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2 sm:truncate">
                       {highlight(est.nombres)}
                     </p>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 mt-0.5 min-w-0">
                       <span className="text-xs text-slate-500 truncate">
                         {est.escuela}
                       </span>
                       {est.correoInstitucional && (
                         <>
-                          <span className="text-slate-300">&bull;</span>
+                          <span className="hidden sm:inline text-slate-300">&bull;</span>
                           <span className="text-xs text-slate-400 truncate">
                             {highlight(est.correoInstitucional)}
                           </span>
@@ -207,7 +208,7 @@ export default function SearchBar({ estudiantes, loading = false, onSelect }: Pr
                       )}
                     </div>
                   </div>
-                  <span className="shrink-0 text-xs font-mono font-medium bg-[#073299]/10 text-[#073299] px-2.5 py-1 rounded-lg border border-[#073299]/20">
+                  <span className="shrink-0 text-[11px] sm:text-xs font-mono font-semibold bg-uss-blue/[0.07] text-uss-blue px-2 sm:px-2.5 py-1 rounded-lg ring-1 ring-uss-blue/15">
                     {highlight(est.codUniv)}
                   </span>
                 </div>
@@ -218,8 +219,10 @@ export default function SearchBar({ estudiantes, loading = false, onSelect }: Pr
       )}
 
       {/* Ayuda inferior */}
-      <p className="mt-2 text-xs text-slate-400 text-center">
-        Buscando en el Excel cargado
+      <p className="mt-2.5 text-xs text-slate-500 text-center">
+        {loading && estudiantes.length === 0
+          ? 'Cargando el Excel de estudiantes…'
+          : `Buscando entre ${estudiantes.length} estudiantes del Excel`}
       </p>
     </div>
   );

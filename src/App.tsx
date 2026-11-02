@@ -1,10 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { RefreshCw, ArrowLeft, Hash, User, Mail, ShieldCheck } from 'lucide-react';
 import SearchBar from './components/SearchBar';
 import StudentDetailView from './components/StudentDetailView';
+import { HeroIllustration } from './components/CourseIllustration';
 import { fetchExcelFromDrive } from './services/driveSheetService';
 import { sincronizarAutomaticoDriveASupabase, getCargaExcelVigente } from './services/cargasService';
 import type { EstudianteGEX } from './types/estudiante';
+
+// Formas de búsqueda que se explican en la portada, cada una con su propio color
+const FORMAS_DE_BUSQUEDA = [
+  { Icon: Hash, titulo: 'Código universitario', ejemplo: 'Ej. 2251804844', tono: 'bg-blue-50 text-uss-blue ring-blue-100' },
+  { Icon: User, titulo: 'Apellidos o nombres', ejemplo: 'Ej. García Pérez', tono: 'bg-amber-50 text-amber-700 ring-amber-100' },
+  { Icon: Mail, titulo: 'Correo institucional', ejemplo: 'Ej. usuario@uss.edu.pe', tono: 'bg-emerald-50 text-emerald-700 ring-emerald-100' },
+];
 
 export default function App() {
   const [estudiantes, setEstudiantes] = useState<EstudianteGEX[]>([]);
@@ -64,44 +72,57 @@ export default function App() {
     };
   }, [cargarDesdeDrive]);
 
-  return (
-    <div className={`min-h-screen ${selected ? 'lg:h-screen lg:overflow-hidden' : ''} bg-slate-50/60 text-slate-900 flex flex-col selection:bg-[#073299] selection:text-white`}>
-      {/* Botón flotante sutil para sincronizar manualmente */}
-      <div className={`fixed ${selected ? 'top-2 right-3' : 'top-3.5 right-4'} z-40`}>
-        <button
-          onClick={() => cargarDesdeDrive(false)}
-          disabled={cargando}
-          className="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-[#073299] bg-white hover:bg-slate-50 transition shadow-sm border border-slate-200 hover:border-slate-300 disabled:opacity-40 cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
-          title="Sincronizar con Google Sheets en tiempo real"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${cargando ? 'animate-spin text-[#073299]' : ''}`} />
-          <span className="hidden sm:inline text-slate-600">Sincronizar</span>
-        </button>
-      </div>
+  // Va dentro de cada encabezado: flotando fijo tapaba las tarjetas al hacer scroll en el celular
+  const botonSincronizar = (sobreAzul: boolean) => (
+    <button
+      onClick={() => cargarDesdeDrive(false)}
+      disabled={cargando}
+      className={`shrink-0 h-9 px-2.5 sm:px-3 rounded-xl transition disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold ${
+        sobreAzul
+          ? 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
+          : 'bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200'
+      }`}
+      title="Sincronizar con Google Sheets en tiempo real"
+      aria-label="Sincronizar con Google Sheets"
+    >
+      <RefreshCw className={`w-4 h-4 lg:w-3.5 lg:h-3.5 ${cargando ? 'animate-spin' : ''}`} />
+      <span className="hidden sm:inline">Sincronizar</span>
+    </button>
+  );
 
-      {/* VISTA 1: DETALLE DEL ESTUDIANTE SELECCIONADO (Encaja en 1 pantalla) */}
+  return (
+    <div className={`min-h-screen ${selected ? 'lg:h-screen lg:overflow-hidden' : ''} bg-uss-mist text-slate-900 flex flex-col selection:bg-uss-blue selection:text-white`}>
+      {/* VISTA 1: DETALLE DEL ESTUDIANTE SELECCIONADO (en escritorio encaja en 1 pantalla) */}
       {selected ? (
-        <div className="flex-1 flex flex-col w-full h-full lg:overflow-hidden">
-          {/* Header institucional compacto */}
-          <header className="border-b border-slate-200 bg-white py-1.5 px-3 sm:px-6 w-full shrink-0 shadow-2xs">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <img
-                  src="/logo.png"
-                  alt="Logo USS"
-                  className="h-7 sm:h-8 w-auto object-contain"
-                />
-                <div className="border-l border-slate-200 pl-2.5">
-                  <h1 className="text-xs sm:text-sm font-bold text-[#073299] leading-tight">Gente con Experiencia</h1>
-                  <p className="text-[10px] text-slate-500">Portal oficial de verificación</p>
-                </div>
+        <div className="flex-1 flex flex-col w-full lg:h-full lg:min-h-0 lg:overflow-hidden">
+          {/* Header institucional: fijo arriba en el celular para tener siempre a mano Volver */}
+          <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 py-2 lg:py-1.5 px-3 sm:px-6 w-full shrink-0">
+            <div className="max-w-7xl mx-auto flex items-center gap-2.5">
+              <button
+                onClick={() => setSelected(null)}
+                type="button"
+                className="lg:hidden w-9 h-9 -ml-1 rounded-xl flex items-center justify-center text-slate-600 hover:text-uss-blue hover:bg-slate-100 transition cursor-pointer"
+                aria-label="Volver a la búsqueda"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <img
+                src="/logo.png"
+                alt="Logo USS"
+                className="h-7 sm:h-8 w-auto object-contain"
+              />
+              <div className="border-l border-slate-200 pl-2.5 min-w-0">
+                <h1 className="text-sm font-bold text-uss-blue leading-tight truncate">Gente con Experiencia</h1>
+                <p className="text-[11px] lg:text-[10px] text-slate-500 truncate">Portal oficial de verificación</p>
               </div>
+              <div className="ml-auto">{botonSincronizar(false)}</div>
             </div>
           </header>
 
-          {/* Área principal: cabe en 1 pantalla */}
-          <main className="w-full max-w-7xl mx-auto px-2 sm:px-6 py-1.5 sm:py-2.5 flex-1 min-h-0 flex flex-col">
+          {/* Área principal: en escritorio cabe en 1 pantalla, en el celular fluye con scroll */}
+          <main className="w-full max-w-7xl mx-auto px-3 sm:px-6 py-3 lg:py-2.5 flex-1 min-h-0 flex flex-col">
             <StudentDetailView
+              key={selected.codUniv}
               estudiante={selected}
               onBack={() => setSelected(null)}
             />
@@ -110,56 +131,82 @@ export default function App() {
       ) : (
         /* VISTA 2: PANTALLA PRINCIPAL CON BUSCADOR */
         <div className="flex-1 flex flex-col w-full">
-          {/* Header institucional */}
-          <header className="pt-12 pb-6 px-4 text-center">
-            {/* Logo Oficial USS */}
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <img
-                src="/logo.png"
-                alt="Logo Universidad Señor de Sipán"
-                className="h-12 sm:h-14 w-auto object-contain drop-shadow-sm"
-              />
+          {/* Portada institucional */}
+          <header className="relative overflow-hidden bg-gradient-to-br from-uss-navy via-uss-blue to-uss-sky text-white px-4 sm:px-6 pt-4 pb-16 sm:pb-20">
+            {/* Una sola ilustración grande y dos luces suaves: nada que se repita como mosaico */}
+            <div className="absolute -left-24 -top-28 w-80 h-80 rounded-full bg-sky-400/25 blur-3xl pointer-events-none" />
+            <div className="absolute right-[-6rem] bottom-[-8rem] w-96 h-96 rounded-full bg-indigo-400/20 blur-3xl pointer-events-none" />
+            <HeroIllustration className="absolute -right-8 bottom-2 w-56 sm:w-80 md:w-96 text-white/[0.09] pointer-events-none" />
+
+            <div className="relative max-w-4xl mx-auto">
+              <div className="flex items-center justify-between gap-3">
+                <span className="inline-flex items-center rounded-2xl bg-white px-3 py-1.5 shadow-lg shadow-black/10">
+                  <img
+                    src="/logo.png"
+                    alt="Logo Universidad Señor de Sipán"
+                    className="h-8 sm:h-10 w-auto object-contain"
+                  />
+                </span>
+                {botonSincronizar(true)}
+              </div>
+
+              <div className="mt-9 sm:mt-12 text-center">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 ring-1 ring-white/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-100">
+                  <ShieldCheck className="w-3.5 h-3.5 text-uss-gold" />
+                  Centro de Informática &bull; USS
+                </span>
+                <h1 className="mt-4 font-display text-[2.4rem] leading-[1.05] sm:text-6xl font-extrabold tracking-tight">
+                  Gente con <span className="text-uss-gold">Experiencia</span>
+                </h1>
+                <p className="mt-3 text-sm sm:text-base text-blue-100/90 max-w-xl mx-auto leading-relaxed">
+                  Portal oficial de consulta y verificación de estudiantes GEX — Universidad Señor de Sipán
+                </p>
+              </div>
             </div>
-
-            {/* Título */}
-            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#073299] via-[#0b4ed6] to-[#1e6ff0] leading-tight pb-2">
-              Gente con Experiencia
-            </h1>
-
-            <p className="mt-1 text-sm sm:text-base text-slate-600 max-w-xl mx-auto">
-              Portal oficial de consulta y verificación de estudiantes GEX — Universidad Señor de Sipán
-            </p>
           </header>
 
-          {/* CUERPO CON BUSCADOR MAT-SELECT */}
-          <main className="flex-1 px-3 sm:px-6 pb-16">
-            <div className="w-full max-w-4xl mx-auto space-y-6">
-              {/* BUSCADOR */}
+          {/* CUERPO CON BUSCADOR: sube sobre la portada para que se vea apenas abre la página */}
+          <main className="flex-1 px-4 sm:px-6 pb-12 -mt-8 relative z-10">
+            <div className="w-full max-w-3xl mx-auto space-y-6">
               <SearchBar
                 estudiantes={estudiantes}
                 loading={cargando}
                 onSelect={(est) => setSelected(est)}
               />
 
-              {/* Mensaje amigable cuando no hay selección */}
-              <div className="text-center py-8 px-4 border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
-                <Sparkles className="w-7 h-7 text-slate-400 mx-auto mb-2" />
-                <p className="text-sm font-semibold text-slate-700">
-                  Escribe en el buscador para consultar el Excel en tiempo real
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Busca por código universitario (ej. 2251804844), apellidos, nombres o correo institucional
-                </p>
-              </div>
+              {/* Cómo buscar */}
+              <section aria-label="Cómo buscar">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5 text-center sm:text-left">
+                  Puedes buscar por
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+                  {FORMAS_DE_BUSQUEDA.map(({ Icon, titulo, ejemplo, tono }) => (
+                    <div
+                      key={titulo}
+                      className="flex items-center gap-3 rounded-2xl bg-white p-3 sm:p-4 ring-1 ring-slate-900/5 shadow-sm"
+                    >
+                      <div className={`w-10 h-10 rounded-xl ring-1 flex items-center justify-center shrink-0 ${tono}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 leading-tight">{titulo}</p>
+                        <p className="text-xs text-slate-500 truncate mt-0.5">{ejemplo}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
           </main>
         </div>
       )}
 
       {/* Footer compacto */}
-      <footer className={`${selected ? 'py-1 text-[10px]' : 'py-3.5 text-xs'} text-center border-t border-slate-200 bg-white shrink-0`}>
+      <footer className={`${selected ? 'py-2 lg:py-1 text-[10px]' : 'py-4 text-xs'} px-4 text-center border-t border-slate-200/80 bg-white shrink-0`}>
         <span className="text-slate-400">
-          Universidad Señor de Sipán &bull; Centro de Informática (CINF) &bull; Portal GEX
+          Universidad Señor de Sipán &bull;{' '}
+          <span className="sm:hidden">CINF</span>
+          <span className="hidden sm:inline">Centro de Informática (CINF)</span> &bull; Portal GEX
         </span>
       </footer>
     </div>

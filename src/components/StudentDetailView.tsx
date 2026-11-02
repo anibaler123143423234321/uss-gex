@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import {
   ArrowLeft,
   User,
@@ -31,13 +31,31 @@ import {
   HelpCircle,
   X,
   BarChart3,
+  type LucideIcon,
 } from 'lucide-react';
+import CourseIllustration, { type Ilustracion } from './CourseIllustration';
 import type { EstudianteGEX } from '../types/estudiante';
 
 interface Props {
   estudiante: EstudianteGEX;
   onBack: () => void;
 }
+
+interface Curso {
+  id: string;
+  codigo: string;
+  nombre: string;
+  tipo: string;
+  descripcion: string;
+  estado: number;
+  Icon: LucideIcon;
+  ilustracion: Ilustracion;
+  /** Color propio del curso: tiñe su ícono, su ilustración y su resplandor */
+  acento: string;
+  tagApproved: string;
+}
+
+type PlanId = 'tradicional' | 'rutas';
 
 export default function StudentDetailView({ estudiante: e, onBack }: Props) {
   const [showOpcionesModal, setShowOpcionesModal] = useState<boolean>(false);
@@ -63,8 +81,8 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
     }
   };
 
-  // 2. Cursos del Plan Tradicional (3 cursos con mosaicos, fondos y marcas de agua DIVERSIFICADAS)
-  const cursosTradicional = [
+  // 2. Cursos del Plan Tradicional: tonos de azul, una ilustración distinta por curso
+  const cursosTradicional: Curso[] = [
     {
       id: 'computacionI',
       codigo: 'INF-101',
@@ -73,12 +91,8 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       descripcion: 'Fundamentos de ofimática, productividad digital y herramientas iniciales.',
       estado: e.computacionI >= 1 ? 1 : 0,
       Icon: Monitor,
-      WatermarkIcon: Monitor,
-      bgApproved: 'from-emerald-50/90 via-white to-teal-50/50',
-      borderApproved: 'border-emerald-300',
-      badgeColor: 'text-emerald-900 bg-emerald-100/90 border-emerald-300',
-      iconBg: 'bg-emerald-600 text-white',
-      patternUrl: "data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 8h8v6H4zM16 8h8v6h-8zM28 8h8v6h-8zM4 18h8v6H4zM16 18h8v6h-8zM28 18h8v6h-8z' fill='%23059669' fill-opacity='0.05'/%3E%3C/svg%3E",
+      ilustracion: 'monitor',
+      acento: '#073299',
       tagApproved: '✓ Fundamentos de Ofimática Aprobados',
     },
     {
@@ -89,12 +103,8 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       descripcion: 'Hojas de cálculo avanzadas, análisis de datos y modelado aplicado.',
       estado: e.computacionII >= 1 ? 1 : 0,
       Icon: BarChart3,
-      WatermarkIcon: BarChart3,
-      bgApproved: 'from-teal-50/90 via-white to-emerald-50/50',
-      borderApproved: 'border-teal-300',
-      badgeColor: 'text-teal-900 bg-teal-100/90 border-teal-300',
-      iconBg: 'bg-teal-600 text-white',
-      patternUrl: "data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 6h36v36H6z' fill='none' stroke='%230d9488' stroke-width='1' stroke-opacity='0.09'/%3E%3Cpath d='M6 18h36M6 30h36M18 6v36M30 6v36' stroke='%230d9488' stroke-width='1' stroke-opacity='0.09'/%3E%3Crect x='10' y='22' width='4' height='16' fill='%230d9488' fill-opacity='0.07'/%3E%3Crect x='22' y='14' width='4' height='24' fill='%230d9488' fill-opacity='0.07'/%3E%3Crect x='34' y='8' width='4' height='30' fill='%230d9488' fill-opacity='0.07'/%3E%3C/svg%3E",
+      ilustracion: 'grafico',
+      acento: '#0369a1',
       tagApproved: '✓ Análisis y Hojas de Cálculo Aprobado',
     },
     {
@@ -105,18 +115,14 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       descripcion: 'Entornos de colaboración en la nube, herramientas web y gestión digital.',
       estado: e.computacionIII >= 1 ? 1 : 0,
       Icon: Laptop,
-      WatermarkIcon: Laptop,
-      bgApproved: 'from-blue-50/90 via-white to-emerald-50/40',
-      borderApproved: 'border-blue-300',
-      badgeColor: 'text-[#073299] bg-blue-100/90 border-blue-200',
-      iconBg: 'bg-[#073299] text-white',
-      patternUrl: "data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 8h24v16H8z' fill='none' stroke='%23073299' stroke-width='1' stroke-opacity='0.08'/%3E%3Cpath d='M4 26h32l-2 3H6z' fill='%23073299' fill-opacity='0.05' stroke='%23073299' stroke-width='1' stroke-opacity='0.08'/%3E%3C/svg%3E",
+      ilustracion: 'nube',
+      acento: '#4338ca',
       tagApproved: '✓ Computación Avanzada Aprobada',
     },
   ];
 
-  // 3. Cursos de la Ruta de Aprendizaje (3 módulos oficiales con mosaicos y marcas de agua DIVERSIFICADAS)
-  const cursosRutas = [
+  // 3. Cursos de la Ruta de Aprendizaje: turquesa, ámbar y violeta, una ilustración por módulo
+  const cursosRutas: Curso[] = [
     {
       id: 'generico',
       codigo: 'GEN-201',
@@ -125,12 +131,8 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       descripcion: 'Competencias digitales transversales y automatización de oficina.',
       estado: e.generico >= 1 ? 1 : 0,
       Icon: BookOpen,
-      WatermarkIcon: BookOpen,
-      bgApproved: 'from-emerald-50/90 via-white to-blue-50/50',
-      borderApproved: 'border-emerald-300',
-      badgeColor: 'text-emerald-900 bg-emerald-100/90 border-emerald-300',
-      iconBg: 'bg-emerald-600 text-white',
-      patternUrl: "data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 12c6-3 12-3 16 0v24c-4-3-10-3-16 0V12zm32 0c-6-3-12-3-16 0v24c4-3 10-3 16 0V12z' fill='%2310b981' fill-opacity='0.06' stroke='%23059669' stroke-width='1' stroke-opacity='0.09'/%3E%3C/svg%3E",
+      ilustracion: 'libro',
+      acento: '#0f766e',
       tagApproved: '✓ Módulo Transversal Acreditado',
     },
     {
@@ -141,12 +143,8 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       descripcion: 'Herramientas tecnológicas orientadas al perfil profesional de la carrera.',
       estado: e.especifico >= 1 ? 1 : 0,
       Icon: Award,
-      WatermarkIcon: Award,
-      bgApproved: 'from-amber-50/80 via-white to-emerald-50/50',
-      borderApproved: 'border-amber-300',
-      badgeColor: 'text-amber-900 bg-amber-100/90 border-amber-300',
-      iconBg: 'bg-amber-600 text-white',
-      patternUrl: "data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='24' cy='20' r='8' fill='%23d97706' fill-opacity='0.07' stroke='%23d97706' stroke-width='1' stroke-opacity='0.12'/%3E%3Cpath d='M20 28l4-2 4 2-1-6h-6z' fill='%23d97706' fill-opacity='0.09'/%3E%3Cpolygon points='24,14 26,18 30,18 27,21 28,25 24,23 20,25 21,21 18,18 22,18' fill='%23d97706' fill-opacity='0.14'/%3E%3C/svg%3E",
+      ilustracion: 'diana',
+      acento: '#b45309',
       tagApproved: '✓ Especialidad de Carrera Acreditada',
     },
     {
@@ -157,12 +155,8 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       descripcion: 'Preparación y evaluación oficial con estándar internacional Microsoft MOS.',
       estado: e.taller >= 1 ? 1 : 0,
       Icon: Wrench,
-      WatermarkIcon: FileCheck2,
-      bgApproved: 'from-indigo-50/80 via-white to-emerald-50/50',
-      borderApproved: 'border-indigo-300',
-      badgeColor: 'text-indigo-900 bg-indigo-100/90 border-indigo-300',
-      iconBg: 'bg-indigo-600 text-white',
-      patternUrl: "data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='24' cy='20' r='10' fill='%234f46e5' fill-opacity='0.07' stroke='%234f46e5' stroke-width='1' stroke-opacity='0.12'/%3E%3Cpath d='M18 28l-4 12 10-4 10 4-4-12' fill='%234f46e5' fill-opacity='0.09' stroke='%234f46e5' stroke-width='1' stroke-opacity='0.14'/%3E%3Cpath d='M20 20l3 3 6-6' stroke='%234f46e5' stroke-width='1.5' stroke-linecap='round' stroke-opacity='0.25' fill='none'/%3E%3C/svg%3E",
+      ilustracion: 'medalla',
+      acento: '#7c3aed',
       tagApproved: '✓ Certificación Internacional MOS Aprobada',
     },
   ];
@@ -186,335 +180,387 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       ? 'Plan Tradicional (Computación I al III)'
       : 'Plan Rutas de Aprendizaje (PROTECH XP)';
 
-  /** Renderiza un contenedor de plan con fondo enriquecido, diseño compacto para 1 pantalla, progreso superior y cursos en columna vertical */
-  const renderPlanColumn = (
-    titulo: string,
-    subtituloBadge: string,
-    cursos: typeof cursosTradicional,
-    aprobados: number,
-    porcentaje: number,
-    PlanIcon: typeof Monitor | typeof Sparkles
-  ) => {
-    const esCompleto = aprobados === 3;
-    const pendientes = 3 - aprobados;
+  // En el celular se ve un plan a la vez; arranca en el que más avanzó el estudiante
+  const [planMovil, setPlanMovil] = useState<PlanId>(
+    aprobadosRutas > aprobadosTradicional ? 'rutas' : 'tradicional'
+  );
+
+  const planes = [
+    {
+      id: 'tradicional' as PlanId,
+      titulo: 'Plan Tradicional',
+      tituloCorto: 'Tradicional',
+      subtitulo: 'Computación I al III',
+      cursos: cursosTradicional,
+      aprobados: aprobadosTradicional,
+      porcentaje: porcentajeTradicional,
+      PlanIcon: Monitor,
+      acento: '#073299',
+    },
+    {
+      id: 'rutas' as PlanId,
+      titulo: 'Plan Rutas de Aprendizaje',
+      tituloCorto: 'Rutas',
+      subtitulo: 'PROTECH XP Oficial',
+      cursos: cursosRutas,
+      aprobados: aprobadosRutas,
+      porcentaje: porcentajeRutas,
+      PlanIcon: Sparkles,
+      acento: '#0f766e',
+    },
+  ];
+
+  /** Tarjeta de un curso: un solo dibujo propio en la esquina, sin mosaicos de fondo */
+  const renderCurso = (curso: Curso) => {
+    const esAprobado = curso.estado === 1;
+    const { Icon } = curso;
 
     return (
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-3 flex flex-col justify-between h-full relative overflow-hidden">
-        {/* Sello oficial académico de fondo cuando el plan está 100% aprobado */}
-        {esCompleto && (
-          <img
-            src="/academic-seal.svg"
-            alt="Sello Académico Acreditado"
-            className="absolute -top-4 -right-4 w-32 h-32 pointer-events-none opacity-[0.08] select-none z-0"
-          />
-        )}
-
-        {/* Fondo sutil con trama geométrica de puntos */}
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.03]"
-          style={{
-            backgroundImage: 'radial-gradient(#073299 1.5px, transparent 1.5px)',
-            backgroundSize: '16px 16px',
-          }}
+      <div
+        key={curso.id}
+        style={
+          esAprobado
+            ? {
+                borderColor: `${curso.acento}40`,
+                backgroundImage: `radial-gradient(120% 130% at 100% 100%, ${curso.acento}1f 0%, transparent 55%)`,
+              }
+            : undefined
+        }
+        className={`rounded-2xl lg:rounded-xl border p-3 lg:p-2.5 relative overflow-hidden group flex-1 flex flex-col justify-center gap-2 lg:gap-1 min-h-[96px] lg:min-h-[62px] transition-shadow ${
+          esAprobado ? 'bg-white shadow-sm hover:shadow-md' : 'bg-white border-slate-200'
+        }`}
+      >
+        <CourseIllustration
+          tipo={curso.ilustracion}
+          className="absolute -right-3 -bottom-4 w-24 h-24 lg:w-28 lg:h-28 pointer-events-none transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3"
+          style={{ color: esAprobado ? curso.acento : '#94a3b8', opacity: esAprobado ? 0.26 : 0.2 }}
         />
 
-        {/* Encabezado del Plan + Estado */}
-        <div className="space-y-2 shrink-0 relative z-10">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-2xs transition-colors ${
-                  esCompleto
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
-                    : aprobados > 0
-                    ? 'bg-blue-50 text-[#073299] border border-blue-200/80'
-                    : 'bg-slate-100 text-slate-500 border border-slate-200'
-                }`}
-              >
-                <PlanIcon className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
-                  {subtituloBadge}
-                </span>
-                <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 truncate" title={titulo}>
-                  {titulo}
-                </h3>
-              </div>
-            </div>
-
-            {/* Badge de Estado del Plan */}
-            <div className="shrink-0">
-              {esCompleto ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold shadow-2xs">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                  <span>Acreditado (100%)</span>
-                </span>
-              ) : aprobados > 0 ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-blue-50 border border-blue-200 text-[#073299] text-[10px] font-bold shadow-2xs">
-                  <Sparkles className="w-3 h-3 text-[#073299]" />
-                  <span>En Proceso</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold shadow-2xs">
-                  <AlertCircle className="w-3 h-3 text-amber-600" />
-                  <span>Pendiente</span>
-                </span>
-              )}
-            </div>
+        {/* Fila superior: Código, Tipo y Estado */}
+        <div className="flex items-center justify-between gap-2 relative z-10">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span
+              className={`text-[10px] lg:text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md ring-1 shrink-0 ${
+                esAprobado ? 'bg-white ring-slate-200 text-slate-800' : 'bg-slate-50 ring-slate-200 text-slate-500'
+              }`}
+            >
+              {curso.codigo}
+            </span>
+            <span className="text-[11px] lg:text-[10px] text-slate-500 truncate">
+              {curso.tipo}
+            </span>
           </div>
 
-          {/* Barra de Progreso compacta */}
-          <div className="p-2 bg-slate-50/90 rounded-xl border border-slate-100/90 space-y-1">
-            <div className="flex items-center justify-between text-[11px] font-semibold">
-              <span className="text-slate-700">
-                Progreso: <span className="text-[#073299] font-extrabold">{aprobados}</span> de <span className="font-bold">3</span> asignaturas
-              </span>
-              <span className={`font-mono font-extrabold text-[10px] px-1.5 py-0.2 rounded-md ${
-                esCompleto ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200/80 text-slate-800'
-              }`}>
-                {porcentaje}%
-              </span>
-            </div>
-            <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ease-out ${
-                  esCompleto
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
-                    : 'bg-gradient-to-r from-[#073299] via-[#0b4ed6] to-blue-500'
-                }`}
-                style={{ width: `${porcentaje}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[10px] text-slate-500 pt-0.5">
-              <span>• {aprobados} {aprobados === 1 ? 'Aprobado' : 'Aprobados'}</span>
-              <span>• {pendientes} {pendientes === 1 ? 'Pendiente' : 'Pendientes'}</span>
-            </div>
-          </div>
+          {esAprobado ? (
+            <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] lg:text-[10px] font-bold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+              <CheckCircle2 className="w-3.5 h-3.5 lg:w-3 lg:h-3" />
+              Aprobado<span className="hidden lg:inline"> (1)</span>
+            </span>
+          ) : (
+            <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] lg:text-[10px] font-bold bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+              <Clock className="w-3.5 h-3.5 lg:w-3 lg:h-3" />
+              Pendiente<span className="hidden lg:inline"> (0)</span>
+            </span>
+          )}
         </div>
 
-        {/* Cursos del Plan en COLUMNA VERTICAL con mosaicos, fondos y marcas de agua DIVERSIFICADAS */}
-        <div className="flex-1 flex flex-col justify-between gap-2 pt-2 relative z-10 min-h-0">
-          {cursos.map((curso) => {
-            const esAprobado = curso.estado === 1;
-            const { Icon, WatermarkIcon } = curso;
-
-            return (
-              <div
-                key={curso.id}
-                style={
-                  esAprobado
-                    ? {
-                        backgroundImage: `url("${curso.patternUrl}"), linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.98) 100%)`,
-                        backgroundSize: '48px 48px, 100% 100%',
-                        backgroundRepeat: 'repeat, no-repeat',
-                      }
-                    : undefined
-                }
-                className={`rounded-xl border p-2.5 transition-all relative overflow-hidden group flex-1 flex flex-col justify-between min-h-[62px] ${
-                  esAprobado
-                    ? `bg-gradient-to-br ${curso.bgApproved} ${curso.borderApproved} shadow-2xs`
-                    : 'border-slate-200/90 bg-white shadow-2xs'
-                }`}
-              >
-                {/* Marca de agua individual propia y temática de cada curso */}
-                {esAprobado ? (
-                  <div className="absolute -bottom-1.5 -right-1.5 w-14 h-14 pointer-events-none opacity-[0.14] transition-transform duration-300 group-hover:scale-110 flex items-center justify-center">
-                    <WatermarkIcon className="w-full h-full text-slate-800" />
-                  </div>
-                ) : (
-                  <div className="absolute -bottom-1 -right-1 w-12 h-12 pointer-events-none opacity-[0.04] text-slate-400 flex items-center justify-center">
-                    <Icon className="w-full h-full" />
-                  </div>
-                )}
-
-                {/* Fila superior: Código, Tipo y Badge de Estado */}
-                <div className="flex items-center justify-between gap-2 relative z-10">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border shadow-2xs ${
-                      esAprobado
-                        ? 'bg-white border-slate-200 text-slate-800 font-extrabold'
-                        : 'bg-slate-50 border-slate-200 text-slate-600'
-                    }`}>
-                      {curso.codigo}
-                    </span>
-                    <span className="text-[10px] text-slate-500 truncate">
-                      {curso.tipo}
-                    </span>
-                  </div>
-
-                  {/* Estado Oficial */}
-                  <div className="shrink-0">
-                    {esAprobado ? (
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-md text-[10px] font-extrabold border shadow-2xs ${curso.badgeColor}`}>
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>Aprobado (1)</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
-                        <Clock className="w-3 h-3 text-amber-600" />
-                        <span>Pendiente (0)</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Fila media: Título del curso con ícono */}
-                <div className="flex items-center gap-2.5 pt-1 relative z-10">
-                  <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-2xs transition-colors ${
-                      esAprobado
-                        ? `${curso.iconBg}`
-                        : 'bg-slate-100 text-slate-500 border border-slate-200'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-xs font-bold text-slate-900 leading-tight truncate" title={curso.nombre}>
-                      {curso.nombre}
-                    </h4>
-                    <p className={`text-[10px] truncate mt-0.2 ${esAprobado ? 'text-slate-700 font-medium' : 'text-slate-500'}`} title={curso.descripcion}>
-                      {esAprobado ? curso.tagApproved : curso.descripcion}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        {/* Título del curso con ícono */}
+        <div className="flex items-center gap-3 lg:gap-2.5 relative z-10 pr-10 lg:pr-6">
+          <div
+            style={esAprobado ? { backgroundColor: curso.acento } : undefined}
+            className={`w-10 h-10 lg:w-7 lg:h-7 rounded-xl lg:rounded-lg flex items-center justify-center shrink-0 ${
+              esAprobado ? 'text-white shadow-sm' : 'bg-slate-100 text-slate-400 ring-1 ring-slate-200'
+            }`}
+          >
+            <Icon className="w-5 h-5 lg:w-3.5 lg:h-3.5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h4 className="text-[15px] lg:text-xs font-bold text-slate-900 leading-tight lg:truncate" title={curso.nombre}>
+              {curso.nombre}
+            </h4>
+            <p
+              className={`text-xs lg:text-[10px] leading-snug mt-0.5 lg:truncate ${esAprobado ? 'text-slate-700 font-medium' : 'text-slate-500'}`}
+              title={curso.descripcion}
+            >
+              {esAprobado ? curso.tagApproved : curso.descripcion}
+            </p>
+          </div>
         </div>
       </div>
     );
   };
 
+  /** Contenedor de un plan: progreso arriba y cursos en columna */
+  const renderPlan = (plan: (typeof planes)[number]) => {
+    const { titulo, subtitulo, cursos, aprobados, porcentaje, PlanIcon, acento } = plan;
+    const esCompleto = aprobados === 3;
+    const pendientes = 3 - aprobados;
+
+    return (
+      <section
+        key={plan.id}
+        id={`plan-${plan.id}`}
+        role="tabpanel"
+        className={`${planMovil === plan.id ? 'flex' : 'hidden'} lg:flex bg-white rounded-3xl lg:rounded-2xl ring-1 ring-slate-900/5 shadow-sm p-3.5 lg:p-3 flex-col h-full relative overflow-hidden`}
+      >
+        {/* Un solo resplandor del color del plan, en lugar de una trama de puntos */}
+        <div
+          className="absolute -top-20 -right-16 w-56 h-56 rounded-full blur-3xl pointer-events-none"
+          style={{ backgroundColor: `${acento}14` }}
+        />
+
+        {/* Sello oficial académico de fondo cuando el plan está 100% aprobado */}
+        {esCompleto && (
+          <img
+            src="/academic-seal.svg"
+            alt=""
+            className="absolute -top-4 -right-4 w-32 h-32 pointer-events-none opacity-[0.08] select-none z-0"
+          />
+        )}
+
+        {/* Encabezado del Plan + Estado */}
+        <div className="flex items-center justify-between gap-2 shrink-0 relative z-10">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className="w-10 h-10 lg:w-8 lg:h-8 rounded-xl flex items-center justify-center shrink-0"
+              style={{ backgroundColor: `${acento}14`, color: acento }}
+            >
+              <PlanIcon className="w-5 h-5 lg:w-4 lg:h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] lg:text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+                {subtitulo}
+              </span>
+              <h3 className="text-base lg:text-sm font-extrabold text-slate-900 lg:truncate leading-tight" title={titulo}>
+                {titulo}
+              </h3>
+            </div>
+          </div>
+
+          {esCompleto ? (
+            <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 lg:py-0.5 rounded-full bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-[11px] lg:text-[10px] font-bold">
+              <CheckCircle2 className="w-3.5 h-3.5 lg:w-3 lg:h-3" />
+              Acreditado
+            </span>
+          ) : aprobados > 0 ? (
+            <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 lg:py-0.5 rounded-full bg-blue-50 ring-1 ring-blue-200 text-uss-blue text-[11px] lg:text-[10px] font-bold">
+              <Sparkles className="w-3.5 h-3.5 lg:w-3 lg:h-3" />
+              En proceso
+            </span>
+          ) : (
+            <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 lg:py-0.5 rounded-full bg-amber-50 ring-1 ring-amber-200 text-amber-700 text-[11px] lg:text-[10px] font-bold">
+              <AlertCircle className="w-3.5 h-3.5 lg:w-3 lg:h-3" />
+              Pendiente
+            </span>
+          )}
+        </div>
+
+        {/* Progreso con anillo */}
+        <div className="mt-3 lg:mt-2 flex items-center gap-3 p-2.5 lg:p-2 rounded-2xl lg:rounded-xl bg-slate-50 ring-1 ring-slate-100 shrink-0 relative z-10">
+          <AnilloProgreso porcentaje={porcentaje} color={esCompleto ? '#059669' : acento} />
+          <div className="flex-1 min-w-0 space-y-1">
+            <p className="text-[13px] lg:text-[11px] font-semibold text-slate-700">
+              <span className="font-extrabold" style={{ color: esCompleto ? '#059669' : acento }}>{aprobados}</span> de 3 asignaturas aprobadas
+            </p>
+            <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500 ease-out"
+                style={{
+                  width: `${porcentaje}%`,
+                  background: esCompleto ? 'linear-gradient(90deg,#10b981,#059669)' : `linear-gradient(90deg,${acento}99,${acento})`,
+                }}
+              />
+            </div>
+            <p className="text-[11px] lg:text-[10px] text-slate-500">
+              {pendientes === 0 ? 'Plan completo' : `${pendientes} ${pendientes === 1 ? 'asignatura pendiente' : 'asignaturas pendientes'}`}
+            </p>
+          </div>
+        </div>
+
+        {/* Cursos del plan */}
+        <div className="flex-1 flex flex-col gap-2.5 lg:gap-2 pt-3 lg:pt-2 relative z-10 min-h-0">
+          {cursos.map(renderCurso)}
+        </div>
+      </section>
+    );
+  };
+
+  // Datos de la ficha. Los largos ocupan las dos columnas de la cuadrícula.
+  const datos: { Icon: LucideIcon; label: string; valor: ReactNode; ancho?: boolean }[] = [
+    { Icon: User, label: 'Apellidos', valor: apellidos || '—' },
+    { Icon: User, label: 'Nombres', valor: nombres || '—' },
+    { Icon: School, label: 'Escuela', valor: e.escuela || '—', ancho: true },
+    { Icon: Layers, label: 'Ciclo', valor: e.nCicCodigo ? `Ciclo ${e.nCicCodigo}` : '—' },
+    { Icon: MapPin, label: 'Sede', valor: e.campus || 'Chiclayo' },
+    { Icon: Compass, label: 'Modalidad', valor: e.modalidad || '—', ancho: !e.telefono },
+    ...(e.telefono
+      ? [{
+          Icon: Phone,
+          label: 'Teléfono',
+          valor: (
+            <a href={`tel:${e.telefono}`} className="font-mono hover:text-uss-blue">
+              {e.telefono}
+            </a>
+          ),
+        }]
+      : []),
+    {
+      Icon: Mail,
+      label: 'Correo',
+      ancho: true,
+      valor: e.correoInstitucional ? (
+        <a href={`mailto:${e.correoInstitucional}`} className="text-uss-blue hover:underline break-all lg:break-normal">
+          {e.correoInstitucional}
+        </a>
+      ) : (
+        '—'
+      ),
+    },
+  ];
+
   return (
-    <div className="w-full flex-1 flex flex-col justify-between min-h-0 gap-1.5 animate-in fade-in duration-200">
+    <div className="w-full flex-1 flex flex-col min-h-0 gap-3 lg:gap-1.5 animate-in fade-in duration-200">
       {/* ========================================================================= */}
-      {/* 1. BARRA SUPERIOR: Volver a la búsqueda + Breadcrumb institucional        */}
+      {/* 1. BARRA SUPERIOR (escritorio): Volver + Breadcrumb institucional          */}
+      {/*    En el celular, Volver vive en el header fijo                            */}
       {/* ========================================================================= */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-slate-200/80 shrink-0">
+      <div className="hidden lg:flex items-center justify-between gap-2 pb-1 border-b border-slate-200/80 shrink-0">
         <button
           onClick={onBack}
           type="button"
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-[#073299] text-xs font-semibold transition shadow-2xs cursor-pointer group"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg ring-1 ring-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-uss-blue text-xs font-semibold transition cursor-pointer group"
         >
           <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
           <span>Volver a la búsqueda</span>
         </button>
 
-        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 min-w-0">
           <span>Portal GEX</span>
           <span>/</span>
-          <span className="font-semibold text-slate-800 truncate max-w-[200px] sm:max-w-none">{e.escuela}</span>
+          <span className="font-semibold text-slate-800 truncate">{e.escuela}</span>
           <span>/</span>
-          <span className="font-mono font-bold text-[#073299] bg-blue-50 border border-blue-100 px-2 py-0.2 rounded-md">
+          <span className="font-mono font-bold text-uss-blue bg-blue-50 ring-1 ring-blue-100 px-2 py-0.5 rounded-md">
             {e.codUniv}
           </span>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. ALERTA ULTRA-SLIM DE ACREDITACIÓN (Bajo perfil, sin textos burocráticos) */}
+      {/* 2. FELICITACIÓN DE ACREDITACIÓN: tarjeta en el celular, franja en escritorio */}
       {/* ========================================================================= */}
       {esAcreditado && (
-        <div className="rounded-xl bg-gradient-to-r from-emerald-600 via-teal-700 to-[#073299] text-white px-3 py-1.5 shadow-2xs border border-emerald-400/30 flex flex-wrap items-center justify-between gap-2 shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-white/20 text-emerald-100 shrink-0">
+        <div className="relative overflow-hidden rounded-3xl lg:rounded-xl bg-gradient-to-br lg:bg-gradient-to-r from-emerald-700 to-teal-700 text-white p-4 lg:px-3 lg:py-1.5 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-2 shrink-0">
+          <Trophy className="lg:hidden absolute -right-4 -top-4 w-28 h-28 text-white/10 rotate-12 pointer-events-none" />
+
+          <div className="flex items-center gap-3 lg:gap-2 min-w-0 relative">
+            <div className="lg:hidden w-11 h-11 rounded-2xl bg-white/15 ring-1 ring-white/25 flex items-center justify-center shrink-0">
+              <Trophy className="w-5 h-5 text-uss-gold" />
+            </div>
+            <span className="hidden lg:inline text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/20 text-emerald-50 shrink-0">
               Acreditado 100%
             </span>
-            <span className="text-xs font-bold truncate">
-              ¡Felicitaciones, {nombres}!
-            </span>
-            <span className="text-[11px] text-emerald-100 hidden md:inline truncate">
-              &bull; Cumples con la acreditación en Informática ({modalidadAcreditada})
-            </span>
+            <div className="min-w-0 lg:flex lg:items-center lg:gap-2">
+              <p className="text-base lg:text-xs font-bold leading-tight lg:truncate">
+                ¡Felicitaciones, {nombres}!
+              </p>
+              <p className="text-xs lg:text-[11px] text-emerald-50/90 mt-0.5 lg:mt-0 lg:truncate">
+                <span className="hidden lg:inline">&bull; </span>Cumples con la acreditación en Informática ({modalidadAcreditada})
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 lg:gap-2.5 shrink-0 relative">
             <button
               onClick={() => setShowComoAcreditarModal(true)}
               type="button"
-              className="text-[11px] text-emerald-100 hover:text-white underline font-semibold cursor-pointer"
+              className="flex-1 lg:flex-none h-10 lg:h-auto rounded-xl bg-white/15 ring-1 ring-white/25 lg:bg-transparent lg:ring-0 lg:underline text-xs lg:text-[11px] font-semibold text-white lg:text-emerald-50 hover:text-white cursor-pointer"
             >
               Conoce cómo acreditar
             </button>
             <button
               onClick={() => setShowOpcionesModal(true)}
               type="button"
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-white text-[#073299] hover:bg-emerald-50 text-[11px] font-extrabold shadow-2xs transition cursor-pointer"
+              className="flex-1 lg:flex-none h-10 lg:h-auto inline-flex items-center justify-center gap-1 px-3 lg:px-2.5 lg:py-0.5 rounded-xl lg:rounded-lg bg-white text-emerald-800 hover:bg-emerald-50 text-xs lg:text-[11px] font-extrabold transition cursor-pointer"
             >
-              <span>Ir a tus opciones</span>
-              <ArrowRight className="w-3 h-3" />
+              Ir a tus opciones
+              <ArrowRight className="w-3.5 h-3.5 lg:w-3 lg:h-3" />
             </button>
           </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 3. CONTENEDOR PRINCIPAL: 3 COLUMNAS SIMÉTRICAS QUE CABEN EN 1 PANTALLA    */}
+      {/* 3. CONTENEDOR PRINCIPAL: 3 columnas en escritorio, una debajo de otra en el celular */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 w-full flex-1 min-h-0 items-stretch">
         {/* ========================================================================= */}
-        {/* COLUMNA 1: FICHA DEL ESTUDIANTE COMPACTA                                  */}
+        {/* COLUMNA 1: FICHA DEL ESTUDIANTE                                           */}
         {/* ========================================================================= */}
-        <aside className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col justify-between h-full relative">
-          {/* Header con Credencial */}
-          <div className="bg-gradient-to-br from-[#052570] via-[#073299] to-[#0e48bd] p-2.5 sm:p-3 text-white relative overflow-hidden shrink-0">
-            <div className="relative z-10 space-y-2">
+        <aside className="bg-white rounded-3xl lg:rounded-2xl ring-1 ring-slate-900/5 shadow-sm overflow-hidden flex flex-col h-full">
+          {/* Credencial */}
+          <div className="bg-gradient-to-br from-uss-navy via-uss-blue to-uss-sky p-4 lg:p-3 text-white relative overflow-hidden shrink-0">
+            {/* Un birrete grande y una luz: un solo dibujo, no un mosaico */}
+            <div className="absolute -left-12 -top-12 w-40 h-40 rounded-full bg-sky-400/25 blur-2xl pointer-events-none" />
+            <GraduationCap
+              strokeWidth={1.25}
+              className="absolute -right-5 -bottom-7 w-32 h-32 lg:w-28 lg:h-28 text-white/[0.08] -rotate-12 pointer-events-none"
+            />
+
+            <div className="relative z-10 space-y-3 lg:space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded bg-white/15 text-white text-[9px] font-mono font-bold tracking-wider uppercase border border-white/20">
-                  <ShieldCheck className="w-2.5 h-2.5 text-emerald-300" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/15 text-white text-[10px] lg:text-[9px] font-mono font-bold tracking-wider uppercase ring-1 ring-white/20">
+                  <ShieldCheck className="w-3 h-3 lg:w-2.5 lg:h-2.5 text-uss-gold" />
                   Carné GEX
                 </span>
 
                 {esAcreditado ? (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-emerald-500/30 text-emerald-200 text-[9px] font-bold border border-emerald-300/40">
-                    <CheckCircle2 className="w-2.5 h-2.5" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-100 text-[10px] lg:text-[9px] font-bold ring-1 ring-emerald-300/40">
+                    <CheckCircle2 className="w-3 h-3 lg:w-2.5 lg:h-2.5" />
                     Acreditado
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-amber-400/25 text-amber-200 text-[9px] font-bold border border-amber-300/30">
-                    <Clock className="w-2.5 h-2.5" />
-                    En Curso
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-300/20 text-amber-100 text-[10px] lg:text-[9px] font-bold ring-1 ring-amber-200/40">
+                    <Clock className="w-3 h-3 lg:w-2.5 lg:h-2.5" />
+                    En curso
                   </span>
                 )}
               </div>
 
               {/* Avatar + Nombre */}
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center font-black text-sm text-white shrink-0 shadow-inner">
+              <div className="flex items-center gap-3 lg:gap-2.5">
+                <div className="w-12 h-12 lg:w-9 lg:h-9 rounded-2xl lg:rounded-xl bg-white/15 ring-1 ring-white/30 flex items-center justify-center font-black text-base lg:text-sm text-white shrink-0">
                   {iniciales}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-xs sm:text-sm font-extrabold leading-snug text-white truncate" title={e.nombres}>
+                  <h2 className="text-base lg:text-sm font-extrabold leading-snug text-white lg:truncate" title={e.nombres}>
                     {e.nombres}
                   </h2>
-                  <p className="text-[10px] text-blue-100 font-medium truncate mt-0.2" title={e.escuela}>
+                  <p className="text-xs lg:text-[10px] text-blue-100 font-medium truncate mt-0.5" title={e.escuela}>
                     {e.escuela || 'Universidad Señor de Sipán'}
                   </p>
                 </div>
               </div>
 
-              {/* Barra de código universitario con botón de copiar */}
-              <div className="flex items-center justify-between gap-2 p-1 px-2 rounded-lg bg-white/15 backdrop-blur-md border border-white/25">
-                <div className="flex items-center gap-1 text-[11px] font-mono">
-                  <Hash className="w-3 h-3 text-blue-200" />
+              {/* Código universitario con botón de copiar */}
+              <div className="flex items-center justify-between gap-2 py-1.5 lg:py-1 px-2.5 lg:px-2 rounded-xl lg:rounded-lg bg-white/10 ring-1 ring-white/20">
+                <div className="flex items-center gap-1 text-sm lg:text-[11px] font-mono">
+                  <Hash className="w-3.5 h-3.5 lg:w-3 lg:h-3 text-blue-200" />
                   <span className="font-bold text-white tracking-wider">{e.codUniv}</span>
                 </div>
                 <button
                   onClick={handleCopyCode}
                   type="button"
-                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-white/20 hover:bg-white/30 text-[10px] font-medium text-white transition cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2 py-1 lg:px-1.5 lg:py-0.5 rounded-lg lg:rounded bg-white/15 hover:bg-white/25 text-[11px] lg:text-[10px] font-semibold text-white transition cursor-pointer"
                   title="Copiar código universitario"
                 >
                   {copiedCode ? (
                     <>
-                      <Check className="w-2.5 h-2.5 text-emerald-300" />
+                      <Check className="w-3 h-3 lg:w-2.5 lg:h-2.5 text-emerald-300" />
                       <span className="text-emerald-200">Copiado</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-2.5 h-2.5" />
+                      <Copy className="w-3 h-3 lg:w-2.5 lg:h-2.5" />
                       <span>Copiar</span>
                     </>
                   )}
@@ -523,364 +569,350 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
           </div>
 
-          {/* Lista compacta de datos del estudiante */}
-          <div className="p-2.5 flex-1 flex flex-col justify-between text-xs divide-y divide-slate-100 min-h-0">
-            {/* Apellidos */}
-            <div className="flex items-center justify-between gap-2 py-1 first:pt-0">
-              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
-                <User className="w-3.5 h-3.5 text-[#073299] shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Apellidos</span>
+          {/* Datos del estudiante en cuadrícula de 2 columnas */}
+          <dl className="flex-1 grid grid-cols-2 lg:auto-rows-fr gap-px bg-slate-100 min-h-0">
+            {datos.map(({ Icon, label, valor, ancho }) => (
+              <div key={label} className={`bg-white px-3.5 py-2.5 lg:px-3 lg:py-1.5 flex flex-col justify-center min-w-0 ${ancho ? 'col-span-2' : ''}`}>
+                <dt className="flex items-center gap-1.5 text-[10px] lg:text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                  <Icon className="w-3.5 h-3.5 lg:w-3 lg:h-3 text-uss-blue/70 shrink-0" />
+                  {label}
+                </dt>
+                <dd className="mt-0.5 text-sm lg:text-xs font-semibold text-slate-900 leading-snug lg:truncate">
+                  {valor}
+                </dd>
               </div>
-              <span className="font-bold text-slate-900 text-xs truncate text-right">{apellidos || '—'}</span>
-            </div>
+            ))}
+          </dl>
 
-            {/* Nombres */}
-            <div className="flex items-center justify-between gap-2 py-1">
-              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
-                <User className="w-3.5 h-3.5 text-[#073299] shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Nombres</span>
-              </div>
-              <span className="font-bold text-slate-900 text-xs truncate text-right">{nombres || '—'}</span>
-            </div>
-
-            {/* Escuela Profesional */}
-            <div className="flex items-center justify-between gap-2 py-1">
-              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
-                <School className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Escuela</span>
-              </div>
-              <span className="font-semibold text-slate-800 text-xs truncate text-right max-w-[140px]" title={e.escuela}>{e.escuela || '—'}</span>
-            </div>
-
-            {/* Ciclo Académico */}
-            <div className="flex items-center justify-between gap-2 py-1">
-              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
-                <Layers className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Ciclo</span>
-              </div>
-              <span className="font-semibold text-slate-800 text-xs">{e.nCicCodigo ? `Ciclo ${e.nCicCodigo}` : '—'}</span>
-            </div>
-
-            {/* Campus / Sede */}
-            <div className="flex items-center justify-between gap-2 py-1">
-              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
-                <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Sede</span>
-              </div>
-              <span className="font-semibold text-slate-800 text-xs">{e.campus || 'Chiclayo'}</span>
-            </div>
-
-            {/* Modalidad */}
-            <div className="flex items-center justify-between gap-2 py-1">
-              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
-                <Compass className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Modalidad</span>
-              </div>
-              <span className="font-semibold text-slate-800 text-xs truncate text-right">{e.modalidad || '—'}</span>
-            </div>
-
-            {/* Correo Institucional */}
-            <div className="flex items-center justify-between gap-2 py-1">
-              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
-                <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Correo</span>
-              </div>
-              {e.correoInstitucional ? (
-                <a href={`mailto:${e.correoInstitucional}`} className="text-xs font-semibold text-[#073299] hover:underline truncate text-right max-w-[150px]" title={e.correoInstitucional}>
-                  {e.correoInstitucional}
-                </a>
-              ) : (
-                <span className="text-slate-400 text-xs">—</span>
-              )}
-            </div>
-
-            {/* Teléfono / Celular */}
-            {e.telefono && (
-              <div className="flex items-center justify-between gap-2 py-1">
-                <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
-                  <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Teléfono</span>
-                </div>
-                <a href={`tel:${e.telefono}`} className="font-mono font-medium text-slate-800 text-xs">
-                  {e.telefono}
-                </a>
-              </div>
-            )}
-          </div>
-
-          {/* Footer del Nav */}
-          <div className="p-2 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between text-[10px] text-slate-500 shrink-0">
+          {/* Pie de la ficha */}
+          <div className="px-3.5 py-2 lg:p-2 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between text-[11px] lg:text-[10px] text-slate-500 shrink-0">
             <span className="inline-flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-[#073299]" />
+              <ShieldCheck className="w-3.5 h-3.5 lg:w-3 lg:h-3 text-uss-blue" />
               Verificación CINF &bull; USS
             </span>
-            <span className="font-mono text-[9px] text-slate-400">GEX 2026</span>
+            <span className="font-mono text-[10px] lg:text-[9px] text-slate-400">GEX 2026</span>
           </div>
         </aside>
 
-        {/* ========================================================================= */}
-        {/* COLUMNA 2: PLAN TRADICIONAL                                               */}
-        {/* ========================================================================= */}
-        {renderPlanColumn(
-          'Plan Tradicional',
-          'Computación I al III',
-          cursosTradicional,
-          aprobadosTradicional,
-          porcentajeTradicional,
-          Monitor
-        )}
+        {/* Selector de plan (solo celular): muestra el avance de los dos sin hacer scroll */}
+        <div role="tablist" aria-label="Planes de acreditación" className="lg:hidden grid grid-cols-2 gap-1 p-1 rounded-2xl bg-white ring-1 ring-slate-900/5 shadow-sm">
+          {planes.map((plan) => {
+            const activo = planMovil === plan.id;
+            const completo = plan.aprobados === 3;
+            return (
+              <button
+                key={plan.id}
+                role="tab"
+                type="button"
+                aria-selected={activo}
+                aria-controls={`plan-${plan.id}`}
+                onClick={() => setPlanMovil(plan.id)}
+                style={activo ? { backgroundColor: plan.acento } : undefined}
+                className={`rounded-xl px-3 py-2 text-left transition cursor-pointer ${
+                  activo ? 'text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className={`block text-[10px] font-bold uppercase tracking-wider ${activo ? 'text-white/75' : 'text-slate-400'}`}>
+                  {plan.id === 'tradicional' ? 'Computación I–III' : 'PROTECH XP'}
+                </span>
+                <span className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-bold truncate">{plan.tituloCorto}</span>
+                  <span
+                    className={`shrink-0 inline-flex items-center gap-0.5 text-[11px] font-mono font-bold px-1.5 rounded-md ${
+                      activo ? 'bg-white/20' : completo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {completo && <Check className="w-3 h-3" />}
+                    {plan.aprobados}/3
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
         {/* ========================================================================= */}
-        {/* COLUMNA 3: PLAN RUTAS PROTECH XP                                          */}
+        {/* COLUMNAS 2 Y 3: PLAN TRADICIONAL Y PLAN RUTAS PROTECH XP                  */}
         {/* ========================================================================= */}
-        {renderPlanColumn(
-          'Plan Rutas de Aprendizaje',
-          'PROTECH XP Oficial',
-          cursosRutas,
-          aprobadosRutas,
-          porcentajeRutas,
-          Sparkles
-        )}
+        {planes.map(renderPlan)}
       </div>
 
       {/* ========================================================================= */}
       {/* 5. MODAL: "IR A TUS OPCIONES" (Para estudiantes acreditados)              */}
       {/* ========================================================================= */}
       {showOpcionesModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 relative space-y-6">
-            {/* Botón cerrar */}
-            <button
-              onClick={() => setShowOpcionesModal(false)}
-              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Encabezado del modal */}
-            <div className="flex items-center gap-3.5 pr-8">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
-                <Trophy className="w-6 h-6 text-amber-500" />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-md">
-                  Acreditación Vigente
-                </span>
-                <h3 className="text-lg font-bold text-slate-900 mt-0.5">
-                  Opciones y Trámites para Estudiantes Acreditados
-                </h3>
-              </div>
+        <HojaModal onClose={() => setShowOpcionesModal(false)} ancho="sm:max-w-xl">
+          {/* Encabezado del modal */}
+          <div className="flex items-center gap-3.5 pr-10">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 ring-1 ring-amber-200 flex items-center justify-center shrink-0">
+              <Trophy className="w-6 h-6 text-amber-500" />
             </div>
+            <div>
+              <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-md">
+                Acreditación Vigente
+              </span>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-1 leading-snug">
+                Opciones y Trámites para Estudiantes Acreditados
+              </h3>
+            </div>
+          </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Estimado(a) <strong className="text-slate-800">{nombres}</strong> ({e.codUniv}), has culminado con éxito la acreditación oficial en Informática. Puedes gestionar tus opciones oficiales a continuación:
-            </p>
+          <p className="text-[13px] sm:text-xs text-slate-600 leading-relaxed">
+            Estimado(a) <strong className="text-slate-800">{nombres}</strong> ({e.codUniv}), has culminado con éxito la acreditación oficial en Informática. Puedes gestionar tus opciones oficiales a continuación:
+          </p>
 
-            {/* Opciones disponibles */}
-            <div className="space-y-3">
-              {/* Opción 1: Solicitar Constancia */}
-              <a
-                href="https://campus.uss.edu.pe"
-                target="_blank"
-                rel="noreferrer"
-                className="p-4 rounded-2xl border border-slate-200 hover:border-[#073299] bg-slate-50/60 hover:bg-blue-50/40 transition flex items-start justify-between gap-3 group"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-100 text-[#073299] flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-[#073299] group-hover:text-white transition">
-                    <FileCheck2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-[#073299] transition">
-                      1. Solicitar Constancia Oficial de Acreditación (CINF)
-                    </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Tramita tu constancia con firma digital a través del Campus Virtual USS (Mesa de Partes).
-                    </p>
-                  </div>
-                </div>
-                <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-[#073299] shrink-0 mt-1" />
-              </a>
-
-              {/* Opción 2: Imprimir / Descargar Reporte Digital */}
-              <button
-                onClick={() => window.print()}
-                type="button"
-                className="w-full text-left p-4 rounded-2xl border border-slate-200 hover:border-emerald-500 bg-slate-50/60 hover:bg-emerald-50/40 transition flex items-start justify-between gap-3 group cursor-pointer"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-emerald-600 group-hover:text-white transition">
-                    <Printer className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition">
-                      2. Imprimir / Guardar Ficha de Verificación (PDF)
-                    </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Genera el comprobante imprimible con el registro oficial de las asignaturas aprobadas.
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0 mt-1" />
-              </button>
-
-              {/* Opción 3: Trámite de Graduación / Titulación */}
-              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 mt-0.5">
-                  <GraduationCap className="w-4 h-4" />
+          {/* Opciones disponibles */}
+          <div className="space-y-2.5 sm:space-y-3">
+            {/* Opción 1: Solicitar Constancia */}
+            <a
+              href="https://campus.uss.edu.pe"
+              target="_blank"
+              rel="noreferrer"
+              className="p-3.5 sm:p-4 rounded-2xl ring-1 ring-slate-200 hover:ring-uss-blue bg-slate-50/60 hover:bg-blue-50/40 transition flex items-start justify-between gap-3 group"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-100 text-uss-blue flex items-center justify-center shrink-0 group-hover:bg-uss-blue group-hover:text-white transition">
+                  <FileCheck2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                    3. Validación para Carpeta de Grado y Titulación
+                  <h4 className="text-sm font-bold text-slate-900 group-hover:text-uss-blue transition">
+                    1. Solicitar Constancia Oficial de Acreditación (CINF)
                   </h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Tu cumplimiento de computación se valida de forma automática ante los Centros Empresariales USS y Registros Académicos.
+                  <p className="text-xs sm:text-[11px] text-slate-500 mt-0.5">
+                    Tramita tu constancia con firma digital a través del Campus Virtual USS (Mesa de Partes).
                   </p>
                 </div>
               </div>
+              <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-uss-blue shrink-0 mt-1" />
+            </a>
 
-              {/* Opción 4: Mesa de Ayuda CINF */}
-              <a
-                href="mailto:cinf@uss.edu.pe"
-                className="p-4 rounded-2xl border border-slate-200 hover:border-slate-300 bg-slate-50/60 hover:bg-slate-100/60 transition flex items-start justify-between gap-3 group"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 mt-0.5">
-                    <HelpCircle className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                      4. Mesa de Ayuda y Consultas CINF
-                    </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Correo: cinf@uss.edu.pe &bull; Atención de lunes a viernes de 8:00 a.m. a 6:00 p.m.
-                    </p>
-                  </div>
+            {/* Opción 2: Imprimir / Descargar Reporte Digital */}
+            <button
+              onClick={() => window.print()}
+              type="button"
+              className="w-full text-left p-3.5 sm:p-4 rounded-2xl ring-1 ring-slate-200 hover:ring-emerald-500 bg-slate-50/60 hover:bg-emerald-50/40 transition flex items-start justify-between gap-3 group cursor-pointer"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition">
+                  <Printer className="w-4 h-4" />
                 </div>
-                <Mail className="w-4 h-4 text-slate-400 group-hover:text-slate-700 shrink-0 mt-1" />
-              </a>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition">
+                    2. Imprimir / Guardar Ficha de Verificación (PDF)
+                  </h4>
+                  <p className="text-xs sm:text-[11px] text-slate-500 mt-0.5">
+                    Genera el comprobante imprimible con el registro oficial de las asignaturas aprobadas.
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0 mt-1" />
+            </button>
+
+            {/* Opción 3: Trámite de Graduación / Titulación */}
+            <div className="p-3.5 sm:p-4 rounded-2xl ring-1 ring-slate-200 bg-slate-50/60 flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">
+                  3. Validación para Carpeta de Grado y Titulación
+                </h4>
+                <p className="text-xs sm:text-[11px] text-slate-500 mt-0.5">
+                  Tu cumplimiento de computación se valida de forma automática ante los Centros Empresariales USS y Registros Académicos.
+                </p>
+              </div>
             </div>
 
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setShowOpcionesModal(false)}
-                type="button"
-                className="px-5 py-2.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold transition cursor-pointer"
-              >
-                Entendido, cerrar
-              </button>
-            </div>
+            {/* Opción 4: Mesa de Ayuda CINF */}
+            <a
+              href="mailto:cinf@uss.edu.pe"
+              className="p-3.5 sm:p-4 rounded-2xl ring-1 ring-slate-200 hover:ring-slate-300 bg-slate-50/60 hover:bg-slate-100/60 transition flex items-start justify-between gap-3 group"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">
+                  <HelpCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">
+                    4. Mesa de Ayuda y Consultas CINF
+                  </h4>
+                  <p className="text-xs sm:text-[11px] text-slate-500 mt-0.5">
+                    Correo: cinf@uss.edu.pe &bull; Atención de lunes a viernes de 8:00 a.m. a 6:00 p.m.
+                  </p>
+                </div>
+              </div>
+              <Mail className="w-4 h-4 text-slate-400 group-hover:text-slate-700 shrink-0 mt-1" />
+            </a>
           </div>
-        </div>
+
+          <div className="flex justify-end pt-1">
+            <button
+              onClick={() => setShowOpcionesModal(false)}
+              type="button"
+              className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl bg-uss-navy text-white hover:bg-uss-blue text-sm sm:text-xs font-bold transition cursor-pointer"
+            >
+              Entendido, cerrar
+            </button>
+          </div>
+        </HojaModal>
       )}
 
       {/* ========================================================================= */}
       {/* 6. MODAL: "CONOCE CÓMO ACREDITAR" (Detalles oficiales de la normativa)     */}
       {/* ========================================================================= */}
       {showComoAcreditarModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 relative space-y-6 max-h-[90vh] overflow-y-auto">
-            {/* Botón cerrar */}
-            <button
-              onClick={() => setShowComoAcreditarModal(false)}
-              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Encabezado */}
-            <div className="flex items-center gap-3.5 pr-8">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 text-[#073299] flex items-center justify-center shrink-0">
-                <Info className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-[#073299] uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded-md">
-                  Normativa Oficial CINF &bull; USS
-                </span>
-                <h3 className="text-lg font-bold text-slate-900 mt-0.5">
-                  Conoce Cómo Acreditar tu Competencia Informática
-                </h3>
-              </div>
+        <HojaModal onClose={() => setShowComoAcreditarModal(false)} ancho="sm:max-w-2xl">
+          {/* Encabezado */}
+          <div className="flex items-center gap-3.5 pr-10">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 ring-1 ring-blue-200 text-uss-blue flex items-center justify-center shrink-0">
+              <Info className="w-6 h-6" />
             </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed">
-              El Centro de Informática (CINF) de la Universidad Señor de Sipán establece dos modalidades académicas válidas para el programa Gente con Experiencia (GEX). Concluir con éxito cualquiera de las dos vías otorga la acreditación definitiva:
-            </p>
-
-            {/* Comparación de los dos planes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Vía 1: Plan Tradicional */}
-              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-blue-100 text-[#073299] flex items-center justify-center font-bold text-xs">
-                    1
-                  </div>
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                    Plan Tradicional
-                  </h4>
-                </div>
-                <p className="text-[11px] text-slate-500">
-                  Ruta regular curricular compuesta por 3 asignaturas semestrales:
-                </p>
-                <ul className="text-xs text-slate-700 space-y-1.5 list-disc list-inside">
-                  <li><strong className="font-semibold">Computación I</strong> (INF-101)</li>
-                  <li><strong className="font-semibold">Computación II</strong> (INF-102)</li>
-                  <li><strong className="font-semibold">Computación III</strong> (INF-103)</li>
-                </ul>
-                <div className="pt-2 border-t border-slate-200/80 text-[11px] font-semibold text-[#073299]">
-                  Meta: 3 de 3 aprobados (100%)
-                </div>
-              </div>
-
-              {/* Vía 2: Plan Rutas de Aprendizaje */}
-              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
-                    2
-                  </div>
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                    Plan Rutas PROTECH XP
-                  </h4>
-                </div>
-                <p className="text-[11px] text-slate-500">
-                  Ruta modular intensiva por competencias y certificación:
-                </p>
-                <ul className="text-xs text-slate-700 space-y-1.5 list-disc list-inside">
-                  <li><strong className="font-semibold">Módulo Genérico</strong> (GEN-201)</li>
-                  <li><strong className="font-semibold">Módulo Específico</strong> (ESP-301)</li>
-                  <li><strong className="font-semibold">Taller Certificación</strong> (TAL-401)</li>
-                </ul>
-                <div className="pt-2 border-t border-slate-200/80 text-[11px] font-semibold text-emerald-700">
-                  Meta: 3 de 3 aprobados (100%)
-                </div>
-              </div>
-            </div>
-
-            {/* Preguntas frecuentes / Reglas de negocio */}
-            <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-100 text-xs text-slate-700 space-y-2">
-              <h5 className="font-bold text-[#073299]">Preguntas Clave:</h5>
-              <p>
-                &bull; <strong>¿Debo completar ambos planes?</strong> No. Basta con que uno de los dos planes esté al 100% (3 de 3 aprobados).
-              </p>
-              <p>
-                &bull; <strong>¿Tiene costo la constancia?</strong> El trámite de constancia digital se efectúa bajo las tasas académicas vigentes del CINF USS en Mesa de Partes.
-              </p>
-              <p>
-                &bull; <strong>¿Cómo convalidar si estudié en otra institución?</strong> Presenta tus certificados de estudios en la coordinación CINF para evaluación curricular.
-              </p>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setShowComoAcreditarModal(false)}
-                type="button"
-                className="px-5 py-2.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold transition cursor-pointer"
-              >
-                Cerrar guía
-              </button>
+            <div>
+              <span className="text-[10px] font-bold text-uss-blue uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded-md">
+                Normativa Oficial CINF &bull; USS
+              </span>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-1 leading-snug">
+                Conoce Cómo Acreditar tu Competencia Informática
+              </h3>
             </div>
           </div>
-        </div>
+
+          <p className="text-[13px] sm:text-xs text-slate-600 leading-relaxed">
+            El Centro de Informática (CINF) de la Universidad Señor de Sipán establece dos modalidades académicas válidas para el programa Gente con Experiencia (GEX). Concluir con éxito cualquiera de las dos vías otorga la acreditación definitiva:
+          </p>
+
+          {/* Comparación de los dos planes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            {/* Vía 1: Plan Tradicional */}
+            <div className="p-4 rounded-2xl ring-1 ring-blue-100 bg-blue-50/40 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-uss-blue text-white flex items-center justify-center font-bold text-xs">
+                  1
+                </div>
+                <h4 className="text-sm font-bold text-slate-900">
+                  Plan Tradicional
+                </h4>
+              </div>
+              <p className="text-xs sm:text-[11px] text-slate-500">
+                Ruta regular curricular compuesta por 3 asignaturas semestrales:
+              </p>
+              <ul className="text-[13px] sm:text-xs text-slate-700 space-y-1.5 list-disc list-inside">
+                <li><strong className="font-semibold">Computación I</strong> (INF-101)</li>
+                <li><strong className="font-semibold">Computación II</strong> (INF-102)</li>
+                <li><strong className="font-semibold">Computación III</strong> (INF-103)</li>
+              </ul>
+              <div className="pt-2 border-t border-blue-100 text-xs sm:text-[11px] font-semibold text-uss-blue">
+                Meta: 3 de 3 aprobados (100%)
+              </div>
+            </div>
+
+            {/* Vía 2: Plan Rutas de Aprendizaje */}
+            <div className="p-4 rounded-2xl ring-1 ring-teal-100 bg-teal-50/40 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-teal-700 text-white flex items-center justify-center font-bold text-xs">
+                  2
+                </div>
+                <h4 className="text-sm font-bold text-slate-900">
+                  Plan Rutas PROTECH XP
+                </h4>
+              </div>
+              <p className="text-xs sm:text-[11px] text-slate-500">
+                Ruta modular intensiva por competencias y certificación:
+              </p>
+              <ul className="text-[13px] sm:text-xs text-slate-700 space-y-1.5 list-disc list-inside">
+                <li><strong className="font-semibold">Módulo Genérico</strong> (GEN-201)</li>
+                <li><strong className="font-semibold">Módulo Específico</strong> (ESP-301)</li>
+                <li><strong className="font-semibold">Taller Certificación</strong> (TAL-401)</li>
+              </ul>
+              <div className="pt-2 border-t border-teal-100 text-xs sm:text-[11px] font-semibold text-teal-700">
+                Meta: 3 de 3 aprobados (100%)
+              </div>
+            </div>
+          </div>
+
+          {/* Preguntas frecuentes / Reglas de negocio */}
+          <div className="p-4 rounded-2xl bg-slate-50 ring-1 ring-slate-200 text-[13px] sm:text-xs text-slate-700 space-y-2">
+            <h5 className="font-bold text-uss-blue">Preguntas Clave:</h5>
+            <p>
+              &bull; <strong>¿Debo completar ambos planes?</strong> No. Basta con que uno de los dos planes esté al 100% (3 de 3 aprobados).
+            </p>
+            <p>
+              &bull; <strong>¿Tiene costo la constancia?</strong> El trámite de constancia digital se efectúa bajo las tasas académicas vigentes del CINF USS en Mesa de Partes.
+            </p>
+            <p>
+              &bull; <strong>¿Cómo convalidar si estudié en otra institución?</strong> Presenta tus certificados de estudios en la coordinación CINF para evaluación curricular.
+            </p>
+          </div>
+
+          <div className="flex justify-end pt-1">
+            <button
+              onClick={() => setShowComoAcreditarModal(false)}
+              type="button"
+              className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl bg-uss-navy text-white hover:bg-uss-blue text-sm sm:text-xs font-bold transition cursor-pointer"
+            >
+              Cerrar guía
+            </button>
+          </div>
+        </HojaModal>
       )}
+    </div>
+  );
+}
+
+/** Anillo de progreso del plan con el porcentaje al centro */
+function AnilloProgreso({ porcentaje, color }: { porcentaje: number; color: string }) {
+  const radio = 18;
+  const circunferencia = 2 * Math.PI * radio;
+  return (
+    <div className="relative w-12 h-12 lg:w-10 lg:h-10 shrink-0">
+      <svg viewBox="0 0 44 44" className="w-full h-full -rotate-90" aria-hidden="true">
+        <circle cx="22" cy="22" r={radio} fill="none" stroke="#e2e8f0" strokeWidth="5" />
+        <circle
+          cx="22"
+          cy="22"
+          r={radio}
+          fill="none"
+          stroke={color}
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray={circunferencia}
+          strokeDashoffset={circunferencia * (1 - porcentaje / 100)}
+          className="transition-all duration-500 ease-out"
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[11px] lg:text-[10px] font-extrabold text-slate-800">
+        {porcentaje}%
+      </span>
+    </div>
+  );
+}
+
+/** Modal que en el celular se abre como hoja desde abajo y en escritorio queda centrado */
+function HojaModal({ children, onClose, ancho }: { children: ReactNode; onClose: () => void; ancho: string }) {
+  const estiloEntrada: CSSProperties = { animationDuration: '200ms' };
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in"
+      style={estiloEntrada}
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        onClick={(ev) => ev.stopPropagation()}
+        className={`bg-white w-full ${ancho} rounded-t-3xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl relative space-y-5 sm:space-y-6 max-h-[88vh] overflow-y-auto animate-in slide-in-from-bottom-2`}
+      >
+        <div className="sm:hidden mx-auto -mt-2 h-1.5 w-10 rounded-full bg-slate-200" />
+        <button
+          onClick={onClose}
+          type="button"
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+          aria-label="Cerrar"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        {children}
+      </div>
     </div>
   );
 }

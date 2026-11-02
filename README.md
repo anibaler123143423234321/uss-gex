@@ -15,7 +15,8 @@ Portal oficial y aplicativo web para la verificación y consulta en tiempo real 
 - **Reglas Curriculares CINF USS**:
   - **Plan Tradicional (Base: 3 cursos)**: Computación I, II y III (cada uno 33.3%).
   - **Plan Rutas de Aprendizaje (Base: 4 componentes)**: Módulo Genérico, Específico y Taller de Certificación MOS (cada uno 25%).
-- **Diseño Ultra-compacto**: Optimizado al 100% de la pantalla (`100vh`) sin márgenes vacíos ni scroll vertical.
+- **Diseño Responsivo**: En escritorio la ficha cabe en una sola pantalla (`100vh`); en el celular fluye con scroll, con header fijo, pestañas por plan y modales que abren desde abajo.
+- **Ilustraciones por curso**: Cada tarjeta lleva un único dibujo propio en la esquina (`CourseIllustration.tsx`), sin mosaicos repetidos de fondo.
 - **Identidad Institucional USS**: Paleta de colores `#073299`, tipografías institucionales y modo de alto contraste.
 
 ---
