@@ -37,38 +37,35 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
     (apellidos[0] || '') + (nombres[0] || '')
   ).toUpperCase() || 'USS';
 
-  // 2. Cursos del Plan Tradicional (3 cursos: Computación I al III - Base: 3)
+  // 2. Cursos del Plan Tradicional (3 cursos: Computación I al III)
   const cursosTradicional = [
     {
       id: 'computacionI',
       codigo: 'INF-101',
       nombre: 'Computación I',
-      tipo: 'Básico',
-      estado: e.computacionI,
+      tipo: 'Computación Básica',
+      estado: e.computacionI >= 1 ? 1 : 0,
       Icon: Monitor,
     },
     {
       id: 'computacionII',
       codigo: 'INF-102',
       nombre: 'Computación II',
-      tipo: 'Intermedio',
-      estado: e.computacionII,
+      tipo: 'Computación Intermedia',
+      estado: e.computacionII >= 1 ? 1 : 0,
       Icon: Code,
     },
     {
       id: 'computacionIII',
       codigo: 'INF-103',
       nombre: 'Computación III',
-      tipo: 'Avanzado',
-      estado: e.computacionIII,
+      tipo: 'Computación Avanzada',
+      estado: e.computacionIII >= 1 ? 1 : 0,
       Icon: Laptop,
     },
   ];
 
-  // 3. Componentes de la Ruta de Aprendizaje (PROTECH XP - Base: 4 componentes)
-  const aprobadosRutasCount =
-    Number(e.generico || 0) + Number(e.especifico || 0) + Number(e.taller || 0);
-
+  // 3. Cursos de la Ruta de Aprendizaje (PROTECH XP: 3 módulos oficiales del Excel)
   const cursosRutas = [
     {
       id: 'generico',
@@ -89,110 +86,115 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
     {
       id: 'taller',
       codigo: 'TAL-401',
-      nombre: 'Taller Certificación',
+      nombre: 'Taller de Certificación',
       tipo: 'Certificación MOS',
       estado: e.taller >= 1 ? 1 : 0,
       Icon: Wrench,
     },
-    {
-      id: 'complementoRuta',
-      codigo: 'RUT-404',
-      nombre: '4.° Componente Ruta',
-      tipo: 'Cierre de Acreditación',
-      estado: aprobadosRutasCount >= 4 ? 1 : 0,
-      Icon: Sparkles,
-    },
   ];
 
-  // 4. Métricas por modalidad:
-  // Tradicional: Base = 3 cursos
+  // 4. Métricas por modalidad (calculado exactamente sobre 3 cursos cada uno)
   const aprobadosTradicional = cursosTradicional.filter((c) => c.estado === 1).length;
   const porcentajeTradicional = Math.round((aprobadosTradicional / 3) * 100);
 
-  // Rutas: Base = 4 componentes (siempre 4 en la ruta)
-  const aprobadosRutas = Math.min(4, aprobadosRutasCount);
-  const porcentajeRutas = Math.round((aprobadosRutas / 4) * 100);
+  const aprobadosRutas = cursosRutas.filter((c) => c.estado === 1).length;
+  const porcentajeRutas = Math.round((aprobadosRutas / 3) * 100);
 
-  /** Renderiza la tarjeta de un plan con altura compacta para no scrollear */
-  const renderPlanCard = (
+  /** Renderiza un contenedor de plan con su progreso arriba y sus cursos en columna vertical */
+  const renderPlanColumn = (
     titulo: string,
-    cursos: typeof cursosTradicional | typeof cursosRutas,
+    subtituloBadge: string,
+    cursos: typeof cursosTradicional,
     aprobados: number,
-    baseTotal: number,
     porcentaje: number,
-    tipoPlan: 'tradicional' | 'rutas'
+    PlanIcon: typeof Monitor | typeof Sparkles
   ) => {
-    const pendientes = baseTotal - aprobados;
-    const esCompleto = aprobados >= baseTotal;
+    const esCompleto = aprobados === 3;
+    const pendientes = 3 - aprobados;
 
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-2.5 sm:p-3 shadow-xs space-y-2 flex-1 flex flex-col justify-between">
-        {/* Cabecera del Plan */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#073299]/10 text-[#073299]">
-              {tipoPlan === 'tradicional' ? 'Plan Tradicional' : 'Plan Rutas'}
-            </span>
-            <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 truncate">
-              {titulo}
-            </h3>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 flex flex-col justify-between h-full space-y-2.5">
+        {/* Encabezado del Plan + Estado */}
+        <div className="space-y-2 shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div
+                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                  esCompleto
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : aprobados > 0
+                    ? 'bg-blue-50 text-[#073299]'
+                    : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                <PlanIcon className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  {subtituloBadge}
+                </span>
+                <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 truncate" title={titulo}>
+                  {titulo}
+                </h3>
+              </div>
+            </div>
+
+            {/* Badge de Estado */}
+            <div className="shrink-0">
+              {esCompleto ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold shadow-xs">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  <span>Acreditado</span>
+                </span>
+              ) : aprobados > 0 ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-[#073299] text-[10px] font-bold shadow-xs">
+                  <Sparkles className="w-3 h-3 text-[#073299]" />
+                  <span>En Proceso</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold shadow-xs">
+                  <AlertCircle className="w-3 h-3 text-amber-600" />
+                  <span>Pendiente</span>
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Badge de Estado del Plan */}
-          <div className="shrink-0">
-            {esCompleto ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold shadow-xs">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                <span>Acreditación Completa</span>
+          {/* Barra de Progreso arriba en el encabezado */}
+          <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 space-y-1">
+            <div className="flex items-center justify-between text-[11px] font-semibold">
+              <span className="text-slate-600">
+                Progreso: <span className="text-[#073299] font-bold">{aprobados}</span> de <span className="font-bold">3</span> aprobados
               </span>
-            ) : aprobados > 0 ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-[#073299] text-[10px] font-bold shadow-xs">
-                <Sparkles className="w-3 h-3 text-[#073299]" />
-                <span>En Proceso ({porcentaje}%)</span>
+              <span className="text-slate-900 font-mono font-bold text-xs">
+                {porcentaje}%
               </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold shadow-xs">
-                <AlertCircle className="w-3 h-3 text-amber-600" />
-                <span>Pendiente (0%)</span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-200/70 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ease-out ${
+                  esCompleto
+                    ? 'bg-emerald-500'
+                    : 'bg-gradient-to-r from-[#073299] via-[#0b4ed6] to-blue-500'
+                }`}
+                style={{ width: `${porcentaje}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-[10px] text-slate-500 pt-0.5">
+              <span className="inline-flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                {aprobados} {aprobados === 1 ? 'Aprobado' : 'Aprobados'}
               </span>
-            )}
+              <span className="inline-flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                {pendientes} {pendientes === 1 ? 'Pendiente' : 'Pendientes'}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Barra de progreso académico compacta */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-[11px] font-semibold">
-            <span className="text-slate-600">
-              Progreso: <span className="text-[#073299] font-bold">{aprobados}</span> de <span className="font-bold">{baseTotal}</span> aprobados
-            </span>
-            <span className="text-slate-900 font-mono font-bold text-xs">
-              {porcentaje}%
-            </span>
-          </div>
-          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ease-out ${
-                esCompleto
-                  ? 'bg-emerald-500'
-                  : 'bg-gradient-to-r from-[#073299] via-[#0b4ed6] to-blue-500'
-              }`}
-              style={{ width: `${porcentaje}%` }}
-            />
-          </div>
-          <div className="flex items-center gap-3 text-[10px] text-slate-500">
-            <span className="inline-flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              {aprobados} {aprobados === 1 ? 'Aprobado' : 'Aprobados'}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-              {pendientes} {pendientes === 1 ? 'Pendiente' : 'Pendientes'}
-            </span>
-          </div>
-        </div>
-
-        {/* Tarjetas de los Cursos en Grid compacto */}
-        <div className={`grid gap-2 pt-0.5 ${tipoPlan === 'tradicional' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
+        {/* Cursos del Plan en COLUMNA VERTICAL (no en rows) */}
+        <div className="flex-1 flex flex-col justify-between gap-2 min-h-0 pt-1">
           {cursos.map((curso) => {
             const esAprobado = curso.estado === 1;
             const { Icon } = curso;
@@ -200,47 +202,48 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             return (
               <div
                 key={curso.id}
-                className={`rounded-lg border p-2 transition-all bg-white flex flex-col justify-between ${
+                className={`rounded-xl border p-2.5 transition-all bg-white flex items-center justify-between gap-2.5 ${
                   esAprobado
-                    ? 'border-emerald-200 bg-emerald-50/20'
+                    ? 'border-emerald-200 bg-emerald-50/20 shadow-xs'
                     : 'border-slate-200 bg-slate-50/20'
                 }`}
               >
-                <div>
-                  <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
-                      {curso.codigo}
-                    </span>
-                    <div
-                      className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${
-                        esAprobado
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-slate-100 text-slate-500'
-                      }`}
-                    >
-                      <Icon className="w-3 h-3" />
-                    </div>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                      esAprobado
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
                   </div>
-                  <h4 className="text-[11px] font-bold text-slate-900 leading-tight truncate" title={curso.nombre}>
-                    {curso.nombre}
-                  </h4>
-                  <p className="text-[9px] text-slate-400 truncate mt-0.5">
-                    {curso.tipo}
-                  </p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
+                        {curso.codigo}
+                      </span>
+                      <span className="text-[9px] text-slate-400 truncate">
+                        {curso.tipo}
+                      </span>
+                    </div>
+                    <h4 className="text-xs font-bold text-slate-900 leading-tight truncate mt-0.5" title={curso.nombre}>
+                      {curso.nombre}
+                    </h4>
+                  </div>
                 </div>
 
                 {/* Badge Oficial */}
-                <div className="pt-1.5 mt-1 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[9px] font-medium text-slate-400">Estado:</span>
+                <div className="shrink-0">
                   {esAprobado ? (
-                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">
-                      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
-                      Aprobado (1)
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      <span>Aprobado (1)</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800">
-                      <Clock className="w-2.5 h-2.5 text-amber-600" />
-                      Pendiente (0)
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800">
+                      <Clock className="w-3 h-3 text-amber-600" />
+                      <span>Pendiente (0)</span>
                     </span>
                   )}
                 </div>
@@ -276,10 +279,10 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
         </div>
       </div>
 
-      {/* CONTENEDOR PRINCIPAL: 1/3 (NAV IZQUIERDO = 4 cols) Y 2/3 (CURSOS = 8 cols) CON ALTURA IGUALADA */}
+      {/* CONTENEDOR PRINCIPAL: 3 COLUMNAS IGUALES (1/3 FICHA, 1/3 TRADICIONAL, 1/3 RUTAS) CON ALTURA SIMÉTRICA */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch w-full flex-1 min-h-0">
         {/* ========================================================================= */}
-        {/* NAV IZQUIERDO (1/3 = 4 cols): MISMA ALTURA QUE EL LADO DERECHO            */}
+        {/* COLUMNA 1 (1/3 = 4 cols): FICHA DEL ESTUDIANTE EN COLUMNA VERTICAL        */}
         {/* ========================================================================= */}
         <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between h-full">
           {/* Header con Iniciales y Nombre */}
@@ -301,10 +304,10 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
           </div>
 
-          {/* Datos del estudiante en columna vertical distribuidos armónicamente */}
-          <div className="p-3.5 flex-1 flex flex-col justify-between text-xs divide-y divide-slate-100">
+          {/* Datos del estudiante en columna vertical limpia */}
+          <div className="p-3.5 flex-1 flex flex-col justify-between text-xs divide-y divide-slate-100 min-h-0">
             {/* Apellidos */}
-            <div className="flex items-start gap-2.5 pt-1.5 first:pt-0">
+            <div className="flex items-start gap-2.5 pt-1 first:pt-0">
               <div className="w-5 h-5 rounded-md bg-blue-50 text-[#073299] flex items-center justify-center shrink-0 mt-0.5">
                 <User className="w-3 h-3" />
               </div>
@@ -315,7 +318,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
 
             {/* Nombres */}
-            <div className="flex items-start gap-2.5 pt-1.5">
+            <div className="flex items-start gap-2.5 pt-1">
               <div className="w-5 h-5 rounded-md bg-blue-50 text-[#073299] flex items-center justify-center shrink-0 mt-0.5">
                 <User className="w-3 h-3" />
               </div>
@@ -326,7 +329,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
 
             {/* Escuela Profesional */}
-            <div className="flex items-start gap-2.5 pt-1.5">
+            <div className="flex items-start gap-2.5 pt-1">
               <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
                 <School className="w-3 h-3" />
               </div>
@@ -337,7 +340,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
 
             {/* Ciclo Académico */}
-            <div className="flex items-start gap-2.5 pt-1.5">
+            <div className="flex items-start gap-2.5 pt-1">
               <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
                 <Layers className="w-3 h-3" />
               </div>
@@ -348,7 +351,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
 
             {/* Campus / Sede */}
-            <div className="flex items-start gap-2.5 pt-1.5">
+            <div className="flex items-start gap-2.5 pt-1">
               <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
                 <MapPin className="w-3 h-3" />
               </div>
@@ -359,9 +362,9 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
 
             {/* Modalidad */}
-            <div className="flex items-start gap-2.5 pt-1.5">
+            <div className="flex items-start gap-2.5 pt-1">
               <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
-                <Compass className="w-3 h-3" />
+                <Compass className="w-3.5 h-3.5" />
               </div>
               <div className="min-w-0 flex-1">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Modalidad</span>
@@ -370,7 +373,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
 
             {/* Correo Institucional */}
-            <div className="flex items-start gap-2.5 pt-1.5">
+            <div className="flex items-start gap-2.5 pt-1">
               <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
                 <Mail className="w-3 h-3" />
               </div>
@@ -388,7 +391,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
 
             {/* Teléfono / Celular */}
             {e.telefono && (
-              <div className="flex items-start gap-2.5 pt-1.5">
+              <div className="flex items-start gap-2.5 pt-1">
                 <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
                   <Phone className="w-3 h-3" />
                 </div>
@@ -402,102 +405,28 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
         </aside>
 
         {/* ========================================================================= */}
-        {/* SECCIÓN DERECHA (2/3 = 8 cols): ESTADÍSTICAS SUPERIORES Y AMBOS PLANES    */}
+        {/* SECCIÓN 2/3 (8 cols) DIVIDIDA EN 2 COLUMNAS VERTICALES (TRADICIONAL Y RUTAS) */}
         {/* ========================================================================= */}
-        <section className="lg:col-span-8 flex flex-col justify-between h-full space-y-2.5">
-          {/* LADO DERECHO SUPERIOR: LAS 2 ESTADÍSTICAS (Tradicional y Rutas) */}
-          <div className="grid grid-cols-2 gap-2.5 shrink-0">
-            {/* Estadística Plan Tradicional */}
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                  porcentajeTradicional === 100
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : aprobadosTradicional > 0
-                    ? 'bg-blue-50 text-[#073299]'
-                    : 'bg-slate-100 text-slate-500'
-                }`}>
-                  <Monitor className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
-                    Plan Tradicional
-                  </span>
-                  <span className="text-xs font-bold text-slate-800 truncate block">
-                    {aprobadosTradicional} de 3 aprobados
-                  </span>
-                </div>
-              </div>
-              <div className="text-right shrink-0">
-                <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md ${
-                  porcentajeTradicional === 100
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : aprobadosTradicional > 0
-                    ? 'bg-blue-100 text-[#073299]'
-                    : 'bg-slate-100 text-slate-600'
-                }`}>
-                  {porcentajeTradicional}%
-                </span>
-              </div>
-            </div>
+        <section className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-3 h-full">
+          {/* COLUMNA 2: PLAN TRADICIONAL EN COLUMNA (Progreso arriba + 3 cursos abajo) */}
+          {renderPlanColumn(
+            'Plan Tradicional',
+            'Computación I al III',
+            cursosTradicional,
+            aprobadosTradicional,
+            porcentajeTradicional,
+            Monitor
+          )}
 
-            {/* Estadística Plan Rutas */}
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                  porcentajeRutas === 100
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : aprobadosRutas > 0
-                    ? 'bg-blue-50 text-[#073299]'
-                    : 'bg-slate-100 text-slate-500'
-                }`}>
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
-                    Plan Rutas
-                  </span>
-                  <span className="text-xs font-bold text-slate-800 truncate block">
-                    {aprobadosRutas} de 4 aprobados
-                  </span>
-                </div>
-              </div>
-              <div className="text-right shrink-0">
-                <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md ${
-                  porcentajeRutas === 100
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : aprobadosRutas > 0
-                    ? 'bg-blue-100 text-[#073299]'
-                    : 'bg-slate-100 text-slate-600'
-                }`}>
-                  {porcentajeRutas}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* AMBOS PLANES ESTÁTICOS (Ver ambos por defecto y de forma permanente) */}
-          <div className="flex-1 flex flex-col justify-between gap-2.5 min-h-0">
-            {/* Bloque 1: Plan Tradicional */}
-            {renderPlanCard(
-              'Plan Tradicional (Computación I al III)',
-              cursosTradicional,
-              aprobadosTradicional,
-              3,
-              porcentajeTradicional,
-              'tradicional'
-            )}
-
-            {/* Bloque 2: Plan Rutas */}
-            {renderPlanCard(
-              'Plan Rutas de Aprendizaje (PROTECH XP)',
-              cursosRutas,
-              aprobadosRutas,
-              4,
-              porcentajeRutas,
-              'rutas'
-            )}
-          </div>
+          {/* COLUMNA 3: PLAN RUTAS EN COLUMNA (Progreso arriba + 3 cursos oficiales abajo) */}
+          {renderPlanColumn(
+            'Plan Rutas de Aprendizaje',
+            'PROTECH XP Oficial',
+            cursosRutas,
+            aprobadosRutas,
+            porcentajeRutas,
+            Sparkles
+          )}
         </section>
       </div>
     </div>
