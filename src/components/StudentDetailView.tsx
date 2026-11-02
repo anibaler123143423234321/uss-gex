@@ -12,6 +12,7 @@ import {
   Clock,
   Layers,
   Monitor,
+  Laptop,
   BookOpen,
   Award,
   Wrench,
@@ -30,8 +31,6 @@ import {
   HelpCircle,
   X,
   BarChart3,
-  Cloud,
-  Globe,
 } from 'lucide-react';
 import type { EstudianteGEX } from '../types/estudiante';
 
@@ -105,14 +104,14 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       tipo: 'Computación Avanzada',
       descripcion: 'Entornos de colaboración en la nube, herramientas web y gestión digital.',
       estado: e.computacionIII >= 1 ? 1 : 0,
-      Icon: Globe,
-      WatermarkIcon: Cloud,
-      bgApproved: 'from-cyan-50/90 via-white to-emerald-50/50',
-      borderApproved: 'border-cyan-300',
-      badgeColor: 'text-cyan-900 bg-cyan-100/90 border-cyan-300',
-      iconBg: 'bg-cyan-600 text-white',
-      patternUrl: "data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='16' r='4' fill='%230284c7' fill-opacity='0.08'/%3E%3Ccircle cx='36' cy='16' r='4' fill='%230284c7' fill-opacity='0.08'/%3E%3Ccircle cx='24' cy='34' r='5' fill='%230284c7' fill-opacity='0.08'/%3E%3Cpath d='M12 16l12 18 12-18' stroke='%230284c7' stroke-width='1.2' stroke-dasharray='2 2' stroke-opacity='0.12'/%3E%3C/svg%3E",
-      tagApproved: '✓ Entornos Cloud y Web Aprobados',
+      Icon: Laptop,
+      WatermarkIcon: Laptop,
+      bgApproved: 'from-blue-50/90 via-white to-emerald-50/40',
+      borderApproved: 'border-blue-300',
+      badgeColor: 'text-[#073299] bg-blue-100/90 border-blue-200',
+      iconBg: 'bg-[#073299] text-white',
+      patternUrl: "data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 8h24v16H8z' fill='none' stroke='%23073299' stroke-width='1' stroke-opacity='0.08'/%3E%3Cpath d='M4 26h32l-2 3H6z' fill='%23073299' fill-opacity='0.05' stroke='%23073299' stroke-width='1' stroke-opacity='0.08'/%3E%3C/svg%3E",
+      tagApproved: '✓ Computación Avanzada Aprobada',
     },
   ];
 
@@ -312,7 +311,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
                       }
                     : undefined
                 }
-                className={`rounded-xl border p-2.5 transition-all relative overflow-hidden group flex flex-col justify-between min-h-0 ${
+                className={`rounded-xl border p-2.5 transition-all relative overflow-hidden group flex-1 flex flex-col justify-between min-h-[62px] ${
                   esAprobado
                     ? `bg-gradient-to-br ${curso.bgApproved} ${curso.borderApproved} shadow-2xs`
                     : 'border-slate-200/90 bg-white shadow-2xs'
