@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none">
+  <!-- Birrete Universitario (Graduation Cap) -->
+  <g transform="translate(15, 15) scale(0.85)" opacity="0.14" stroke="#059669" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <polygon points="18 4 33 11 18 18 3 11 18 4" fill="#10b981" fill-opacity="0.08"/>
+    <path d="M7 13.5v7c0 4.5 5 8 11 8s11-3.5 11-8v-7" />
+    <path d="M33 11v11" />
+    <circle cx="33" cy="23" r="1.5" fill="#059669"/>
+  </g>
+
+  <!-- Libro Abierto Académico (Open Book) -->
+  <g transform="translate(75, 18) scale(0.85)" opacity="0.14" stroke="#059669" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M2 5c5-3 10-3 14 0v16c-4-3-9-3-14 0V5z" fill="#10b981" fill-opacity="0.08"/>
+    <path d="M30 5c-5-3-10-3-14 0v16c4-3 9-3 14 0V5z" fill="#10b981" fill-opacity="0.08"/>
+    <line x1="16" y1="5" x2="16" y2="21" />
+  </g>
+
+  <!-- Diploma con Lazo (Diploma Scroll) -->
+  <g transform="translate(15, 75) scale(0.85)" opacity="0.14" stroke="#059669" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <rect x="4" y="6" width="24" height="18" rx="2" fill="#10b981" fill-opacity="0.08"/>
+    <line x1="8" y1="11" x2="20" y2="11" />
+    <line x1="8" y1="15" x2="24" y2="15" />
+    <line x1="8" y1="19" x2="18" y2="19" />
+    <!-- Sello y cinta -->
+    <circle cx="23" cy="20" r="3" fill="#059669" fill-opacity="0.2"/>
+    <path d="M23 23l-2 5 2-1 2 1-2-5z" fill="#059669"/>
+  </g>
+
+  <!-- Corona de Laureles / Medalla Académica (Laurel & Medal) -->
+  <g transform="translate(75, 72) scale(0.85)" opacity="0.14" stroke="#059669" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <circle cx="16" cy="14" r="8" fill="#10b981" fill-opacity="0.08"/>
+    <path d="M12 20l4-2 4 2-1.5-6h-5z" fill="#059669" fill-opacity="0.15"/>
+    <path d="M9 14c-1-3 0-6 2-8" />
+    <path d="M23 14c1-3 0-6-2-8" />
+  </g>
+</svg>
