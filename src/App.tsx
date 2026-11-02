@@ -65,13 +65,13 @@ export default function App() {
   }, [cargarDesdeDrive]);
 
   return (
-    <div className="min-h-screen bg-slate-50/60 text-slate-900 flex flex-col selection:bg-[#073299] selection:text-white">
+    <div className={`min-h-screen ${selected ? 'lg:h-screen lg:overflow-hidden' : ''} bg-slate-50/60 text-slate-900 flex flex-col selection:bg-[#073299] selection:text-white`}>
       {/* Botón flotante sutil para sincronizar manualmente */}
-      <div className="fixed top-3.5 right-4 z-40">
+      <div className={`fixed ${selected ? 'top-2 right-3' : 'top-3.5 right-4'} z-40`}>
         <button
           onClick={() => cargarDesdeDrive(false)}
           disabled={cargando}
-          className="p-2 rounded-xl text-slate-500 hover:text-[#073299] bg-white hover:bg-slate-50 transition shadow-sm border border-slate-200 hover:border-slate-300 disabled:opacity-40 cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+          className="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-[#073299] bg-white hover:bg-slate-50 transition shadow-sm border border-slate-200 hover:border-slate-300 disabled:opacity-40 cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
           title="Sincronizar con Google Sheets en tiempo real"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${cargando ? 'animate-spin text-[#073299]' : ''}`} />
@@ -79,28 +79,28 @@ export default function App() {
         </button>
       </div>
 
-      {/* VISTA 1: DETALLE DEL ESTUDIANTE SELECCIONADO */}
+      {/* VISTA 1: DETALLE DEL ESTUDIANTE SELECCIONADO (Encaja en 1 pantalla) */}
       {selected ? (
-        <div className="flex-1 flex flex-col w-full">
-          {/* Header institucional */}
-          <header className="border-b border-slate-200 bg-white py-3 px-4 sm:px-6 lg:px-8 w-full shrink-0 shadow-2xs">
+        <div className="flex-1 flex flex-col w-full h-full lg:overflow-hidden">
+          {/* Header institucional compacto */}
+          <header className="border-b border-slate-200 bg-white py-1.5 px-3 sm:px-6 w-full shrink-0 shadow-2xs">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <img
                   src="/logo.png"
                   alt="Logo USS"
-                  className="h-8 sm:h-9 w-auto object-contain"
+                  className="h-7 sm:h-8 w-auto object-contain"
                 />
-                <div className="border-l border-slate-200 pl-3">
-                  <h1 className="text-sm font-bold text-[#073299] leading-tight">Gente con Experiencia</h1>
-                  <p className="text-[11px] text-slate-500">Portal oficial de verificación</p>
+                <div className="border-l border-slate-200 pl-2.5">
+                  <h1 className="text-xs sm:text-sm font-bold text-[#073299] leading-tight">Gente con Experiencia</h1>
+                  <p className="text-[10px] text-slate-500">Portal oficial de verificación</p>
                 </div>
               </div>
             </div>
           </header>
 
-          {/* Área principal con márgenes cómodos */}
-          <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1">
+          {/* Área principal: cabe en 1 pantalla */}
+          <main className="w-full max-w-7xl mx-auto px-2 sm:px-6 py-1.5 sm:py-2.5 flex-1 min-h-0 flex flex-col">
             <StudentDetailView
               estudiante={selected}
               onBack={() => setSelected(null)}
@@ -156,9 +156,9 @@ export default function App() {
         </div>
       )}
 
-      {/* Footer elegante */}
-      <footer className="py-4 text-center border-t border-slate-200 bg-white shrink-0">
-        <span className="text-xs text-slate-500">
+      {/* Footer compacto */}
+      <footer className={`${selected ? 'py-1 text-[10px]' : 'py-3.5 text-xs'} text-center border-t border-slate-200 bg-white shrink-0`}>
+        <span className="text-slate-400">
           Universidad Señor de Sipán &bull; Centro de Informática (CINF) &bull; Portal GEX
         </span>
       </footer>

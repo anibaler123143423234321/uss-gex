@@ -187,7 +187,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       ? 'Plan Tradicional (Computación I al III)'
       : 'Plan Rutas de Aprendizaje (PROTECH XP)';
 
-  /** Renderiza un contenedor de plan con fondo enriquecido, mayor altura, progreso superior y cursos en columna vertical */
+  /** Renderiza un contenedor de plan con fondo enriquecido, diseño compacto para 1 pantalla, progreso superior y cursos en columna vertical */
   const renderPlanColumn = (
     titulo: string,
     subtituloBadge: string,
@@ -200,19 +200,19 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
     const pendientes = 3 - aprobados;
 
     return (
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:shadow-md">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-3 flex flex-col justify-between h-full relative overflow-hidden">
         {/* Sello oficial académico de fondo cuando el plan está 100% aprobado */}
         {esCompleto && (
           <img
             src="/academic-seal.svg"
             alt="Sello Académico Acreditado"
-            className="absolute -top-6 -right-6 w-44 h-44 pointer-events-none opacity-[0.09] select-none z-0"
+            className="absolute -top-4 -right-4 w-32 h-32 pointer-events-none opacity-[0.08] select-none z-0"
           />
         )}
 
         {/* Fondo sutil con trama geométrica de puntos */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.035]"
+          className="absolute inset-0 pointer-events-none opacity-[0.03]"
           style={{
             backgroundImage: 'radial-gradient(#073299 1.5px, transparent 1.5px)',
             backgroundSize: '16px 16px',
@@ -220,25 +220,25 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
         />
 
         {/* Encabezado del Plan + Estado */}
-        <div className="space-y-4 shrink-0 relative z-10">
+        <div className="space-y-2 shrink-0 relative z-10">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
-                className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs transition-colors ${
+                className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-2xs transition-colors ${
                   esCompleto
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 ring-4 ring-emerald-50/50'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
                     : aprobados > 0
-                    ? 'bg-blue-50 text-[#073299] border border-blue-200/80 ring-4 ring-blue-50/50'
+                    ? 'bg-blue-50 text-[#073299] border border-blue-200/80'
                     : 'bg-slate-100 text-slate-500 border border-slate-200'
                 }`}
               >
-                <PlanIcon className="w-5 h-5" />
+                <PlanIcon className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
                   {subtituloBadge}
                 </span>
-                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 truncate" title={titulo}>
+                <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 truncate" title={titulo}>
                   {titulo}
                 </h3>
               </div>
@@ -247,61 +247,55 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             {/* Badge de Estado del Plan */}
             <div className="shrink-0">
               {esCompleto ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-2xs">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold shadow-2xs">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                   <span>Acreditado (100%)</span>
                 </span>
               ) : aprobados > 0 ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 border border-blue-200 text-[#073299] text-xs font-bold shadow-2xs">
-                  <Sparkles className="w-3.5 h-3.5 text-[#073299]" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-blue-50 border border-blue-200 text-[#073299] text-[10px] font-bold shadow-2xs">
+                  <Sparkles className="w-3 h-3 text-[#073299]" />
                   <span>En Proceso</span>
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold shadow-2xs">
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold shadow-2xs">
+                  <AlertCircle className="w-3 h-3 text-amber-600" />
                   <span>Pendiente</span>
                 </span>
               )}
             </div>
           </div>
 
-          {/* Barra de Progreso con altura cómoda */}
-          <div className="p-4 bg-slate-50/90 rounded-2xl border border-slate-100/90 space-y-2.5">
-            <div className="flex items-center justify-between text-xs font-semibold">
+          {/* Barra de Progreso compacta */}
+          <div className="p-2 bg-slate-50/90 rounded-xl border border-slate-100/90 space-y-1">
+            <div className="flex items-center justify-between text-[11px] font-semibold">
               <span className="text-slate-700">
                 Progreso: <span className="text-[#073299] font-extrabold">{aprobados}</span> de <span className="font-bold">3</span> asignaturas
               </span>
-              <span className={`font-mono font-extrabold text-xs px-2 py-0.5 rounded-lg ${
+              <span className={`font-mono font-extrabold text-[10px] px-1.5 py-0.2 rounded-md ${
                 esCompleto ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200/80 text-slate-800'
               }`}>
                 {porcentaje}%
               </span>
             </div>
-            <div className="w-full h-2.5 bg-slate-200/80 rounded-full overflow-hidden p-0.5">
+            <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ease-out ${
                   esCompleto
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-xs'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
                     : 'bg-gradient-to-r from-[#073299] via-[#0b4ed6] to-blue-500'
                 }`}
                 style={{ width: `${porcentaje}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-              <span className="inline-flex items-center gap-1.5 font-medium">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                {aprobados} {aprobados === 1 ? 'Aprobado' : 'Aprobados'}
-              </span>
-              <span className="inline-flex items-center gap-1.5 font-medium">
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                {pendientes} {pendientes === 1 ? 'Pendiente' : 'Pendientes'}
-              </span>
+            <div className="flex items-center justify-between text-[10px] text-slate-500 pt-0.5">
+              <span>• {aprobados} {aprobados === 1 ? 'Aprobado' : 'Aprobados'}</span>
+              <span>• {pendientes} {pendientes === 1 ? 'Pendiente' : 'Pendientes'}</span>
             </div>
           </div>
         </div>
 
         {/* Cursos del Plan en COLUMNA VERTICAL con mosaicos, fondos y marcas de agua DIVERSIFICADAS */}
-        <div className="flex-1 flex flex-col justify-start gap-3.5 pt-4 relative z-10">
+        <div className="flex-1 flex flex-col justify-between gap-2 pt-2 relative z-10 min-h-0">
           {cursos.map((curso) => {
             const esAprobado = curso.estado === 1;
             const { Icon, WatermarkIcon } = curso;
@@ -318,34 +312,34 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
                       }
                     : undefined
                 }
-                className={`rounded-2xl border p-4 sm:p-4.5 transition-all duration-300 relative overflow-hidden group min-h-[102px] flex flex-col justify-between ${
+                className={`rounded-xl border p-2.5 transition-all relative overflow-hidden group flex flex-col justify-between min-h-0 ${
                   esAprobado
-                    ? `bg-gradient-to-br ${curso.bgApproved} ${curso.borderApproved} shadow-xs hover:shadow-md hover:scale-[1.01]`
-                    : 'border-slate-200/90 bg-white shadow-2xs hover:border-slate-300 hover:shadow-xs'
+                    ? `bg-gradient-to-br ${curso.bgApproved} ${curso.borderApproved} shadow-2xs`
+                    : 'border-slate-200/90 bg-white shadow-2xs'
                 }`}
               >
                 {/* Marca de agua individual propia y temática de cada curso */}
                 {esAprobado ? (
-                  <div className="absolute -bottom-2 -right-2 w-20 h-20 pointer-events-none opacity-[0.14] transition-transform duration-300 group-hover:scale-110 flex items-center justify-center">
+                  <div className="absolute -bottom-1.5 -right-1.5 w-14 h-14 pointer-events-none opacity-[0.14] transition-transform duration-300 group-hover:scale-110 flex items-center justify-center">
                     <WatermarkIcon className="w-full h-full text-slate-800" />
                   </div>
                 ) : (
-                  <div className="absolute -bottom-2 -right-2 w-16 h-16 pointer-events-none opacity-[0.04] text-slate-400 flex items-center justify-center">
+                  <div className="absolute -bottom-1 -right-1 w-12 h-12 pointer-events-none opacity-[0.04] text-slate-400 flex items-center justify-center">
                     <Icon className="w-full h-full" />
                   </div>
                 )}
 
                 {/* Fila superior: Código, Tipo y Badge de Estado */}
                 <div className="flex items-center justify-between gap-2 relative z-10">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border shadow-2xs ${
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border shadow-2xs ${
                       esAprobado
                         ? 'bg-white border-slate-200 text-slate-800 font-extrabold'
                         : 'bg-slate-50 border-slate-200 text-slate-600'
                     }`}>
                       {curso.codigo}
                     </span>
-                    <span className="text-[11px] font-medium text-slate-500 truncate">
+                    <span className="text-[10px] text-slate-500 truncate">
                       {curso.tipo}
                     </span>
                   </div>
@@ -353,13 +347,13 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
                   {/* Estado Oficial */}
                   <div className="shrink-0">
                     {esAprobado ? (
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold border shadow-2xs ${curso.badgeColor}`}>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-md text-[10px] font-extrabold border shadow-2xs ${curso.badgeColor}`}>
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                         <span>Aprobado (1)</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
-                        <Clock className="w-3.5 h-3.5 text-amber-600" />
+                      <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                        <Clock className="w-3 h-3 text-amber-600" />
                         <span>Pendiente (0)</span>
                       </span>
                     )}
@@ -367,21 +361,21 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
                 </div>
 
                 {/* Fila media: Título del curso con ícono */}
-                <div className="flex items-center gap-3 pt-2 relative z-10">
+                <div className="flex items-center gap-2.5 pt-1 relative z-10">
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs transition-colors ${
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-2xs transition-colors ${
                       esAprobado
-                        ? `${curso.iconBg} shadow-xs`
+                        ? `${curso.iconBg}`
                         : 'bg-slate-100 text-slate-500 border border-slate-200'
                     }`}
                   >
-                    <Icon className="w-4.5 h-4.5" />
+                    <Icon className="w-3.5 h-3.5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight truncate" title={curso.nombre}>
+                    <h4 className="text-xs font-bold text-slate-900 leading-tight truncate" title={curso.nombre}>
                       {curso.nombre}
                     </h4>
-                    <p className={`text-[11px] truncate mt-0.5 ${esAprobado ? 'text-slate-700 font-medium' : 'text-slate-500'}`} title={curso.descripcion}>
+                    <p className={`text-[10px] truncate mt-0.2 ${esAprobado ? 'text-slate-700 font-medium' : 'text-slate-500'}`} title={curso.descripcion}>
                       {esAprobado ? curso.tagApproved : curso.descripcion}
                     </p>
                   </div>
@@ -395,144 +389,133 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
   };
 
   return (
-    <div className="w-full flex flex-col space-y-4 animate-in fade-in duration-200">
+    <div className="w-full flex-1 flex flex-col justify-between min-h-0 gap-1.5 animate-in fade-in duration-200">
       {/* ========================================================================= */}
       {/* 1. BARRA SUPERIOR: Volver a la búsqueda + Breadcrumb institucional        */}
       {/* ========================================================================= */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200/80 shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-slate-200/80 shrink-0">
         <button
           onClick={onBack}
           type="button"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-[#073299] text-xs font-semibold transition shadow-xs cursor-pointer group"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-[#073299] text-xs font-semibold transition shadow-2xs cursor-pointer group"
         >
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
           <span>Volver a la búsqueda</span>
         </button>
 
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <div className="flex items-center gap-1.5 text-xs text-slate-500">
           <span>Portal GEX</span>
           <span>/</span>
           <span className="font-semibold text-slate-800 truncate max-w-[200px] sm:max-w-none">{e.escuela}</span>
           <span>/</span>
-          <span className="font-mono font-bold text-[#073299] bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-lg">
+          <span className="font-mono font-bold text-[#073299] bg-blue-50 border border-blue-100 px-2 py-0.2 rounded-md">
             {e.codUniv}
           </span>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. ALERTA COMPACTA Y ELEGANTE DE ACREDITACIÓN (Solo si está acreditado)    */}
+      {/* 2. ALERTA ULTRA-SLIM DE ACREDITACIÓN (Bajo perfil, sin textos burocráticos) */}
       {/* ========================================================================= */}
       {esAcreditado && (
-        <div className="rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-700 to-[#073299] text-white px-4 py-2.5 sm:px-5 sm:py-3 shadow-xs border border-emerald-400/30 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
-            <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/20">
-              <Trophy className="w-4 h-4 text-amber-300" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-400/25 border border-emerald-300/30 text-emerald-100">
-                  Acreditación Completa (100%)
-                </span>
-                <span className="text-xs sm:text-sm font-bold text-white truncate">
-                  ¡Felicitaciones, {nombres}!
-                </span>
-              </div>
-              <p className="text-[11px] text-emerald-100 truncate mt-0.5">
-                Cumples con los requisitos de acreditación oficial mediante el {modalidadAcreditada}.
-              </p>
-            </div>
+        <div className="rounded-xl bg-gradient-to-r from-emerald-600 via-teal-700 to-[#073299] text-white px-3 py-1.5 shadow-2xs border border-emerald-400/30 flex flex-wrap items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-white/20 text-emerald-100 shrink-0">
+              Acreditado 100%
+            </span>
+            <span className="text-xs font-bold truncate">
+              ¡Felicitaciones, {nombres}!
+            </span>
+            <span className="text-[11px] text-emerald-100 hidden md:inline truncate">
+              &bull; Cumples con la acreditación en Informática ({modalidadAcreditada})
+            </span>
           </div>
 
-          <button
-            onClick={() => setShowOpcionesModal(true)}
-            type="button"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white text-[#073299] hover:bg-emerald-50 text-xs font-bold shadow-xs transition hover:scale-102 shrink-0 cursor-pointer"
-          >
-            <span>Ir a tus opciones</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              onClick={() => setShowComoAcreditarModal(true)}
+              type="button"
+              className="text-[11px] text-emerald-100 hover:text-white underline font-semibold cursor-pointer"
+            >
+              Conoce cómo acreditar
+            </button>
+            <button
+              onClick={() => setShowOpcionesModal(true)}
+              type="button"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-white text-[#073299] hover:bg-emerald-50 text-[11px] font-extrabold shadow-2xs transition cursor-pointer"
+            >
+              <span>Ir a tus opciones</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 3. CONTENEDOR PRINCIPAL: 3 COLUMNAS SIMÉTRICAS                            */}
-      {/*    Columna 1: Ficha del Estudiante (Nav responsivo de alta gama)          */}
-      {/*    Columna 2: Plan Tradicional (3 cursos en columna)                      */}
-      {/*    Columna 3: Plan Rutas PROTECH XP (3 módulos oficiales)                 */}
+      {/* 3. CONTENEDOR PRINCIPAL: 3 COLUMNAS SIMÉTRICAS QUE CABEN EN 1 PANTALLA    */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 w-full flex-1 min-h-0 items-stretch">
         {/* ========================================================================= */}
-        {/* COLUMNA 1: FICHA / CARNÉ DIGITAL DEL ESTUDIANTE (Nav Responsivo de Alta Gama) */}
+        {/* COLUMNA 1: FICHA DEL ESTUDIANTE COMPACTA                                  */}
         {/* ========================================================================= */}
-        <aside className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col justify-between transition-all duration-300 hover:shadow-md relative">
-          {/* Header tipo Credencial Universitaria Oficial */}
-          <div className="bg-gradient-to-br from-[#052570] via-[#073299] to-[#0e48bd] p-5 sm:p-6 text-white relative overflow-hidden shrink-0">
-            {/* Trama decorativa sutil */}
-            <div
-              className="absolute inset-0 pointer-events-none opacity-10"
-              style={{
-                backgroundImage: 'radial-gradient(white 1.5px, transparent 1.5px)',
-                backgroundSize: '16px 16px',
-              }}
-            />
-
-            <div className="relative z-10 space-y-4">
-              {/* Badge superior de credencial */}
+        <aside className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col justify-between h-full relative">
+          {/* Header con Credencial */}
+          <div className="bg-gradient-to-br from-[#052570] via-[#073299] to-[#0e48bd] p-2.5 sm:p-3 text-white relative overflow-hidden shrink-0">
+            <div className="relative z-10 space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/15 backdrop-blur-md text-white text-[10px] font-mono font-bold tracking-wider uppercase border border-white/20">
-                  <ShieldCheck className="w-3 h-3 text-emerald-300" />
-                  Carné GEX Oficial
+                <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded bg-white/15 text-white text-[9px] font-mono font-bold tracking-wider uppercase border border-white/20">
+                  <ShieldCheck className="w-2.5 h-2.5 text-emerald-300" />
+                  Carné GEX
                 </span>
 
                 {esAcreditado ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/30 text-emerald-200 text-[10px] font-bold border border-emerald-300/40">
-                    <CheckCircle2 className="w-3 h-3" />
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-emerald-500/30 text-emerald-200 text-[9px] font-bold border border-emerald-300/40">
+                    <CheckCircle2 className="w-2.5 h-2.5" />
                     Acreditado
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-400/25 text-amber-200 text-[10px] font-bold border border-amber-300/30">
-                    <Clock className="w-3 h-3" />
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-amber-400/25 text-amber-200 text-[9px] font-bold border border-amber-300/30">
+                    <Clock className="w-2.5 h-2.5" />
                     En Curso
                   </span>
                 )}
               </div>
 
-              {/* Avatar + Nombre + Código */}
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center font-black text-lg text-white shrink-0 shadow-inner ring-4 ring-white/10">
+              {/* Avatar + Nombre */}
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center font-black text-sm text-white shrink-0 shadow-inner">
                   {iniciales}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-base sm:text-lg font-extrabold leading-snug text-white truncate" title={e.nombres}>
+                  <h2 className="text-xs sm:text-sm font-extrabold leading-snug text-white truncate" title={e.nombres}>
                     {e.nombres}
                   </h2>
-                  <p className="text-xs text-blue-100 font-medium truncate mt-0.5" title={e.escuela}>
+                  <p className="text-[10px] text-blue-100 font-medium truncate mt-0.2" title={e.escuela}>
                     {e.escuela || 'Universidad Señor de Sipán'}
                   </p>
                 </div>
               </div>
 
-              {/* Barra de código universitario con botón de copiar interactivo */}
-              <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/15 backdrop-blur-md border border-white/25">
-                <div className="flex items-center gap-1.5 text-xs font-mono">
-                  <Hash className="w-3.5 h-3.5 text-blue-200" />
+              {/* Barra de código universitario con botón de copiar */}
+              <div className="flex items-center justify-between gap-2 p-1 px-2 rounded-lg bg-white/15 backdrop-blur-md border border-white/25">
+                <div className="flex items-center gap-1 text-[11px] font-mono">
+                  <Hash className="w-3 h-3 text-blue-200" />
                   <span className="font-bold text-white tracking-wider">{e.codUniv}</span>
                 </div>
                 <button
                   onClick={handleCopyCode}
                   type="button"
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[11px] font-medium text-white transition cursor-pointer"
+                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-white/20 hover:bg-white/30 text-[10px] font-medium text-white transition cursor-pointer"
                   title="Copiar código universitario"
                 >
                   {copiedCode ? (
                     <>
-                      <Check className="w-3 h-3 text-emerald-300" />
+                      <Check className="w-2.5 h-2.5 text-emerald-300" />
                       <span className="text-emerald-200">Copiado</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3 h-3" />
+                      <Copy className="w-2.5 h-2.5" />
                       <span>Copiar</span>
                     </>
                   )}
@@ -541,125 +524,103 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
           </div>
 
-          {/* CUERPO DEL NAV RESPONSIVO: Mosaicos individuales estructurados (Grid adaptable en tablet/móvil) */}
-          <div className="p-4 sm:p-5 flex-1 flex flex-col justify-start">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-3">
-              Datos Académicos y de Contacto
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
-              {/* Apellidos */}
-              <div className="bg-slate-50/70 hover:bg-blue-50/40 border border-slate-200/70 rounded-xl p-3 transition flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#073299] flex items-center justify-center shrink-0">
-                  <User className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Apellidos</span>
-                  <span className="font-bold text-slate-900 text-xs block truncate" title={apellidos}>{apellidos || '—'}</span>
-                </div>
+          {/* Lista compacta de datos del estudiante */}
+          <div className="p-2.5 flex-1 flex flex-col justify-between text-xs divide-y divide-slate-100 min-h-0">
+            {/* Apellidos */}
+            <div className="flex items-center justify-between gap-2 py-1 first:pt-0">
+              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
+                <User className="w-3.5 h-3.5 text-[#073299] shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Apellidos</span>
               </div>
+              <span className="font-bold text-slate-900 text-xs truncate text-right">{apellidos || '—'}</span>
+            </div>
 
-              {/* Nombres */}
-              <div className="bg-slate-50/70 hover:bg-blue-50/40 border border-slate-200/70 rounded-xl p-3 transition flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#073299] flex items-center justify-center shrink-0">
-                  <User className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Nombres</span>
-                  <span className="font-bold text-slate-900 text-xs block truncate" title={nombres}>{nombres || '—'}</span>
-                </div>
+            {/* Nombres */}
+            <div className="flex items-center justify-between gap-2 py-1">
+              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
+                <User className="w-3.5 h-3.5 text-[#073299] shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Nombres</span>
               </div>
+              <span className="font-bold text-slate-900 text-xs truncate text-right">{nombres || '—'}</span>
+            </div>
 
-              {/* Escuela Profesional */}
-              <div className="bg-slate-50/70 hover:bg-blue-50/40 border border-slate-200/70 rounded-xl p-3 transition flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                  <School className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Escuela Profesional</span>
-                  <span className="font-semibold text-slate-800 text-xs block truncate" title={e.escuela}>{e.escuela || '—'}</span>
-                </div>
+            {/* Escuela Profesional */}
+            <div className="flex items-center justify-between gap-2 py-1">
+              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
+                <School className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Escuela</span>
               </div>
+              <span className="font-semibold text-slate-800 text-xs truncate text-right max-w-[140px]" title={e.escuela}>{e.escuela || '—'}</span>
+            </div>
 
-              {/* Ciclo Académico */}
-              <div className="bg-slate-50/70 hover:bg-blue-50/40 border border-slate-200/70 rounded-xl p-3 transition flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                  <Layers className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Ciclo Académico</span>
-                  <span className="font-semibold text-slate-800 text-xs block">{e.nCicCodigo ? `Ciclo ${e.nCicCodigo}` : '—'}</span>
-                </div>
+            {/* Ciclo Académico */}
+            <div className="flex items-center justify-between gap-2 py-1">
+              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
+                <Layers className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Ciclo</span>
               </div>
+              <span className="font-semibold text-slate-800 text-xs">{e.nCicCodigo ? `Ciclo ${e.nCicCodigo}` : '—'}</span>
+            </div>
 
-              {/* Campus / Sede */}
-              <div className="bg-slate-50/70 hover:bg-blue-50/40 border border-slate-200/70 rounded-xl p-3 transition flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                  <MapPin className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Campus / Sede</span>
-                  <span className="font-semibold text-slate-800 text-xs block">{e.campus || 'Chiclayo'}</span>
-                </div>
+            {/* Campus / Sede */}
+            <div className="flex items-center justify-between gap-2 py-1">
+              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
+                <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Sede</span>
               </div>
+              <span className="font-semibold text-slate-800 text-xs">{e.campus || 'Chiclayo'}</span>
+            </div>
 
-              {/* Modalidad */}
-              <div className="bg-slate-50/70 hover:bg-blue-50/40 border border-slate-200/70 rounded-xl p-3 transition flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                  <Compass className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Modalidad</span>
-                  <span className="font-semibold text-slate-800 text-xs block truncate" title={e.modalidad}>{e.modalidad || '—'}</span>
-                </div>
+            {/* Modalidad */}
+            <div className="flex items-center justify-between gap-2 py-1">
+              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
+                <Compass className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Modalidad</span>
               </div>
+              <span className="font-semibold text-slate-800 text-xs truncate text-right">{e.modalidad || '—'}</span>
+            </div>
 
-              {/* Correo Institucional */}
-              <div className="bg-slate-50/70 hover:bg-blue-50/40 border border-slate-200/70 rounded-xl p-3 transition flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Correo Institucional</span>
-                  {e.correoInstitucional ? (
-                    <a href={`mailto:${e.correoInstitucional}`} className="text-xs font-semibold text-[#073299] hover:underline block truncate" title={e.correoInstitucional}>
-                      {e.correoInstitucional}
-                    </a>
-                  ) : (
-                    <span className="text-slate-400 text-xs block">—</span>
-                  )}
-                </div>
+            {/* Correo Institucional */}
+            <div className="flex items-center justify-between gap-2 py-1">
+              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
+                <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Correo</span>
               </div>
-
-              {/* Teléfono / Celular */}
-              {e.telefono && (
-                <div className="bg-slate-50/70 hover:bg-blue-50/40 border border-slate-200/70 rounded-xl p-3 transition flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                    <Phone className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Teléfono / Celular</span>
-                    <a href={`tel:${e.telefono}`} className="font-mono font-medium text-slate-800 hover:text-[#073299] text-xs block">
-                      {e.telefono}
-                    </a>
-                  </div>
-                </div>
+              {e.correoInstitucional ? (
+                <a href={`mailto:${e.correoInstitucional}`} className="text-xs font-semibold text-[#073299] hover:underline truncate text-right max-w-[150px]" title={e.correoInstitucional}>
+                  {e.correoInstitucional}
+                </a>
+              ) : (
+                <span className="text-slate-400 text-xs">—</span>
               )}
             </div>
+
+            {/* Teléfono / Celular */}
+            {e.telefono && (
+              <div className="flex items-center justify-between gap-2 py-1">
+                <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
+                  <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Teléfono</span>
+                </div>
+                <a href={`tel:${e.telefono}`} className="font-mono font-medium text-slate-800 text-xs">
+                  {e.telefono}
+                </a>
+              </div>
+            )}
           </div>
 
-          {/* Footer del Nav: Sello de Validación Institucional */}
-          <div className="p-4 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between text-[11px] text-slate-500 shrink-0">
-            <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#073299]" />
+          {/* Footer del Nav */}
+          <div className="p-2 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between text-[10px] text-slate-500 shrink-0">
+            <span className="inline-flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-[#073299]" />
               Verificación CINF &bull; USS
             </span>
-            <span className="font-mono text-[10px] text-slate-400">GEX 2026</span>
+            <span className="font-mono text-[9px] text-slate-400">GEX 2026</span>
           </div>
         </aside>
 
         {/* ========================================================================= */}
-        {/* COLUMNA 2: PLAN TRADICIONAL (Progreso arriba + 3 cursos en columna)        */}
+        {/* COLUMNA 2: PLAN TRADICIONAL                                               */}
         {/* ========================================================================= */}
         {renderPlanColumn(
           'Plan Tradicional',
@@ -671,7 +632,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
         )}
 
         {/* ========================================================================= */}
-        {/* COLUMNA 3: PLAN RUTAS PROTECH XP (Progreso arriba + 3 módulos oficiales)  */}
+        {/* COLUMNA 3: PLAN RUTAS PROTECH XP                                          */}
         {/* ========================================================================= */}
         {renderPlanColumn(
           'Plan Rutas de Aprendizaje',
@@ -713,7 +674,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Estimado(a) <strong className="text-slate-800">{nombres}</strong> ({e.codUniv}), tu acreditación en Informática se encuentra expedita. Elige una de las siguientes opciones oficiales:
+              Estimado(a) <strong className="text-slate-800">{nombres}</strong> ({e.codUniv}), has culminado con éxito la acreditación oficial en Informática. Puedes gestionar tus opciones oficiales a continuación:
             </p>
 
             {/* Opciones disponibles */}
