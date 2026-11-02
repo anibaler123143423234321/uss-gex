@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   ArrowLeft,
   User,
@@ -19,7 +18,6 @@ import {
   Wrench,
   AlertCircle,
   Sparkles,
-  Columns,
 } from 'lucide-react';
 import type { EstudianteGEX } from '../types/estudiante';
 
@@ -27,8 +25,6 @@ interface Props {
   estudiante: EstudianteGEX;
   onBack: () => void;
 }
-
-type ModalidadPlan = 'tradicional' | 'rutas' | 'ambos';
 
 export default function StudentDetailView({ estudiante: e, onBack }: Props) {
   // 1. Separar apellidos y nombres
@@ -70,8 +66,6 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
   ];
 
   // 3. Componentes de la Ruta de Aprendizaje (PROTECH XP - Base: 4 componentes)
-  // Las opciones oficiales de la ruta exigen 4 componentes:
-  // 1) 3 genéricos + 1 específico/taller  2) 4 talleres  3) 4 cursos (2 genéricos + 2 específicos)
   const aprobadosRutasCount =
     Number(e.generico || 0) + Number(e.especifico || 0) + Number(e.taller || 0);
 
@@ -119,16 +113,6 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
   const aprobadosRutas = Math.min(4, aprobadosRutasCount);
   const porcentajeRutas = Math.round((aprobadosRutas / 4) * 100);
 
-  // 5. Detección automática del plan inicial del estudiante
-  const getInitialPlan = (): ModalidadPlan => {
-    if (aprobadosTradicional > 0 && aprobadosRutas === 0) return 'tradicional';
-    if (aprobadosRutas > 0 && aprobadosTradicional === 0) return 'rutas';
-    if (aprobadosTradicional > 0 && aprobadosRutas > 0) return 'ambos';
-    return 'tradicional';
-  };
-
-  const [activePlan, setActivePlan] = useState<ModalidadPlan>(getInitialPlan);
-
   /** Renderiza la tarjeta de un plan con altura compacta para no scrollear */
   const renderPlanCard = (
     titulo: string,
@@ -142,35 +126,33 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
     const esCompleto = aprobados >= baseTotal;
 
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-sm space-y-2.5">
+      <div className="bg-white rounded-xl border border-slate-200 p-2.5 sm:p-3 shadow-xs space-y-2">
         {/* Cabecera del Plan */}
         <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#073299]/10 text-[#073299]">
-                {tipoPlan === 'tradicional' ? 'Plan Tradicional' : 'Plan Rutas'}
-              </span>
-              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
-                {titulo}
-              </h3>
-            </div>
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#073299]/10 text-[#073299]">
+              {tipoPlan === 'tradicional' ? 'Plan Tradicional' : 'Plan Rutas'}
+            </span>
+            <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 truncate">
+              {titulo}
+            </h3>
           </div>
 
           {/* Badge de Estado del Plan */}
           <div className="shrink-0">
             {esCompleto ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-xs">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold shadow-xs">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                 <span>Acreditación Completa</span>
               </span>
             ) : aprobados > 0 ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-[#073299] text-xs font-bold shadow-xs">
-                <Sparkles className="w-3.5 h-3.5 text-[#073299]" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-[#073299] text-[10px] font-bold shadow-xs">
+                <Sparkles className="w-3 h-3 text-[#073299]" />
                 <span>En Proceso ({porcentaje}%)</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold shadow-xs">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold shadow-xs">
+                <AlertCircle className="w-3 h-3 text-amber-600" />
                 <span>Pendiente (0%)</span>
               </span>
             )}
@@ -183,11 +165,11 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             <span className="text-slate-600">
               Progreso: <span className="text-[#073299] font-bold">{aprobados}</span> de <span className="font-bold">{baseTotal}</span> aprobados
             </span>
-            <span className="text-slate-900 font-mono font-bold">
+            <span className="text-slate-900 font-mono font-bold text-xs">
               {porcentaje}%
             </span>
           </div>
-          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
             <div
               className={`h-full rounded-full transition-all duration-500 ease-out ${
                 esCompleto
@@ -197,20 +179,20 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
               style={{ width: `${porcentaje}%` }}
             />
           </div>
-          <div className="flex items-center gap-3 text-[10px] text-slate-500 pt-0.5">
+          <div className="flex items-center gap-3 text-[10px] text-slate-500">
             <span className="inline-flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               {aprobados} {aprobados === 1 ? 'Aprobado' : 'Aprobados'}
             </span>
             <span className="inline-flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
               {pendientes} {pendientes === 1 ? 'Pendiente' : 'Pendientes'}
             </span>
           </div>
         </div>
 
         {/* Tarjetas de los Cursos en Grid compacto */}
-        <div className={`grid gap-2 pt-1 ${tipoPlan === 'tradicional' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
+        <div className={`grid gap-2 pt-0.5 ${tipoPlan === 'tradicional' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
           {cursos.map((curso) => {
             const esAprobado = curso.estado === 1;
             const { Icon } = curso;
@@ -218,7 +200,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             return (
               <div
                 key={curso.id}
-                className={`rounded-xl border p-2.5 transition-all bg-white flex flex-col justify-between ${
+                className={`rounded-lg border p-2 transition-all bg-white flex flex-col justify-between ${
                   esAprobado
                     ? 'border-emerald-200 bg-emerald-50/20'
                     : 'border-slate-200 bg-slate-50/20'
@@ -226,38 +208,38 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
               >
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
                       {curso.codigo}
                     </span>
                     <div
-                      className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
+                      className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${
                         esAprobado
                           ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-slate-100 text-slate-500'
                       }`}
                     >
-                      <Icon className="w-3.5 h-3.5" />
+                      <Icon className="w-3 h-3" />
                     </div>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-900 leading-tight truncate" title={curso.nombre}>
+                  <h4 className="text-[11px] font-bold text-slate-900 leading-tight truncate" title={curso.nombre}>
                     {curso.nombre}
                   </h4>
-                  <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                  <p className="text-[9px] text-slate-400 truncate mt-0.5">
                     {curso.tipo}
                   </p>
                 </div>
 
                 {/* Badge Oficial */}
-                <div className="pt-2 mt-1.5 border-t border-slate-100 flex items-center justify-between">
+                <div className="pt-1.5 mt-1 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-[9px] font-medium text-slate-400">Estado:</span>
                   {esAprobado ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">
+                      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
                       Aprobado (1)
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800">
-                      <Clock className="w-3 h-3 text-amber-600" />
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800">
+                      <Clock className="w-2.5 h-2.5 text-amber-600" />
                       Pendiente (0)
                     </span>
                   )}
@@ -273,11 +255,11 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
   return (
     <div className="w-full flex flex-col h-full animate-in fade-in duration-150">
       {/* Barra superior compacta: botón volver + breadcrumbs */}
-      <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-slate-100 shrink-0">
+      <div className="flex items-center justify-between gap-2 pb-1.5 mb-2 border-b border-slate-100 shrink-0">
         <button
           onClick={onBack}
           type="button"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-[#073299] text-xs font-semibold transition shadow-xs cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-[#073299] text-xs font-semibold transition shadow-xs cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Volver a la búsqueda</span>
@@ -297,61 +279,29 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       {/* CONTENEDOR PRINCIPAL: 1/3 (NAV IZQUIERDO = 4 cols) Y 2/3 (CURSOS = 8 cols) OCUPANDO TODO EL VIEWPORT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start w-full flex-1 min-h-0">
         {/* ========================================================================= */}
-        {/* NAV IZQUIERDO (1/3 = 4 cols): DATOS DEL ESTUDIANTE EN FORMATO COMPACTO    */}
+        {/* NAV IZQUIERDO (1/3 = 4 cols): DATOS DEL ESTUDIANTE EN COLUMNA VERTICAL    */}
         {/* ========================================================================= */}
-        <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between">
+        <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
           {/* Header con Iniciales y Nombre */}
-          <div className="bg-gradient-to-r from-[#073299] via-[#0941bf] to-[#1258e2] p-3 sm:p-3.5 text-white flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center font-bold text-base text-white shrink-0 shadow-inner">
+          <div className="bg-gradient-to-r from-[#073299] via-[#0941bf] to-[#1258e2] p-3 text-white flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center font-bold text-sm text-white shrink-0 shadow-inner">
               {iniciales}
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="text-xs sm:text-sm font-bold leading-tight truncate">
                 {e.nombres}
               </h2>
-              <p className="text-[11px] text-blue-200 truncate mt-0.5">
+              <p className="text-[10px] text-blue-200 truncate mt-0.5">
                 {e.escuela || 'Universidad Señor de Sipán'}
               </p>
-              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded bg-white/20 text-white text-[10px] font-mono font-semibold">
+              <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.2 rounded bg-white/20 text-white text-[9px] font-mono font-semibold">
                 <Hash className="w-2.5 h-2.5" />
                 {e.codUniv}
               </span>
             </div>
           </div>
 
-          {/* Resumen rápido de acreditación: Tradicional (Base 3) y Rutas (Base 4) */}
-          <div className="p-2.5 bg-slate-50 border-b border-slate-100 grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-white p-2 rounded-lg border border-slate-200/80">
-              <span className="text-[10px] font-medium text-slate-400 block uppercase">Tradicional</span>
-              <span
-                className={`font-mono font-bold text-xs ${
-                  porcentajeTradicional === 100
-                    ? 'text-emerald-700'
-                    : aprobadosTradicional > 0
-                    ? 'text-[#073299]'
-                    : 'text-slate-600'
-                }`}
-              >
-                {aprobadosTradicional}/3 ({porcentajeTradicional}%)
-              </span>
-            </div>
-            <div className="bg-white p-2 rounded-lg border border-slate-200/80">
-              <span className="text-[10px] font-medium text-slate-400 block uppercase">Rutas</span>
-              <span
-                className={`font-mono font-bold text-xs ${
-                  porcentajeRutas === 100
-                    ? 'text-emerald-700'
-                    : aprobadosRutas > 0
-                    ? 'text-[#073299]'
-                    : 'text-slate-600'
-                }`}
-              >
-                {aprobadosRutas}/4 ({porcentajeRutas}%)
-              </span>
-            </div>
-          </div>
-
-          {/* Datos del estudiante en columna vertical */}
+          {/* Datos del estudiante en columna vertical limpia */}
           <div className="p-3 space-y-2 text-xs divide-y divide-slate-100">
             {/* Apellidos */}
             <div className="flex items-start gap-2.5 pt-1.5 first:pt-0">
@@ -411,7 +361,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             {/* Modalidad */}
             <div className="flex items-start gap-2.5 pt-1.5">
               <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
-                <Compass className="w-3.5 h-3.5" />
+                <Compass className="w-3 h-3" />
               </div>
               <div className="min-w-0 flex-1">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Modalidad</span>
@@ -449,131 +399,105 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
               </div>
             )}
           </div>
-
-          {/* Botón de acción rápido al pie del nav */}
-          <div className="p-2.5 bg-slate-50/70 border-t border-slate-100 text-center">
-            <button
-              type="button"
-              onClick={onBack}
-              className="w-full py-1.5 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700 transition cursor-pointer"
-            >
-              Buscar otro estudiante
-            </button>
-          </div>
         </aside>
 
         {/* ========================================================================= */}
-        {/* SECCIÓN DERECHA (2/3 = 8 cols): CURSOS COMPACTOS EN UNA SOLA PANTALLA    */}
+        {/* SECCIÓN DERECHA (2/3 = 8 cols): ESTADÍSTICAS SUPERIORES Y AMBOS PLANES    */}
         {/* ========================================================================= */}
         <section className="lg:col-span-8 space-y-2.5">
-          {/* Pestañas de selección compactas */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl border border-slate-200">
-            <button
-              type="button"
-              onClick={() => setActivePlan('tradicional')}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                activePlan === 'tradicional'
-                  ? 'bg-white text-[#073299] shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Monitor className="w-3.5 h-3.5" />
-              <span>Plan Tradicional</span>
-              <span
-                className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-bold ${
+          {/* LADO DERECHO SUPERIOR: LAS 2 ESTADÍSTICAS (Tradicional y Rutas) */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {/* Estadística Plan Tradicional */}
+            <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                  porcentajeTradicional === 100
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : aprobadosTradicional > 0
+                    ? 'bg-blue-50 text-[#073299]'
+                    : 'bg-slate-100 text-slate-500'
+                }`}>
+                  <Monitor className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
+                    Plan Tradicional
+                  </span>
+                  <span className="text-xs font-bold text-slate-800 truncate block">
+                    {aprobadosTradicional} de 3 aprobados
+                  </span>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md ${
                   porcentajeTradicional === 100
                     ? 'bg-emerald-100 text-emerald-800'
                     : aprobadosTradicional > 0
                     ? 'bg-blue-100 text-[#073299]'
-                    : 'bg-slate-200 text-slate-600'
-                }`}
-              >
-                {aprobadosTradicional}/3 ({porcentajeTradicional}%)
-              </span>
-            </button>
+                    : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {porcentajeTradicional}%
+                </span>
+              </div>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => setActivePlan('rutas')}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                activePlan === 'rutas'
-                  ? 'bg-white text-[#073299] shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Plan Rutas</span>
-              <span
-                className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-bold ${
+            {/* Estadística Plan Rutas */}
+            <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                  porcentajeRutas === 100
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : aprobadosRutas > 0
+                    ? 'bg-blue-50 text-[#073299]'
+                    : 'bg-slate-100 text-slate-500'
+                }`}>
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
+                    Plan Rutas
+                  </span>
+                  <span className="text-xs font-bold text-slate-800 truncate block">
+                    {aprobadosRutas} de 4 aprobados
+                  </span>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md ${
                   porcentajeRutas === 100
                     ? 'bg-emerald-100 text-emerald-800'
                     : aprobadosRutas > 0
                     ? 'bg-blue-100 text-[#073299]'
-                    : 'bg-slate-200 text-slate-600'
-                }`}
-              >
-                {aprobadosRutas}/4 ({porcentajeRutas}%)
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActivePlan('ambos')}
-              className={`py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                activePlan === 'ambos'
-                  ? 'bg-white text-[#073299] shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Columns className="w-3.5 h-3.5" />
-              <span>Ver ambos</span>
-            </button>
+                    : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {porcentajeRutas}%
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* CONTENIDO DEL PLAN ACTIVO */}
-          {activePlan === 'tradicional' && (
-            renderPlanCard(
+          {/* AMBOS PLANES ESTÁTICOS (Ver ambos por defecto y de forma permanente) */}
+          <div className="space-y-2.5">
+            {/* Bloque 1: Plan Tradicional */}
+            {renderPlanCard(
               'Plan Tradicional (Computación I al III)',
               cursosTradicional,
               aprobadosTradicional,
               3,
               porcentajeTradicional,
               'tradicional'
-            )
-          )}
+            )}
 
-          {activePlan === 'rutas' && (
-            renderPlanCard(
+            {/* Bloque 2: Plan Rutas */}
+            {renderPlanCard(
               'Plan Rutas de Aprendizaje (PROTECH XP)',
               cursosRutas,
               aprobadosRutas,
               4,
               porcentajeRutas,
               'rutas'
-            )
-          )}
-
-          {activePlan === 'ambos' && (
-            <div className="space-y-2.5">
-              {renderPlanCard(
-                'Plan Tradicional (Computación I al III)',
-                cursosTradicional,
-                aprobadosTradicional,
-                3,
-                porcentajeTradicional,
-                'tradicional'
-              )}
-
-              {renderPlanCard(
-                'Plan Rutas de Aprendizaje (PROTECH XP)',
-                cursosRutas,
-                aprobadosRutas,
-                4,
-                porcentajeRutas,
-                'rutas'
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </section>
       </div>
     </div>
