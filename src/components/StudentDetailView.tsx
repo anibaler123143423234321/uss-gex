@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import {
   ArrowLeft,
+  User,
+  School,
   Hash,
+  Mail,
+  Phone,
+  MapPin,
+  Compass,
   CheckCircle2,
   Clock,
+  Layers,
   Monitor,
   Code,
   Laptop,
@@ -344,50 +351,101 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
           </div>
 
-          {/* Grid de 2 columnas de atributos del estudiante (ahorra espacio vertical) */}
-          <div className="p-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
-            <div className="min-w-0">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Apellidos</span>
-              <span className="font-semibold text-slate-800 truncate block text-[11px]" title={apellidos}>{apellidos || '—'}</span>
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Nombres</span>
-              <span className="font-semibold text-slate-800 truncate block text-[11px]" title={nombres}>{nombres || '—'}</span>
-            </div>
-
-            <div className="min-w-0">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Escuela</span>
-              <span className="font-semibold text-slate-800 truncate block text-[11px]" title={e.escuela}>{e.escuela || '—'}</span>
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Ciclo</span>
-              <span className="font-semibold text-slate-800 block text-[11px]">{e.nCicCodigo ? `Ciclo ${e.nCicCodigo}` : '—'}</span>
+          {/* Datos del estudiante en columna vertical */}
+          <div className="p-3 space-y-2 text-xs divide-y divide-slate-100">
+            {/* Apellidos */}
+            <div className="flex items-start gap-2.5 pt-1.5 first:pt-0">
+              <div className="w-5 h-5 rounded-md bg-blue-50 text-[#073299] flex items-center justify-center shrink-0 mt-0.5">
+                <User className="w-3 h-3" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Apellidos</span>
+                <span className="font-bold text-slate-900 text-xs block truncate" title={apellidos}>{apellidos || '—'}</span>
+              </div>
             </div>
 
-            <div className="min-w-0">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Campus</span>
-              <span className="font-semibold text-slate-800 block text-[11px]">{e.campus || 'Chiclayo'}</span>
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Modalidad</span>
-              <span className="font-semibold text-slate-800 truncate block text-[11px]" title={e.modalidad}>{e.modalidad || '—'}</span>
-            </div>
-
-            <div className="min-w-0 col-span-2">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Correo Institucional</span>
-              {e.correoInstitucional ? (
-                <a href={`mailto:${e.correoInstitucional}`} className="text-[11px] font-medium text-[#073299] hover:underline truncate block" title={e.correoInstitucional}>
-                  {e.correoInstitucional}
-                </a>
-              ) : (
-                <span className="text-slate-400 text-[11px]">—</span>
-              )}
+            {/* Nombres */}
+            <div className="flex items-start gap-2.5 pt-1.5">
+              <div className="w-5 h-5 rounded-md bg-blue-50 text-[#073299] flex items-center justify-center shrink-0 mt-0.5">
+                <User className="w-3 h-3" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Nombres</span>
+                <span className="font-bold text-slate-900 text-xs block truncate" title={nombres}>{nombres || '—'}</span>
+              </div>
             </div>
 
+            {/* Escuela Profesional */}
+            <div className="flex items-start gap-2.5 pt-1.5">
+              <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
+                <School className="w-3 h-3" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Escuela Profesional</span>
+                <span className="font-semibold text-slate-800 text-xs block truncate" title={e.escuela}>{e.escuela || '—'}</span>
+              </div>
+            </div>
+
+            {/* Ciclo Académico */}
+            <div className="flex items-start gap-2.5 pt-1.5">
+              <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
+                <Layers className="w-3 h-3" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Ciclo Académico</span>
+                <span className="font-semibold text-slate-800 text-xs block">{e.nCicCodigo ? `Ciclo ${e.nCicCodigo}` : '—'}</span>
+              </div>
+            </div>
+
+            {/* Campus / Sede */}
+            <div className="flex items-start gap-2.5 pt-1.5">
+              <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
+                <MapPin className="w-3 h-3" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Campus / Sede</span>
+                <span className="font-semibold text-slate-800 text-xs block">{e.campus || 'Chiclayo'}</span>
+              </div>
+            </div>
+
+            {/* Modalidad */}
+            <div className="flex items-start gap-2.5 pt-1.5">
+              <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
+                <Compass className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Modalidad</span>
+                <span className="font-semibold text-slate-800 text-xs block truncate" title={e.modalidad}>{e.modalidad || '—'}</span>
+              </div>
+            </div>
+
+            {/* Correo Institucional */}
+            <div className="flex items-start gap-2.5 pt-1.5">
+              <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
+                <Mail className="w-3 h-3" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Correo Institucional</span>
+                {e.correoInstitucional ? (
+                  <a href={`mailto:${e.correoInstitucional}`} className="text-xs font-semibold text-[#073299] hover:underline block truncate" title={e.correoInstitucional}>
+                    {e.correoInstitucional}
+                  </a>
+                ) : (
+                  <span className="text-slate-400 text-xs block">—</span>
+                )}
+              </div>
+            </div>
+
+            {/* Teléfono / Celular */}
             {e.telefono && (
-              <div className="min-w-0 col-span-2">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Teléfono / Celular</span>
-                <span className="font-mono font-medium text-slate-800 text-[11px]">{e.telefono}</span>
+              <div className="flex items-start gap-2.5 pt-1.5">
+                <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
+                  <Phone className="w-3 h-3" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Teléfono / Celular</span>
+                  <span className="font-mono font-medium text-slate-800 text-xs block">{e.telefono}</span>
+                </div>
               </div>
             )}
           </div>
