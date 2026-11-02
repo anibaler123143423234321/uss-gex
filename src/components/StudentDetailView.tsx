@@ -126,7 +126,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
     const esCompleto = aprobados >= baseTotal;
 
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-2.5 sm:p-3 shadow-xs space-y-2">
+      <div className="bg-white rounded-xl border border-slate-200 p-2.5 sm:p-3 shadow-xs space-y-2 flex-1 flex flex-col justify-between">
         {/* Cabecera del Plan */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 flex-wrap min-w-0">
@@ -276,14 +276,14 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
         </div>
       </div>
 
-      {/* CONTENEDOR PRINCIPAL: 1/3 (NAV IZQUIERDO = 4 cols) Y 2/3 (CURSOS = 8 cols) OCUPANDO TODO EL VIEWPORT */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start w-full flex-1 min-h-0">
+      {/* CONTENEDOR PRINCIPAL: 1/3 (NAV IZQUIERDO = 4 cols) Y 2/3 (CURSOS = 8 cols) CON ALTURA IGUALADA */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch w-full flex-1 min-h-0">
         {/* ========================================================================= */}
-        {/* NAV IZQUIERDO (1/3 = 4 cols): DATOS DEL ESTUDIANTE EN COLUMNA VERTICAL    */}
+        {/* NAV IZQUIERDO (1/3 = 4 cols): MISMA ALTURA QUE EL LADO DERECHO            */}
         {/* ========================================================================= */}
-        <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between h-full">
           {/* Header con Iniciales y Nombre */}
-          <div className="bg-gradient-to-r from-[#073299] via-[#0941bf] to-[#1258e2] p-3 text-white flex items-center gap-3">
+          <div className="bg-gradient-to-r from-[#073299] via-[#0941bf] to-[#1258e2] p-3 text-white flex items-center gap-3 shrink-0">
             <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center font-bold text-sm text-white shrink-0 shadow-inner">
               {iniciales}
             </div>
@@ -301,8 +301,8 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
             </div>
           </div>
 
-          {/* Datos del estudiante en columna vertical limpia */}
-          <div className="p-3 space-y-2 text-xs divide-y divide-slate-100">
+          {/* Datos del estudiante en columna vertical distribuidos armónicamente */}
+          <div className="p-3.5 flex-1 flex flex-col justify-between text-xs divide-y divide-slate-100">
             {/* Apellidos */}
             <div className="flex items-start gap-2.5 pt-1.5 first:pt-0">
               <div className="w-5 h-5 rounded-md bg-blue-50 text-[#073299] flex items-center justify-center shrink-0 mt-0.5">
@@ -404,9 +404,9 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
         {/* ========================================================================= */}
         {/* SECCIÓN DERECHA (2/3 = 8 cols): ESTADÍSTICAS SUPERIORES Y AMBOS PLANES    */}
         {/* ========================================================================= */}
-        <section className="lg:col-span-8 space-y-2.5">
+        <section className="lg:col-span-8 flex flex-col justify-between h-full space-y-2.5">
           {/* LADO DERECHO SUPERIOR: LAS 2 ESTADÍSTICAS (Tradicional y Rutas) */}
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-2.5 shrink-0">
             {/* Estadística Plan Tradicional */}
             <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between gap-2.5">
               <div className="flex items-center gap-2 min-w-0">
@@ -477,7 +477,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
           </div>
 
           {/* AMBOS PLANES ESTÁTICOS (Ver ambos por defecto y de forma permanente) */}
-          <div className="space-y-2.5">
+          <div className="flex-1 flex flex-col justify-between gap-2.5 min-h-0">
             {/* Bloque 1: Plan Tradicional */}
             {renderPlanCard(
               'Plan Tradicional (Computación I al III)',
