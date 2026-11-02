@@ -12,15 +12,12 @@ import {
   Clock,
   Layers,
   Monitor,
-  Code,
-  Laptop,
   BookOpen,
   Award,
   Wrench,
   AlertCircle,
   Sparkles,
   Trophy,
-  PartyPopper,
   Info,
   ArrowRight,
   Copy,
@@ -32,6 +29,9 @@ import {
   FileCheck2,
   HelpCircle,
   X,
+  BarChart3,
+  Cloud,
+  Globe,
 } from 'lucide-react';
 import type { EstudianteGEX } from '../types/estudiante';
 
@@ -64,7 +64,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
     }
   };
 
-  // 2. Cursos del Plan Tradicional (3 cursos: Computación I al III)
+  // 2. Cursos del Plan Tradicional (3 cursos con mosaicos, fondos y marcas de agua DIVERSIFICADAS)
   const cursosTradicional = [
     {
       id: 'computacionI',
@@ -74,6 +74,13 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       descripcion: 'Fundamentos de ofimática, productividad digital y herramientas iniciales.',
       estado: e.computacionI >= 1 ? 1 : 0,
       Icon: Monitor,
+      WatermarkIcon: Monitor,
+      bgApproved: 'from-emerald-50/90 via-white to-teal-50/50',
+      borderApproved: 'border-emerald-300',
+      badgeColor: 'text-emerald-900 bg-emerald-100/90 border-emerald-300',
+      iconBg: 'bg-emerald-600 text-white',
+      patternUrl: "data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 8h8v6H4zM16 8h8v6h-8zM28 8h8v6h-8zM4 18h8v6H4zM16 18h8v6h-8zM28 18h8v6h-8z' fill='%23059669' fill-opacity='0.05'/%3E%3C/svg%3E",
+      tagApproved: '✓ Fundamentos de Ofimática Aprobados',
     },
     {
       id: 'computacionII',
@@ -82,7 +89,14 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       tipo: 'Computación Intermedia',
       descripcion: 'Hojas de cálculo avanzadas, análisis de datos y modelado aplicado.',
       estado: e.computacionII >= 1 ? 1 : 0,
-      Icon: Code,
+      Icon: BarChart3,
+      WatermarkIcon: BarChart3,
+      bgApproved: 'from-teal-50/90 via-white to-emerald-50/50',
+      borderApproved: 'border-teal-300',
+      badgeColor: 'text-teal-900 bg-teal-100/90 border-teal-300',
+      iconBg: 'bg-teal-600 text-white',
+      patternUrl: "data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 6h36v36H6z' fill='none' stroke='%230d9488' stroke-width='1' stroke-opacity='0.09'/%3E%3Cpath d='M6 18h36M6 30h36M18 6v36M30 6v36' stroke='%230d9488' stroke-width='1' stroke-opacity='0.09'/%3E%3Crect x='10' y='22' width='4' height='16' fill='%230d9488' fill-opacity='0.07'/%3E%3Crect x='22' y='14' width='4' height='24' fill='%230d9488' fill-opacity='0.07'/%3E%3Crect x='34' y='8' width='4' height='30' fill='%230d9488' fill-opacity='0.07'/%3E%3C/svg%3E",
+      tagApproved: '✓ Análisis y Hojas de Cálculo Aprobado',
     },
     {
       id: 'computacionIII',
@@ -91,11 +105,18 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       tipo: 'Computación Avanzada',
       descripcion: 'Entornos de colaboración en la nube, herramientas web y gestión digital.',
       estado: e.computacionIII >= 1 ? 1 : 0,
-      Icon: Laptop,
+      Icon: Globe,
+      WatermarkIcon: Cloud,
+      bgApproved: 'from-cyan-50/90 via-white to-emerald-50/50',
+      borderApproved: 'border-cyan-300',
+      badgeColor: 'text-cyan-900 bg-cyan-100/90 border-cyan-300',
+      iconBg: 'bg-cyan-600 text-white',
+      patternUrl: "data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='16' r='4' fill='%230284c7' fill-opacity='0.08'/%3E%3Ccircle cx='36' cy='16' r='4' fill='%230284c7' fill-opacity='0.08'/%3E%3Ccircle cx='24' cy='34' r='5' fill='%230284c7' fill-opacity='0.08'/%3E%3Cpath d='M12 16l12 18 12-18' stroke='%230284c7' stroke-width='1.2' stroke-dasharray='2 2' stroke-opacity='0.12'/%3E%3C/svg%3E",
+      tagApproved: '✓ Entornos Cloud y Web Aprobados',
     },
   ];
 
-  // 3. Cursos de la Ruta de Aprendizaje (PROTECH XP: 3 módulos oficiales del Excel)
+  // 3. Cursos de la Ruta de Aprendizaje (3 módulos oficiales con mosaicos y marcas de agua DIVERSIFICADAS)
   const cursosRutas = [
     {
       id: 'generico',
@@ -105,6 +126,13 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       descripcion: 'Competencias digitales transversales y automatización de oficina.',
       estado: e.generico >= 1 ? 1 : 0,
       Icon: BookOpen,
+      WatermarkIcon: BookOpen,
+      bgApproved: 'from-emerald-50/90 via-white to-blue-50/50',
+      borderApproved: 'border-emerald-300',
+      badgeColor: 'text-emerald-900 bg-emerald-100/90 border-emerald-300',
+      iconBg: 'bg-emerald-600 text-white',
+      patternUrl: "data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 12c6-3 12-3 16 0v24c-4-3-10-3-16 0V12zm32 0c-6-3-12-3-16 0v24c4-3 10-3 16 0V12z' fill='%2310b981' fill-opacity='0.06' stroke='%23059669' stroke-width='1' stroke-opacity='0.09'/%3E%3C/svg%3E",
+      tagApproved: '✓ Módulo Transversal Acreditado',
     },
     {
       id: 'especifico',
@@ -114,6 +142,13 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       descripcion: 'Herramientas tecnológicas orientadas al perfil profesional de la carrera.',
       estado: e.especifico >= 1 ? 1 : 0,
       Icon: Award,
+      WatermarkIcon: Award,
+      bgApproved: 'from-amber-50/80 via-white to-emerald-50/50',
+      borderApproved: 'border-amber-300',
+      badgeColor: 'text-amber-900 bg-amber-100/90 border-amber-300',
+      iconBg: 'bg-amber-600 text-white',
+      patternUrl: "data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='24' cy='20' r='8' fill='%23d97706' fill-opacity='0.07' stroke='%23d97706' stroke-width='1' stroke-opacity='0.12'/%3E%3Cpath d='M20 28l4-2 4 2-1-6h-6z' fill='%23d97706' fill-opacity='0.09'/%3E%3Cpolygon points='24,14 26,18 30,18 27,21 28,25 24,23 20,25 21,21 18,18 22,18' fill='%23d97706' fill-opacity='0.14'/%3E%3C/svg%3E",
+      tagApproved: '✓ Especialidad de Carrera Acreditada',
     },
     {
       id: 'taller',
@@ -123,6 +158,13 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       descripcion: 'Preparación y evaluación oficial con estándar internacional Microsoft MOS.',
       estado: e.taller >= 1 ? 1 : 0,
       Icon: Wrench,
+      WatermarkIcon: FileCheck2,
+      bgApproved: 'from-indigo-50/80 via-white to-emerald-50/50',
+      borderApproved: 'border-indigo-300',
+      badgeColor: 'text-indigo-900 bg-indigo-100/90 border-indigo-300',
+      iconBg: 'bg-indigo-600 text-white',
+      patternUrl: "data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='24' cy='20' r='10' fill='%234f46e5' fill-opacity='0.07' stroke='%234f46e5' stroke-width='1' stroke-opacity='0.12'/%3E%3Cpath d='M18 28l-4 12 10-4 10 4-4-12' fill='%234f46e5' fill-opacity='0.09' stroke='%234f46e5' stroke-width='1' stroke-opacity='0.14'/%3E%3Cpath d='M20 20l3 3 6-6' stroke='%234f46e5' stroke-width='1.5' stroke-linecap='round' stroke-opacity='0.25' fill='none'/%3E%3C/svg%3E",
+      tagApproved: '✓ Certificación Internacional MOS Aprobada',
     },
   ];
 
@@ -258,11 +300,11 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
           </div>
         </div>
 
-        {/* Cursos del Plan en COLUMNA VERTICAL con fondos temáticos educativos (solo cuando está aprobado) */}
+        {/* Cursos del Plan en COLUMNA VERTICAL con mosaicos, fondos y marcas de agua DIVERSIFICADAS */}
         <div className="flex-1 flex flex-col justify-start gap-3.5 pt-4 relative z-10">
           {cursos.map((curso) => {
             const esAprobado = curso.estado === 1;
-            const { Icon } = curso;
+            const { Icon, WatermarkIcon } = curso;
 
             return (
               <div
@@ -270,22 +312,22 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
                 style={
                   esAprobado
                     ? {
-                        backgroundImage: `url('/academic-pattern.svg'), linear-gradient(135deg, rgba(236, 253, 245, 0.88) 0%, rgba(255, 255, 255, 0.96) 60%, rgba(209, 250, 229, 0.45) 100%)`,
-                        backgroundSize: '100px 100px, 100% 100%',
+                        backgroundImage: `url("${curso.patternUrl}"), linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.98) 100%)`,
+                        backgroundSize: '48px 48px, 100% 100%',
                         backgroundRepeat: 'repeat, no-repeat',
                       }
                     : undefined
                 }
                 className={`rounded-2xl border p-4 sm:p-4.5 transition-all duration-300 relative overflow-hidden group min-h-[102px] flex flex-col justify-between ${
                   esAprobado
-                    ? 'border-emerald-300/90 shadow-xs hover:border-emerald-400 hover:shadow-md'
+                    ? `bg-gradient-to-br ${curso.bgApproved} ${curso.borderApproved} shadow-xs hover:shadow-md hover:scale-[1.01]`
                     : 'border-slate-200/90 bg-white shadow-2xs hover:border-slate-300 hover:shadow-xs'
                 }`}
               >
-                {/* Marca de agua educativa de birrete/diploma cuando está aprobado */}
+                {/* Marca de agua individual propia y temática de cada curso */}
                 {esAprobado ? (
-                  <div className="absolute -bottom-2.5 -right-2.5 w-20 h-20 pointer-events-none opacity-[0.14] transition-transform duration-300 group-hover:scale-110 text-emerald-700 flex items-center justify-center">
-                    <GraduationCap className="w-full h-full" />
+                  <div className="absolute -bottom-2 -right-2 w-20 h-20 pointer-events-none opacity-[0.14] transition-transform duration-300 group-hover:scale-110 flex items-center justify-center">
+                    <WatermarkIcon className="w-full h-full text-slate-800" />
                   </div>
                 ) : (
                   <div className="absolute -bottom-2 -right-2 w-16 h-16 pointer-events-none opacity-[0.04] text-slate-400 flex items-center justify-center">
@@ -298,7 +340,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
                   <div className="flex items-center gap-2">
                     <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border shadow-2xs ${
                       esAprobado
-                        ? 'bg-white border-emerald-200 text-emerald-900 font-extrabold'
+                        ? 'bg-white border-slate-200 text-slate-800 font-extrabold'
                         : 'bg-slate-50 border-slate-200 text-slate-600'
                     }`}>
                       {curso.codigo}
@@ -311,7 +353,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
                   {/* Estado Oficial */}
                   <div className="shrink-0">
                     {esAprobado ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300/80 shadow-2xs">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold border shadow-2xs ${curso.badgeColor}`}>
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                         <span>Aprobado (1)</span>
                       </span>
@@ -329,7 +371,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs transition-colors ${
                       esAprobado
-                        ? 'bg-emerald-600 text-white shadow-emerald-200'
+                        ? `${curso.iconBg} shadow-xs`
                         : 'bg-slate-100 text-slate-500 border border-slate-200'
                     }`}
                   >
@@ -339,8 +381,8 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
                     <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight truncate" title={curso.nombre}>
                       {curso.nombre}
                     </h4>
-                    <p className={`text-[11px] truncate mt-0.5 ${esAprobado ? 'text-emerald-800/80 font-medium' : 'text-slate-500'}`} title={curso.descripcion}>
-                      {esAprobado ? '✓ Asignatura acreditada con valor curricular CINF' : curso.descripcion}
+                    <p className={`text-[11px] truncate mt-0.5 ${esAprobado ? 'text-slate-700 font-medium' : 'text-slate-500'}`} title={curso.descripcion}>
+                      {esAprobado ? curso.tagApproved : curso.descripcion}
                     </p>
                   </div>
                 </div>
@@ -353,7 +395,7 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
   };
 
   return (
-    <div className="w-full flex flex-col space-y-5 animate-in fade-in duration-200">
+    <div className="w-full flex flex-col space-y-4 animate-in fade-in duration-200">
       {/* ========================================================================= */}
       {/* 1. BARRA SUPERIOR: Volver a la búsqueda + Breadcrumb institucional        */}
       {/* ========================================================================= */}
@@ -379,97 +421,42 @@ export default function StudentDetailView({ estudiante: e, onBack }: Props) {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. MENSAJE "CONOCE CÓMO ACREDITAR" (Orientación y normativa oficial CINF)  */}
-      {/* ========================================================================= */}
-      <div className="bg-gradient-to-r from-blue-50/90 via-slate-50 to-indigo-50/60 rounded-2xl border border-blue-100/90 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
-        <div className="flex items-start gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-[#073299] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
-            <Info className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-[#073299] uppercase tracking-wider bg-blue-100/70 px-2 py-0.5 rounded-md">
-                Guía CINF USS
-              </span>
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-                Conoce cómo acreditar tu competencia informática en GEX
-              </h3>
-            </div>
-            <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
-              Puedes acreditar mediante dos vías oficiales con el mismo valor académico: <strong className="text-slate-800">Plan Tradicional</strong> (3 cursos regulares) o <strong className="text-slate-800">Plan Rutas de Aprendizaje PROTECH XP</strong> (3 componentes por competencias). Basta con cumplir una de las dos modalidades al 100%.
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setShowComoAcreditarModal(true)}
-          type="button"
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-[#073299] text-xs font-bold border border-blue-200/80 shadow-2xs transition hover:border-[#073299] shrink-0 cursor-pointer"
-        >
-          <span>Ver requisitos y normativa</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 3. HERO DE FELICITACIONES (Solo si el estudiante ya está acreditado)      */}
+      {/* 2. ALERTA COMPACTA Y ELEGANTE DE ACREDITACIÓN (Solo si está acreditado)    */}
       {/* ========================================================================= */}
       {esAcreditado && (
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-[#073299] to-[#0a2366] text-white p-6 sm:p-7 shadow-lg border border-emerald-400/30">
-          {/* Sello educativo universitario oficial de acreditación en el fondo */}
-          <img
-            src="/academic-seal.svg"
-            alt="Sello de Acreditación CINF USS"
-            className="absolute -bottom-10 -right-10 w-64 h-64 pointer-events-none opacity-20 select-none z-0"
-          />
-
-          {/* Trama decorativa de fondo con confeti / brillos */}
-          <div
-            className="absolute inset-0 pointer-events-none opacity-10"
-            style={{
-              backgroundImage: 'radial-gradient(white 1.5px, transparent 1.5px)',
-              backgroundSize: '20px 20px',
-            }}
-          />
-
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shrink-0 shadow-inner">
-                <PartyPopper className="w-7 h-7 text-yellow-300 animate-bounce" />
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-400/25 border border-emerald-300/40 text-emerald-200 text-[11px] font-bold uppercase tracking-wider">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
-                  <span>Acreditación Oficial Completa (100%)</span>
-                </div>
-                <h2 className="text-lg sm:text-2xl font-black tracking-tight text-white leading-tight">
-                  ¡Felicitaciones, {nombres}!
-                </h2>
-                <p className="text-xs sm:text-sm text-blue-100 max-w-2xl leading-relaxed">
-                  Has cumplido satisfactoriamente con la totalidad de requisitos oficiales de acreditación en Informática mediante el <strong className="text-white font-semibold">{modalidadAcreditada}</strong>. Tu expediente se encuentra expedito para trámites de graduación y titulación.
-                </p>
-              </div>
+        <div className="rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-700 to-[#073299] text-white px-4 py-2.5 sm:px-5 sm:py-3 shadow-xs border border-emerald-400/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
+            <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/20">
+              <Trophy className="w-4 h-4 text-amber-300" />
             </div>
-
-            {/* BOTÓN "IR A TUS OPCIONES" */}
-            <div className="shrink-0 w-full md:w-auto">
-              <button
-                onClick={() => setShowOpcionesModal(true)}
-                type="button"
-                className="w-full md:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white text-[#073299] hover:bg-blue-50 text-xs sm:text-sm font-extrabold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer ring-4 ring-white/20"
-              >
-                <Trophy className="w-4 h-4 text-amber-500" />
-                <span>Ir a tus opciones</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-400/25 border border-emerald-300/30 text-emerald-100">
+                  Acreditación Completa (100%)
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-white truncate">
+                  ¡Felicitaciones, {nombres}!
+                </span>
+              </div>
+              <p className="text-[11px] text-emerald-100 truncate mt-0.5">
+                Cumples con los requisitos de acreditación oficial mediante el {modalidadAcreditada}.
+              </p>
             </div>
           </div>
+
+          <button
+            onClick={() => setShowOpcionesModal(true)}
+            type="button"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white text-[#073299] hover:bg-emerald-50 text-xs font-bold shadow-xs transition hover:scale-102 shrink-0 cursor-pointer"
+          >
+            <span>Ir a tus opciones</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 4. CONTENEDOR PRINCIPAL: 3 COLUMNAS SIMÉTRICAS                            */}
+      {/* 3. CONTENEDOR PRINCIPAL: 3 COLUMNAS SIMÉTRICAS                            */}
       {/*    Columna 1: Ficha del Estudiante (Nav responsivo de alta gama)          */}
       {/*    Columna 2: Plan Tradicional (3 cursos en columna)                      */}
       {/*    Columna 3: Plan Rutas PROTECH XP (3 módulos oficiales)                 */}
