@@ -1,7 +1,9 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { ArrowLeft, ArrowRight, Award, Check, CheckCircle2, Loader2, Monitor, AlertCircle, CalendarClock, Paperclip, X, PenLine } from 'lucide-react';
+import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { ArrowLeft, ArrowRight, Award, Check, CheckCircle2, Loader2, Minus, Monitor, AlertCircle, CalendarClock, Paperclip, X, PenLine } from 'lucide-react';
 import {
+  COMPARATIVA,
   NOTA_COSTOS,
+  descuentoVigente,
   iconoPlan,
   type PlanOpcion,
   type PlanOpcionId,
@@ -42,11 +44,13 @@ export default function MenuOpciones({ titulo, subtitulo, planes, estudiante, es
   }
 
   const nombre = estudiante ? primerNombre(estudiante.nombres) : '';
+  // En 2 columnas no hay subgrid: si una tarjeta trae descuento, todas reservan su alto en el precio
+  const conDescuento = planes.some((p) => descuentoVigente(p));
 
   return (
-    // En laptop (xl) la lista ocupa justo el alto de la ventana: App fija la altura y aquí
-    // las tarjetas se reparten el espacio que deja el encabezado.
-    <div className="flex flex-col gap-8 sm:gap-10 xl:gap-4 xl:flex-1 xl:min-h-0">
+    // En xl las tarjetas se estiran hasta el pie si sobra alto; si no caben, la página hace scroll
+    // (con el comparativo ya no entran en una laptop baja sin esconder las etapas y requisitos).
+    <div className="flex flex-col gap-8 sm:gap-10 xl:gap-4 xl:flex-1">
       <div className="text-center max-w-2xl mx-auto shrink-0">
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 ring-1 ring-blue-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-uss-blue">
@@ -62,11 +66,15 @@ export default function MenuOpciones({ titulo, subtitulo, planes, estudiante, es
         {subtitulo && <p className="mt-2 xl:mt-1 text-sm sm:text-base xl:text-sm text-slate-500">{subtitulo}</p>}
       </div>
 
-      {/* xl: 5 filas compartidas (encabezado, precio, botón, detalle y documento) con subgrid, para
-          que las partes de las 4 tarjetas queden alineadas aunque un texto ocupe más líneas */}
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4 xl:grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] xl:gap-x-4 xl:gap-y-0 items-stretch pt-2 xl:pt-3 xl:flex-1 xl:min-h-0">
-        {planes.map((p) => (
-          <TarjetaPlan key={p.id} plan={p} onElegir={() => onPlan(p.id)} />
+      {/* xl: filas compartidas con subgrid (encabezado, precio, botón, una por fila del comparativo,
+          detalle y documento), para que las 4 tarjetas queden alineadas como una tabla de precios */}
+      <div
+        className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4 xl:grid-rows-[auto_auto_auto_repeat(var(--filas),auto)_1fr_auto] xl:gap-x-4 xl:gap-y-0 items-stretch pt-2 xl:pt-3 xl:flex-1"
+        // Cada tarjeta ocupa las filas del comparativo más las 5 fijas
+        style={{ '--filas': COMPARATIVA.length, '--filas-tarjeta': COMPARATIVA.length + 5 } as CSSProperties}
+      >
+        {planes.map((p, i) => (
+          <TarjetaPlan key={p.id} plan={p} numero={i + 1} reservarDescuento={conDescuento} onElegir={() => onPlan(p.id)} />
         ))}
       </div>
 
@@ -76,27 +84,46 @@ export default function MenuOpciones({ titulo, subtitulo, planes, estudiante, es
 }
 
 /** Tarjeta de un plan al estilo de una página de precios. Sin onElegir sirve de resumen del plan elegido. */
-function TarjetaPlan({ plan, onElegir }: { plan: PlanOpcion; onElegir?: () => void }) {
+function TarjetaPlan({
+  plan,
+  numero,
+  reservarDescuento,
+  onElegir,
+}: {
+  plan: PlanOpcion;
+  numero?: number;
+  reservarDescuento?: boolean;
+  onElegir?: () => void;
+}) {
   const Icon = iconoPlan(plan.icono);
   const destacado = !!plan.insignia && !!onElegir;
+  const descuento = descuentoVigente(plan);
 
-  // En la lista (xl) la tarjeta ocupa 5 filas del subgrid; como resumen del plan elegido es una columna normal
+  // En la lista (xl) la tarjeta ocupa todas las filas del subgrid; como resumen del plan elegido es una columna normal
   const enLista = !!onElegir;
   const conExamen = plan.id !== 'convalidacion';
+  const conDetalle = plan.etapas.length > 0 || plan.requisitos.length > 0;
+
+  // En la lista van todas las filas (las que no aplican con "–"); en el resumen, solo lo que incluye
+  const comparativo = COMPARATIVA.map((fila) => {
+    const valor = fila.planes[plan.id];
+    return { texto: typeof valor === 'string' ? valor : fila.texto, incluido: !!valor };
+  }).filter((fila) => enLista || fila.incluido);
 
   return (
     <article
       className={`relative flex flex-col rounded-3xl bg-white p-5 sm:p-6 ring-1 ring-slate-200 shadow-sm ${
-        enLista ? 'xl:row-span-5 xl:grid xl:grid-rows-subgrid xl:p-4' : ''
+        enLista ? 'xl:[grid-row:span_var(--filas-tarjeta)] xl:grid xl:grid-rows-subgrid xl:p-4' : ''
       }`}
       style={destacado ? { boxShadow: `0 0 0 2px ${plan.acento}, 0 10px 30px -12px ${plan.acento}55` } : undefined}
     >
-      {destacado && (
+      {/* Número de opción en la lista; el borde de color sigue marcando al plan con insignia */}
+      {enLista && numero && (
         <span
           className="absolute -top-3 left-6 rounded-full px-3 py-1 text-[11px] font-bold text-white shadow-sm"
           style={{ backgroundColor: plan.acento }}
         >
-          {plan.insignia}
+          Opción {numero}
         </span>
       )}
 
@@ -112,7 +139,7 @@ function TarjetaPlan({ plan, onElegir }: { plan: PlanOpcion; onElegir?: () => vo
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 min-w-0">
             {enLista ? plan.etiqueta : 'Plan elegido'}
           </span>
-          {/* Las opciones 1 a 3 se acreditan con examen; la convalidación, con el archivo del estudiante */}
+          {/* Todas se acreditan con examen menos la convalidación, que pide el archivo del estudiante */}
           <span
             className="ml-auto shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
             style={{ backgroundColor: `${plan.acento}14`, color: plan.acento }}
@@ -137,12 +164,39 @@ function TarjetaPlan({ plan, onElegir }: { plan: PlanOpcion; onElegir?: () => vo
         </p>
       </div>
 
-      {/* 2. Precio */}
-      <div className={`mt-4 ${enLista ? 'sm:min-h-[4.25rem] xl:min-h-0 xl:mt-3' : ''}`}>
-        <p className={`text-3xl font-black tracking-tight text-slate-900 leading-none ${enLista ? 'xl:text-2xl' : ''}`}>
-          {plan.precio}
+      {/* 2. Precio; con descuento vigente, como una página de precios: el regular tachado, el % y hasta cuándo.
+          Va en las mismas dos líneas que sin descuento, para que el menú siga entrando en 1920×945. */}
+      <div
+        className={`mt-4 ${
+          enLista ? `${reservarDescuento ? 'sm:min-h-[5.5rem]' : 'sm:min-h-[4.25rem]'} xl:min-h-0 xl:mt-3` : ''
+        }`}
+      >
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <p className={`text-3xl font-black tracking-tight text-slate-900 leading-none ${enLista ? 'xl:text-2xl' : ''}`}>
+            {descuento?.precioFinal && <span className="sr-only">Con descuento: </span>}
+            {descuento?.precioFinal ?? plan.precio}
+          </p>
+          {descuento?.precioFinal && (
+            <s className="text-base font-semibold text-slate-400">
+              <span className="sr-only">Precio regular: </span>
+              {plan.precio}
+            </s>
+          )}
+          {descuento && (
+            <span className="self-center rounded-full bg-rose-600 px-2 py-0.5 text-[11px] font-extrabold text-white">
+              -{descuento.porcentaje}%
+            </span>
+          )}
+        </div>
+        <p className="mt-1.5 text-xs text-slate-500">
+          {plan.precioNota}
+          {descuento && (
+            <>
+              {plan.precioNota && ' · '}
+              <span className="font-bold text-rose-700 whitespace-nowrap">Válido hasta {descuento.hasta}</span>
+            </>
+          )}
         </p>
-        <p className="mt-1.5 text-xs text-slate-500">{plan.precioNota}</p>
       </div>
 
       {/* 3. Botón */}
@@ -153,15 +207,36 @@ function TarjetaPlan({ plan, onElegir }: { plan: PlanOpcion; onElegir?: () => vo
           className="mt-5 xl:mt-3 h-11 xl:h-10 w-full rounded-xl text-sm font-bold text-white inline-flex items-center justify-center gap-1.5 transition hover:brightness-110 cursor-pointer"
           style={{ backgroundColor: plan.acento }}
         >
-          {conExamen ? 'Inscribirme al examen' : 'Enviar mi archivo'}
+          {conExamen ? 'Inscribirme' : 'Enviar mi archivo'}
           <ArrowRight className="w-4 h-4" />
         </button>
       )}
 
-      {/* 4. Detalle: si la laptop es muy baja, solo esto hace scroll dentro de la tarjeta */}
+      {/* 4. Comparativo: una fila del subgrid por cada una, así quedan a la misma altura en las 4 tarjetas */}
+      <ul
+        className={`mt-5 ${enLista ? 'xl:mt-3 xl:[grid-row:span_var(--filas)] xl:grid xl:grid-rows-subgrid' : 'space-y-1'}`}
+      >
+        {comparativo.map((fila) => (
+          <li
+            key={fila.texto}
+            className={`flex items-start gap-2 py-1 text-sm leading-snug ${enLista ? 'xl:py-[3px] xl:text-[13px]' : ''} ${
+              fila.incluido ? 'text-slate-700' : 'text-slate-400'
+            }`}
+          >
+            {fila.incluido ? (
+              <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: plan.acento }} />
+            ) : (
+              <Minus className="w-4 h-4 mt-0.5 shrink-0 text-slate-300" />
+            )}
+            {fila.texto}
+          </li>
+        ))}
+      </ul>
+
+      {/* 5. Detalle: etapas o requisitos; es la fila que se estira si sobra alto */}
       <div
-        className={`mt-5 pt-5 border-t border-slate-100 space-y-4 flex-1 ${
-          enLista ? 'xl:mt-3 xl:pt-3 xl:space-y-3 xl:min-h-0 xl:overflow-y-auto scroll-fino' : ''
+        className={`space-y-4 flex-1 ${conDetalle ? 'mt-5 pt-5 border-t border-slate-100' : ''} ${
+          enLista ? `xl:space-y-3 ${conDetalle ? 'xl:mt-3 xl:pt-3' : ''}` : ''
         }`}
       >
         {plan.etapas.length > 0 && (
@@ -188,11 +263,9 @@ function TarjetaPlan({ plan, onElegir }: { plan: PlanOpcion; onElegir?: () => vo
             <ListaCheck items={plan.requisitos} color={plan.acento} compacta={enLista} />
           </div>
         )}
-
-        {plan.incluye.length > 0 && <ListaCheck items={plan.incluye} color={plan.acento} compacta={enLista} />}
       </div>
 
-      {/* 5. Documento */}
+      {/* 6. Documento */}
       <p className={`mt-5 inline-flex items-start gap-1.5 text-xs font-semibold text-slate-600 ${enLista ? 'xl:mt-3' : ''}`}>
         <Award className="w-4 h-4 text-slate-400 shrink-0" />
         {plan.documento}
@@ -218,8 +291,8 @@ function ListaCheck({ items, color, compacta }: { items: string[]; color: string
 // Registro
 // ---------------------------------------------------------------------------
 
-// Las opciones 1 a 3 son la inscripción al examen: el estudiante deja sus datos y el Centro
-// de Informática le programa la fecha. Convalidación no tiene examen: solo pide el archivo.
+// Las opciones 1, 2 y 4 son la inscripción: el estudiante deja sus datos y el Centro de
+// Informática le programa la fecha. Convalidación (opción 3) se registra con el archivo del estudiante.
 const DECLARACION: Partial<Record<PlanOpcionId, string>> = {
   validacion: 'Declaro que no estoy matriculado en el curso de Computación.',
 };
@@ -485,7 +558,7 @@ function RegistroPlan({
                   : enviando === 'registrando'
                   ? 'Registrando…'
                   : esExamen
-                  ? 'Inscribirme al examen'
+                  ? 'Inscribirme'
                   : 'Enviar solicitud de convalidación'}
               </button>
             </Paso>

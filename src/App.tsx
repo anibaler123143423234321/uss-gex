@@ -3,6 +3,7 @@ import { RefreshCw, ArrowLeft, Hash, User, Mail, ShieldCheck, Loader2 } from 'lu
 import SearchBar from './components/SearchBar';
 import StudentDetailView from './components/StudentDetailView';
 import MenuOpciones from './components/MenuOpciones';
+import CinfAgentChat from './components/CinfAgentChat';
 import { HeroIllustration } from './components/CourseIllustration';
 import { fetchExcelFromDrive } from './services/driveSheetService';
 import { sincronizarAutomaticoDriveASupabase, getCargaExcelVigente } from './services/cargasService';
@@ -176,9 +177,7 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen ${selected && !mostrarComoAcreditar ? 'lg:h-screen lg:overflow-hidden' : ''} ${
-        mostrarComoAcreditar && !planElegido && !restaurando ? 'xl:h-screen xl:overflow-hidden' : ''
-      } bg-[#f2f5fb] text-slate-900 flex flex-col selection:bg-uss-blue selection:text-white`}
+      className={`min-h-screen ${selected && !mostrarComoAcreditar ? 'lg:h-screen lg:overflow-hidden' : ''} bg-[#f2f5fb] text-slate-900 flex flex-col selection:bg-uss-blue selection:text-white`}
     >
       {restaurando ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 py-24 text-slate-500">
@@ -190,7 +189,7 @@ export default function App() {
         <div className="flex-1 flex flex-col w-full bg-[#f2f5fb] xl:min-h-0">
           {/* Header institucional: mantiene la sesión del estudiante */}
           <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 py-2.5 px-4 sm:px-6 w-full shrink-0 shadow-xs">
-            <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            <div className="max-w-7xl grande:max-w-[1600px] mx-auto flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 <button
                   onClick={cerrarOpciones}
@@ -226,10 +225,11 @@ export default function App() {
             </div>
           </header>
 
-          {/* Planes para acreditar Computación y registro del elegido. El footer es el general. */}
+          {/* Planes para acreditar Computación y registro del elegido. El footer es el general.
+              En monitores grandes se ensancha para que el comparativo de las 4 tarjetas quepa en una línea */}
           <main
-            className={`flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 ${
-              planElegido ? '' : 'xl:py-5 xl:min-h-0 xl:flex xl:flex-col'
+            className={`flex-1 w-full max-w-7xl grande:max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-10 ${
+              planElegido ? '' : 'xl:py-5 xl:flex xl:flex-col'
             }`}
           >
             <MenuOpciones
@@ -247,7 +247,7 @@ export default function App() {
         <div className="flex-1 flex flex-col w-full lg:h-full lg:min-h-0 lg:overflow-hidden">
           {/* Header institucional: fijo arriba en el celular para tener siempre a mano Volver */}
           <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 py-2 lg:py-1.5 px-3 sm:px-6 w-full shrink-0">
-            <div className="max-w-7xl mx-auto flex items-center gap-2.5">
+            <div className="max-w-7xl 2xl:max-w-[1440px] mx-auto flex items-center gap-2.5">
               <button
                 onClick={() => setSelected(null)}
                 type="button"
@@ -272,7 +272,7 @@ export default function App() {
           </header>
 
           {/* Área principal: en escritorio cabe en 1 pantalla, en el celular fluye con scroll */}
-          <main className="w-full max-w-7xl mx-auto px-3 sm:px-6 py-3 lg:py-2.5 flex-1 min-h-0 flex flex-col">
+          <main className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 py-3 lg:py-2.5 flex-1 min-h-0 flex flex-col">
             <StudentDetailView
               key={selected.codUniv}
               estudiante={selected}
@@ -366,6 +366,15 @@ export default function App() {
           <span className="hidden sm:inline">Centro de Informática (CINF)</span> &bull; Portal GEX
         </span>
       </footer>
+
+      {/* Agente CINF (Solo activo cuando se consulta un estudiante) */}
+      {selected && (
+        <CinfAgentChat
+          estudiante={selected}
+          estudiantes={estudiantes}
+          onNavigateComoAcreditar={() => setMostrarComoAcreditar(true)}
+        />
+      )}
     </div>
   );
 }

@@ -15,6 +15,19 @@ export interface EtapaPlan {
   detalle: string;
 }
 
+/**
+ * Descuento en porcentaje sobre el precio principal (no sobre las etapas). Lo edita el panel;
+ * se muestra solo desde el inicio hasta el fin, ambos días incluidos y en hora de Lima.
+ */
+export interface DescuentoPlan {
+  activo: boolean;
+  /** Entero de 1 a 99 */
+  porcentaje: number;
+  /** yyyy-mm-dd */
+  inicio: string;
+  fin: string;
+}
+
 /** Una tarjeta del Menú de opciones. Se edita en el panel; los 4 id son fijos. */
 export interface PlanOpcion {
   id: PlanOpcionId;
@@ -34,6 +47,8 @@ export interface PlanOpcion {
   documento: string;
   /** Lo que sigue después de registrarse */
   proceso: string[];
+  /** Sin descuento si falta */
+  descuento?: DescuentoPlan;
 }
 
 // Íconos que se pueden elegir en el panel. La misma lista valida el backend
@@ -85,34 +100,13 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
     ],
   },
   {
-    id: 'protech',
-    icono: 'Route',
-    acento: '#0f766e',
-    etiqueta: 'Modelo académico',
-    nombre: 'PROTECH XP',
-    resumen: '3 cursos de tu ruta de aprendizaje y 1 taller de certificación internacional.',
-    precio: 'S/ 420',
-    precioNota: 'por curso · taller S/ 340 (Sede Chiclayo)',
-    insignia: '',
-    etapas: [],
-    requisitos: [],
-    incluye: [
-      '3 cursos de tu ruta de aprendizaje',
-      '1 taller de certificación internacional',
-      'Puedes llevar los cursos de tu ruta en paralelo',
-      'Certificación Internacional Microsoft Office Specialist',
-    ],
-    documento: 'Certificación Internacional Microsoft Office',
-    proceso: ['El Centro de Informática programará la fecha de tu examen y te la comunicará por celular o correo.'],
-  },
-  {
     id: 'validacion',
     icono: 'ClipboardCheck',
     acento: '#b45309',
     etiqueta: 'Reconocimiento de experiencia',
     nombre: 'Validación de conocimientos',
     resumen: 'Si ya usas herramientas digitales en tu trabajo, acredita con un examen sin cursar.',
-    precio: 'Examen',
+    precio: 'S/.',
     precioNota: 'según tasa vigente',
     insignia: '',
     etapas: [],
@@ -161,12 +155,95 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
       'Registro del resultado en el sistema académico.',
     ],
   },
+  {
+    id: 'protech',
+    icono: 'Route',
+    acento: '#0f766e',
+    etiqueta: 'Modelo académico',
+    nombre: 'PROTECH XP',
+    resumen: '3 cursos de tu ruta de aprendizaje y 1 taller de certificación internacional.',
+    precio: 'S/ 420',
+    precioNota: 'por curso · taller S/ 340 (Sede Chiclayo)',
+    insignia: '',
+    etapas: [],
+    requisitos: [],
+    incluye: [
+      '3 cursos de tu ruta de aprendizaje',
+      '1 taller de certificación internacional',
+      'Puedes llevar los cursos de tu ruta en paralelo',
+      'Certificación Internacional Microsoft Office Specialist',
+    ],
+    documento: 'Certificación Internacional Microsoft Office',
+    proceso: ['El Centro de Informática programará la fecha de tu examen y te la comunicará por celular o correo.'],
+  },
 ];
 
-/** Completa los planes guardados con los oficiales; siempre salen los 4, en el orden oficial. */
+/** Una fila del comparativo de las tarjetas: va en el mismo orden en los 4 planes, como una página de precios */
+export interface FilaComparativa {
+  /** Se muestra con "–" en los planes que no lo incluyen */
+  texto: string;
+  /** Planes que sí lo incluyen; true usa el mismo texto, un string lo cambia solo para ese plan */
+  planes: Partial<Record<PlanOpcionId, true | string>>;
+}
+
+// Misma fuente que PLANES_COMPUTACION (sección 2 del documento) más lo que indicó el CINF: las 4
+// opciones cierran con examen; las opciones 1 y 4 dan certificado y la 2 y la 3, constancia.
+export const COMPARATIVA: FilaComparativa[] = [
+  { texto: 'Sesiones por Zoom, talleres y master class', planes: { gex: true, protech: 'Sesiones por Zoom' } },
+  { texto: 'Curso asincrónico en Cisco NetAcad', planes: { gex: 'Curso asincrónico gratis en Cisco NetAcad' } },
+  { texto: 'Cursos de tu ruta y taller de certificación', planes: { protech: '3 cursos de tu ruta y 1 taller de certificación' } },
+  {
+    texto: 'Acreditas sin cursar',
+    planes: { validacion: 'Acreditas tu experiencia, sin cursar', convalidacion: 'Acreditas con tu título técnico, sin cursar' },
+  },
+  { texto: 'Constancia de cumplimiento', planes: { gex: true, protech: true, validacion: true, convalidacion: true } },
+  {
+    texto: 'Examen al final',
+    planes: {
+      gex: 'Examen al final para obtener el certificado',
+      validacion: 'Examen al final para obtener la constancia',
+      convalidacion: 'Examen al final para obtener la constancia',
+      protech: 'Examen al final para obtener el certificado',
+    },
+  },
+];
+
+/** Completa los planes guardados con los oficiales; siempre salen los 4, en el orden oficial (Opción 1 a 4). */
 export function mezclarPlanes(guardados: unknown): PlanOpcion[] {
   const lista = Array.isArray(guardados) ? (guardados as Partial<PlanOpcion>[]) : [];
   return PLANES_COMPUTACION.map((oficial) => ({ ...oficial, ...(lista.find((p) => p?.id === oficial.id) ?? {}) }));
 }
 
 export const NOTA_COSTOS = '* Costos por apertura vigentes en el semestre actual.';
+
+/** Descuento que rige hoy, listo para la tarjeta. precioFinal es null si el precio no trae número ("S/.", "Trámite"). */
+export interface DescuentoVigente {
+  porcentaje: number;
+  precioFinal: string | null;
+  /** dd/mm/aaaa */
+  hasta: string;
+}
+
+// El día cambia a medianoche de Lima, no de UTC ni de la zona del navegador
+const hoyEnLima = (): string => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+
+/** Rebaja solo el primer número del precio y deja el resto del texto: "S/ 420" al 15 % → "S/ 357" */
+function precioConDescuento(precio: string, porcentaje: number): string | null {
+  const numero = precio.match(/\d[\d,]*(?:\.\d+)?/);
+  if (!numero || numero.index === undefined) return null;
+  const final = Math.round(Number(numero[0].replace(/,/g, '')) * (100 - porcentaje)) / 100;
+  const texto = final.toLocaleString('en-US', Number.isInteger(final) ? {} : { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return precio.slice(0, numero.index) + texto + precio.slice(numero.index + numero[0].length);
+}
+
+/** Copia del cálculo de GexPlanesEditor en ecosistema-cinf, que lo usa para la vista previa */
+export function descuentoVigente(plan: PlanOpcion, hoy = hoyEnLima()): DescuentoVigente | null {
+  const d = plan.descuento;
+  if (!d?.activo || !(d.porcentaje >= 1 && d.porcentaje <= 99) || !d.inicio || !d.fin) return null;
+  if (hoy < d.inicio || hoy > d.fin) return null;
+  return {
+    porcentaje: d.porcentaje,
+    precioFinal: precioConDescuento(plan.precio, d.porcentaje),
+    hasta: d.fin.split('-').reverse().join('/'),
+  };
+}

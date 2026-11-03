@@ -7,6 +7,10 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      // Monitores grandes (1920×1080): la ficha del estudiante crece. Las laptops bajas siguen compactas
+      screens: {
+        grande: { raw: '(min-width: 1440px) and (min-height: 820px)' },
+      },
       colors: {
         uss: {
           blue: '#073299',
