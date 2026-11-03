@@ -1,11 +1,39 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ArrowLeft, Hash, User, Mail, ShieldCheck } from 'lucide-react';
+import { RefreshCw, ArrowLeft, Hash, User, Mail, ShieldCheck, Loader2 } from 'lucide-react';
 import SearchBar from './components/SearchBar';
 import StudentDetailView from './components/StudentDetailView';
+import MenuOpciones from './components/MenuOpciones';
 import { HeroIllustration } from './components/CourseIllustration';
 import { fetchExcelFromDrive } from './services/driveSheetService';
 import { sincronizarAutomaticoDriveASupabase, getCargaExcelVigente } from './services/cargasService';
+import { gexConfigService, DEFAULT_GEX_CONFIG, type GexPortalConfig } from './services/gexConfigService';
 import type { EstudianteGEX } from './types/estudiante';
+import type { PlanOpcionId } from './data/planesComputacion';
+
+// Consulta abierta en la pestaña: sobrevive a F5 y se borra al cerrar la pestaña
+const CLAVE_SESION = 'gex.sesion';
+
+interface SesionGex {
+  codUniv?: string;
+  opciones?: boolean;
+  plan?: PlanOpcionId | null;
+}
+
+function leerSesion(): SesionGex {
+  try {
+    return JSON.parse(sessionStorage.getItem(CLAVE_SESION) || '{}') as SesionGex;
+  } catch {
+    return {};
+  }
+}
+
+function guardarSesion(sesion: SesionGex): void {
+  try {
+    sessionStorage.setItem(CLAVE_SESION, JSON.stringify(sesion));
+  } catch {
+    // Sin sessionStorage (modo privado estricto) la consulta solo no sobrevive al F5
+  }
+}
 
 // Formas de búsqueda que se explican en la portada, cada una con su propio color
 const FORMAS_DE_BUSQUEDA = [
@@ -18,6 +46,62 @@ export default function App() {
   const [estudiantes, setEstudiantes] = useState<EstudianteGEX[]>([]);
   const [cargando, setCargando] = useState<boolean>(true);
   const [selected, setSelected] = useState<EstudianteGEX | null>(null);
+  const [config, setConfig] = useState<GexPortalConfig>(DEFAULT_GEX_CONFIG);
+  const [sesionInicial] = useState<SesionGex>(leerSesion);
+  const [mostrarComoAcreditar, setMostrarComoAcreditar] = useState<boolean>(!!sesionInicial.opciones);
+  const [planElegido, setPlanElegido] = useState<PlanOpcionId | null>(sesionInicial.plan ?? null);
+  // El estudiante se recupera recién cuando llega el Excel; hasta entonces no se muestra la portada
+  const [restaurando, setRestaurando] = useState<boolean>(!!sesionInicial.codUniv);
+
+  useEffect(() => {
+    if (!restaurando || cargando) return;
+    const guardado = estudiantes.find((est) => est.codUniv === sesionInicial.codUniv);
+    if (guardado) setSelected(guardado);
+    setRestaurando(false);
+  }, [restaurando, cargando, estudiantes, sesionInicial.codUniv]);
+
+  useEffect(() => {
+    if (restaurando) return;
+    guardarSesion({ codUniv: selected?.codUniv, opciones: mostrarComoAcreditar, plan: planElegido });
+  }, [restaurando, selected, mostrarComoAcreditar, planElegido]);
+
+  const cerrarOpciones = () => {
+    setMostrarComoAcreditar(false);
+    setPlanElegido(null);
+  };
+
+  // Sincronizar vista con query param si viniese de URL directa
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('vista') === 'como-acreditar') {
+      setMostrarComoAcreditar(true);
+    }
+  }, []);
+
+  // Configuración del portal: la edita el panel en tbl_gex_config y llega por Realtime
+  useEffect(() => {
+    let montado = true;
+    const cargarConfig = async () => {
+      const c = await gexConfigService.getConfig();
+      if (montado) setConfig(c);
+    };
+    cargarConfig();
+
+    const dejarDeEscuchar = gexConfigService.suscribirse((c) => {
+      if (montado) setConfig(c);
+    });
+
+    // Respaldo por si Realtime no está activo: al volver a la pestaña y cada 30 s
+    window.addEventListener('focus', cargarConfig);
+    const interval = window.setInterval(cargarConfig, 30000);
+
+    return () => {
+      montado = false;
+      dejarDeEscuchar();
+      window.removeEventListener('focus', cargarConfig);
+      window.clearInterval(interval);
+    };
+  }, []);
 
   // Consulta directa a Google Drive y respaldo automático del archivo Excel en Supabase
   const cargarDesdeDrive = useCallback(async (silencioso = false) => {
@@ -91,9 +175,75 @@ export default function App() {
   );
 
   return (
-    <div className={`min-h-screen ${selected ? 'lg:h-screen lg:overflow-hidden' : ''} bg-uss-mist text-slate-900 flex flex-col selection:bg-uss-blue selection:text-white`}>
-      {/* VISTA 1: DETALLE DEL ESTUDIANTE SELECCIONADO (en escritorio encaja en 1 pantalla) */}
-      {selected ? (
+    <div
+      className={`min-h-screen ${selected && !mostrarComoAcreditar ? 'lg:h-screen lg:overflow-hidden' : ''} ${
+        mostrarComoAcreditar && !planElegido && !restaurando ? 'xl:h-screen xl:overflow-hidden' : ''
+      } bg-[#f2f5fb] text-slate-900 flex flex-col selection:bg-uss-blue selection:text-white`}
+    >
+      {restaurando ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 py-24 text-slate-500">
+          <Loader2 className="w-7 h-7 animate-spin text-uss-blue" />
+          <p className="text-sm font-medium">Recuperando tu consulta…</p>
+        </div>
+      ) : mostrarComoAcreditar ? (
+        /* VISTA: MENÚ DE OPCIONES (misma sesión del estudiante) */
+        <div className="flex-1 flex flex-col w-full bg-[#f2f5fb] xl:min-h-0">
+          {/* Header institucional: mantiene la sesión del estudiante */}
+          <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 py-2.5 px-4 sm:px-6 w-full shrink-0 shadow-xs">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <button
+                  onClick={cerrarOpciones}
+                  type="button"
+                  className="shrink-0 inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer"
+                  title="Volver"
+                  aria-label="Volver"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Volver</span>
+                </button>
+                <img
+                  src="/logo.png"
+                  alt="Logo USS"
+                  className="h-7 sm:h-8 w-auto object-contain"
+                />
+                <div className="border-l border-slate-200 pl-3 min-w-0">
+                  <h1 className="text-sm font-bold text-uss-blue leading-tight truncate">
+                    {config.titulo} {config.palabraDestacada}
+                  </h1>
+                  <p className="text-[11px] text-slate-500 truncate">Conoce cómo acreditar</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {selected && (
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-uss-blue text-xs font-medium border border-blue-100">
+                    Estudiante: <strong className="font-semibold">{selected.nombres.split(' ')[0]}</strong> ({selected.codUniv})
+                  </span>
+                )}
+                {botonSincronizar(false)}
+              </div>
+            </div>
+          </header>
+
+          {/* Planes para acreditar Computación y registro del elegido. El footer es el general. */}
+          <main
+            className={`flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 ${
+              planElegido ? '' : 'xl:py-5 xl:min-h-0 xl:flex xl:flex-col'
+            }`}
+          >
+            <MenuOpciones
+              titulo={config.menuTitulo}
+              subtitulo={config.menuSubtitulo}
+              planes={config.planes}
+              estudiante={selected}
+              estudiantes={estudiantes}
+              plan={planElegido}
+              onPlan={setPlanElegido}
+            />
+          </main>
+        </div>
+      ) : selected ? (
         <div className="flex-1 flex flex-col w-full lg:h-full lg:min-h-0 lg:overflow-hidden">
           {/* Header institucional: fijo arriba en el celular para tener siempre a mano Volver */}
           <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 py-2 lg:py-1.5 px-3 sm:px-6 w-full shrink-0">
@@ -112,7 +262,9 @@ export default function App() {
                 className="h-7 sm:h-8 w-auto object-contain"
               />
               <div className="border-l border-slate-200 pl-2.5 min-w-0">
-                <h1 className="text-sm font-bold text-uss-blue leading-tight truncate">Gente con Experiencia</h1>
+                <h1 className="text-sm font-bold text-uss-blue leading-tight truncate">
+                  {config.titulo} {config.palabraDestacada}
+                </h1>
                 <p className="text-[11px] lg:text-[10px] text-slate-500 truncate">Portal oficial de verificación</p>
               </div>
               <div className="ml-auto">{botonSincronizar(false)}</div>
@@ -125,6 +277,7 @@ export default function App() {
               key={selected.codUniv}
               estudiante={selected}
               onBack={() => setSelected(null)}
+              onOpenComoAcreditar={() => setMostrarComoAcreditar(true)}
             />
           </main>
         </div>
@@ -132,7 +285,7 @@ export default function App() {
         /* VISTA 2: PANTALLA PRINCIPAL CON BUSCADOR */
         <div className="flex-1 flex flex-col w-full">
           {/* Portada institucional */}
-          <header className="relative overflow-hidden bg-gradient-to-br from-uss-navy via-uss-blue to-uss-sky text-white px-4 sm:px-6 pt-4 pb-16 sm:pb-20">
+          <header className="relative overflow-hidden bg-gradient-to-br from-[#041d5f] via-uss-blue to-[#1450d8] text-white px-4 sm:px-6 pt-4 pb-16 sm:pb-20">
             {/* Una sola ilustración grande y dos luces suaves: nada que se repita como mosaico */}
             <div className="absolute -left-24 -top-28 w-80 h-80 rounded-full bg-sky-400/25 blur-3xl pointer-events-none" />
             <div className="absolute right-[-6rem] bottom-[-8rem] w-96 h-96 rounded-full bg-indigo-400/20 blur-3xl pointer-events-none" />
@@ -152,14 +305,17 @@ export default function App() {
 
               <div className="mt-9 sm:mt-12 text-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 ring-1 ring-white/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-100">
-                  <ShieldCheck className="w-3.5 h-3.5 text-uss-gold" />
-                  Centro de Informática &bull; USS
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#ffc53d]" />
+                  {config.badge || 'Centro de Informática • USS'}
                 </span>
                 <h1 className="mt-4 font-display text-[2.4rem] leading-[1.05] sm:text-6xl font-extrabold tracking-tight">
-                  Gente con <span className="text-uss-gold">Experiencia</span>
+                  {config.titulo}{' '}
+                  {config.palabraDestacada && (
+                    <span className="text-[#ffc53d]">{config.palabraDestacada}</span>
+                  )}
                 </h1>
                 <p className="mt-3 text-sm sm:text-base text-blue-100/90 max-w-xl mx-auto leading-relaxed">
-                  Portal oficial de consulta y verificación de estudiantes GEX — Universidad Señor de Sipán
+                  {config.subtitulo}
                 </p>
               </div>
             </div>
@@ -171,6 +327,7 @@ export default function App() {
               <SearchBar
                 estudiantes={estudiantes}
                 loading={cargando}
+                config={config}
                 onSelect={(est) => setSelected(est)}
               />
 

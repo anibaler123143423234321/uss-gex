@@ -43,3 +43,9 @@
     );
   }
 }
+
+/* Scroll interno discreto (detalle de las tarjetas de planes en laptops bajas) */
+.scroll-fino {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}

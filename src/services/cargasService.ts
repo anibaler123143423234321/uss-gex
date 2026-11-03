@@ -7,7 +7,6 @@ export interface CargaExcelGEX {
   version: number;
   nombre_archivo: string;
   archivo_url?: string;
-  drive_file_id?: string;
   archivo_base64?: string; // El archivo Excel binario real (.xlsx)
   total_registros: number;
   es_vigente: boolean;

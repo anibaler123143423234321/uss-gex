@@ -10,10 +10,7 @@ export default {
       colors: {
         uss: {
           blue: '#073299',
-          navy: '#041d5f',
-          sky: '#1450d8',
-          gold: '#ffc53d',
-          mist: '#f2f5fb',
+          gold: '#f59e0b',
         },
       },
       fontFamily: {
