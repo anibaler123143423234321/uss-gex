@@ -228,8 +228,8 @@ export default function App() {
           {/* Planes para acreditar Computación y registro del elegido. El footer es el general.
               En monitores grandes se ensancha para que el comparativo de las 4 tarjetas quepa en una línea */}
           <main
-            className={`flex-1 w-full max-w-7xl grande:max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-10 ${
-              planElegido ? '' : 'xl:py-5 xl:flex xl:flex-col'
+            className={`flex-1 w-full max-w-7xl grande:max-w-[1600px] mx-auto px-3 sm:px-6 ${
+              planElegido ? 'py-2 sm:py-3 lg:py-2.5 flex flex-col justify-start min-h-0' : 'py-6 sm:py-10 xl:py-5 xl:flex xl:flex-col'
             }`}
           >
             <MenuOpciones

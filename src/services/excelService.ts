@@ -93,3 +93,6 @@ export function downloadStudentsAsExcel(estudiantes: EstudianteGEX[], filename =
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Estudiantes');
   XLSX.writeFile(workbook, filename);
 }
+
+export * from './driveSolicitudesService';
+

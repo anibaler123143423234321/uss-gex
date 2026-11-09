@@ -1,5 +1,23 @@
-import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
-import { ArrowLeft, ArrowRight, Award, Check, CheckCircle2, Loader2, Minus, Monitor, AlertCircle, CalendarClock, Paperclip, X, PenLine } from 'lucide-react';
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Award,
+  Check,
+  CheckCircle2,
+  Loader2,
+  Minus,
+  Monitor,
+  AlertCircle,
+  CalendarClock,
+  Paperclip,
+  X,
+  PenLine,
+  FileSpreadsheet,
+  Download,
+  ExternalLink,
+  FolderCheck,
+} from 'lucide-react';
 import {
   COMPARATIVA,
   NOTA_COSTOS,
@@ -9,6 +27,19 @@ import {
   type PlanOpcionId,
 } from '../data/planesComputacion';
 import { registrarSolicitud, revisarAdjunto, subirAdjunto } from '../services/solicitudesService';
+import {
+  GEX_DRIVE_FOLDER_ID,
+  GEX_DRIVE_FOLDER_NAME,
+  GEX_DRIVE_FOLDER_PATH,
+  GEX_DRIVE_FOLDER_URL,
+  construirFilaSolicitud,
+  descargarExcelSolicitud,
+  descargarExcelConsolidado,
+  guardarSolicitudEnHistorial,
+  obtenerSolicitudesGuardadas,
+  sincronizarSolicitudConGoogleDrive,
+  type FilaSolicitudGEX,
+} from '../services/driveSolicitudesService';
 import type { EstudianteGEX } from '../types/estudiante';
 
 interface Props {
@@ -89,11 +120,13 @@ function TarjetaPlan({
   numero,
   reservarDescuento,
   onElegir,
+  compacto,
 }: {
   plan: PlanOpcion;
   numero?: number;
   reservarDescuento?: boolean;
   onElegir?: () => void;
+  compacto?: boolean;
 }) {
   const Icon = iconoPlan(plan.icono);
   const destacado = !!plan.insignia && !!onElegir;
@@ -109,6 +142,97 @@ function TarjetaPlan({
     const valor = fila.planes[plan.id];
     return { texto: typeof valor === 'string' ? valor : fila.texto, incluido: !!valor };
   }).filter((fila) => enLista || fila.incluido);
+
+  if (compacto) {
+    return (
+      <article className="rounded-2xl bg-white p-3.5 sm:p-4 ring-1 ring-slate-200/90 shadow-sm space-y-2.5">
+        {/* Encabezado */}
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: `${plan.acento}14`, color: plan.acento }}
+            >
+              <Icon className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block leading-none">
+                Plan elegido
+              </span>
+              <h3 className="text-sm font-black text-slate-900 leading-tight truncate">{plan.nombre}</h3>
+            </div>
+          </div>
+          <span
+            className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+            style={{ backgroundColor: `${plan.acento}14`, color: plan.acento }}
+          >
+            {conExamen ? <PenLine className="w-2.5 h-2.5" /> : <Paperclip className="w-2.5 h-2.5" />}
+            {conExamen ? 'Examen' : 'Archivo'}
+          </span>
+        </div>
+
+        {/* Precio */}
+        <div className="bg-slate-50/90 rounded-xl p-2.5 ring-1 ring-slate-100 flex items-baseline justify-between gap-2">
+          <div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-black text-slate-900 leading-none">
+                {descuento?.precioFinal ?? plan.precio}
+              </span>
+              {descuento && (
+                <span className="rounded-full bg-rose-600 px-1.5 py-0.2 text-[9px] font-extrabold text-white">
+                  -{descuento.porcentaje}%
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-slate-500 mt-0.5">{plan.precioNota}</p>
+          </div>
+          {plan.insignia && (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white shrink-0"
+              style={{ backgroundColor: plan.acento }}
+            >
+              {plan.insignia}
+            </span>
+          )}
+        </div>
+
+        {/* Incluye / Beneficios principales */}
+        <ul className="space-y-1 text-slate-600">
+          {comparativo.slice(0, 3).map((fila) => (
+            <li key={fila.texto} className="flex items-start gap-1.5 text-[11px] leading-snug">
+              <Check className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: plan.acento }} />
+              <span className="line-clamp-1">{fila.texto}</span>
+            </li>
+          ))}
+        </ul>
+
+        {/* Etapas en miniatura */}
+        {plan.etapas.length > 0 && (
+          <div className="border-t border-slate-100 pt-2 space-y-1">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Cronograma</span>
+            <div className="grid grid-cols-3 gap-1">
+              {plan.etapas.map((etapa) => (
+                <div key={etapa.periodo} className="bg-slate-50 rounded-lg p-1 text-center min-w-0">
+                  <span className="text-[10px] font-bold text-slate-800 block leading-tight truncate">
+                    {etapa.duracion}
+                  </span>
+                  <span className="text-[9px] text-slate-500 block leading-tight truncate">
+                    {etapa.costo}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Documento */}
+        <div className="border-t border-slate-100 pt-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+          <Award className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span className="truncate">{plan.documento}</span>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article
@@ -297,9 +421,6 @@ const DECLARACION: Partial<Record<PlanOpcionId, string>> = {
   validacion: 'Declaro que no estoy matriculado en el curso de Computación.',
 };
 
-const CLASE_INPUT =
-  'w-full h-11 rounded-xl border border-slate-300 bg-white px-3.5 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-uss-blue focus:ring-4 focus:ring-uss-blue/15';
-
 // Recuerda en la pestaña que la solicitud ya se envió, para no reenviarla tras un F5
 const claveEnviada = (cod: string, plan: PlanOpcionId) => `gex.solicitud.${cod}.${plan}`;
 
@@ -329,14 +450,51 @@ function RegistroPlan({
   const [declara, setDeclara] = useState(false);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [autoriza, setAutoriza] = useState(false);
-  const [enviando, setEnviando] = useState<'' | 'subiendo' | 'registrando'>('');
+  const [enviando, setEnviando] = useState<'' | 'subiendo' | 'registrando' | 'excel' | 'drive'>('');
   const [enviada, setEnviada] = useState(() => yaEnviada(estudiante?.codUniv, plan.id));
   const [error, setError] = useState('');
+  const [filaGenerada, setFilaGenerada] = useState<FilaSolicitudGEX | null>(null);
 
   // Sin estudiante elegido (se entró desde la portada) se identifica por su código en el Excel GEX
   const alumno = estudiante ?? estudiantes.find((e) => e.codUniv === codigo.trim()) ?? null;
   const esExamen = plan.id !== 'convalidacion';
   const declaracion = DECLARACION[plan.id];
+
+  const getFilaActual = (): FilaSolicitudGEX => {
+    if (filaGenerada) return filaGenerada;
+    const guardadas = obtenerSolicitudesGuardadas();
+    const encontrada = guardadas.find(
+      (f) => f['Código Universitario'] === alumno?.codUniv && f['ID Plan'] === plan.id
+    );
+    if (encontrada) return encontrada;
+    return construirFilaSolicitud({
+      alumno: alumno || {
+        item: 1,
+        condicionEstudio: 'Gente con Experiencia',
+        campus: 'Chiclayo',
+        escuela: '—',
+        seuss: '—',
+        codUniv: codigo || 'USS',
+        nombres: 'Estudiante GEX',
+        nCicCodigo: 0,
+        ingreso: '—',
+        egreso: '—',
+        modalidad: 'Virtual',
+        computacionI: 0,
+        computacionII: 0,
+        computacionIII: 0,
+        generico: 0,
+        especifico: 0,
+        taller: 0,
+        correoInstitucional: '—',
+      },
+      plan,
+      celular: celular || '—',
+      correoPersonal: correoPersonal || '—',
+      esExamen,
+      declaracion,
+    });
+  };
 
   const validar = (): string => {
     if (!alumno) return 'Ingresa un código universitario registrado en GEX.';
@@ -360,6 +518,19 @@ function RegistroPlan({
     try {
       setEnviando(archivo && !esExamen ? 'subiendo' : 'registrando');
       const adjunto = archivo && !esExamen ? await subirAdjunto(alumno.codUniv, archivo) : undefined;
+
+      // 1. Construir fila de la solicitud con todos los atributos requeridos
+      const fila = construirFilaSolicitud({
+        alumno,
+        plan,
+        celular,
+        correoPersonal,
+        esExamen,
+        adjunto,
+        declaracion,
+      });
+
+      // 2. Registrar en Supabase (tbl_gex_solicitudes)
       setEnviando('registrando');
       await registrarSolicitud({
         codUniv: alumno.codUniv,
@@ -373,9 +544,27 @@ function RegistroPlan({
           ...(declaracion ? { noMatriculado: true } : {}),
           ...(correoPersonal.trim() ? { correoPersonal: correoPersonal.trim() } : {}),
           autorizaDatos: true,
+          carpetaDriveId: GEX_DRIVE_FOLDER_ID,
+          carpetaDriveNombre: GEX_DRIVE_FOLDER_NAME,
+          marcaTemporal: fila['Marca temporal'],
         },
         adjunto,
       });
+
+      // 3. Generar y descargar automáticamente el archivo Excel (.xlsx)
+      setEnviando('excel');
+      descargarExcelSolicitud(fila);
+
+      // 4. Acumular en historial local para respaldo y consolidado
+      guardarSolicitudEnHistorial(fila);
+      setFilaGenerada(fila);
+
+      // 5. Enviar al Webhook de Google Apps Script vinculado a la carpeta BDSolicitudes-Gex
+      setEnviando('drive');
+      sincronizarSolicitudConGoogleDrive(fila).catch((err) =>
+        console.warn('Error en webhook de Drive:', err)
+      );
+
       try {
         sessionStorage.setItem(claveEnviada(alumno.codUniv, plan.id), new Date().toISOString());
       } catch {
@@ -390,207 +579,335 @@ function RegistroPlan({
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-5xl mx-auto w-full">
       <button
         type="button"
         onClick={onVolver}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-uss-blue transition cursor-pointer"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-uss-blue transition cursor-pointer mb-2.5"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-3.5 h-3.5" />
         Ver todos los planes
       </button>
 
-      <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] items-start">
-        <div className="lg:sticky lg:top-20">
-          <TarjetaPlan plan={plan} />
+      <div className="grid gap-3.5 lg:grid-cols-[minmax(0,290px)_minmax(0,1fr)] items-start">
+        <div className="lg:sticky lg:top-14">
+          <TarjetaPlan plan={plan} compacto />
         </div>
 
         {enviada ? (
-          <section className="bg-white rounded-3xl ring-1 ring-emerald-200 shadow-sm p-6 sm:p-8">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 ring-1 ring-emerald-200 text-emerald-600 flex items-center justify-center">
-              <CheckCircle2 className="w-7 h-7" />
+          <section className="bg-white rounded-2xl ring-1 ring-emerald-200 shadow-sm p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 ring-1 ring-emerald-200 text-emerald-600 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-tight">
+                  {esExamen ? 'Inscripción al examen registrada' : 'Solicitud de convalidación registrada'}
+                </h2>
+                <p className="text-xs text-slate-600 truncate">
+                  {esExamen ? 'Te inscribimos a ' : 'Recibimos tu solicitud para '}
+                  <strong>{plan.nombre}</strong>
+                  {alumno && ` (${alumno.nombres}, ${alumno.codUniv})`}
+                </p>
+              </div>
             </div>
-            <h2 className="mt-4 text-2xl font-extrabold text-slate-900">
-              {esExamen ? 'Inscripción al examen registrada' : 'Solicitud de convalidación registrada'}
-            </h2>
-            <p className="mt-1 text-sm text-slate-600">
-              {esExamen ? 'Te inscribimos al examen de ' : 'Recibimos tu archivo para '}
-              <strong>{plan.nombre}</strong>
-              {alumno && (
-                <>
-                  {' '}({alumno.nombres}, {alumno.codUniv})
-                </>
-              )}
-              .{esExamen && ' El Centro de Informática programará la fecha y te la comunicará.'}
-            </p>
 
-            <h3 className="mt-6 text-[11px] font-bold uppercase tracking-wider text-slate-400">Próximos pasos</h3>
-            <ol className="mt-2 space-y-2.5">
-              {plan.proceso.map((p, i) => (
-                <li key={p} className="flex items-start gap-3 text-sm text-slate-700">
-                  <span
-                    className="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: plan.acento }}
-                  >
-                    {i + 1}
+            {/* Tarjeta de Confirmación de Excel y Google Drive */}
+            <div className="mt-4 rounded-xl bg-gradient-to-br from-blue-50/80 via-white to-slate-50 ring-1 ring-blue-100 p-3.5 sm:p-4 shadow-sm space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-100/70 pb-2">
+                <div className="flex items-center gap-2 text-uss-blue">
+                  <div className="w-7 h-7 rounded-lg bg-blue-100/70 text-uss-blue flex items-center justify-center shrink-0">
+                    <FileSpreadsheet className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 leading-none">
+                      Excel Generado y Vinculado a Google Drive
+                    </h4>
+                    <span className="text-[10px] text-slate-500">
+                      CINF GEX &bull; {GEX_DRIVE_FOLDER_NAME}
+                    </span>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200">
+                  <FolderCheck className="w-3 h-3" />
+                  Listo en Drive
+                </span>
+              </div>
+
+              <div className="grid gap-1.5 text-xs text-slate-600 bg-white/70 rounded-lg p-2.5 ring-1 ring-slate-100">
+                <p className="flex flex-wrap items-center gap-1.5">
+                  <span className="font-semibold text-slate-700 shrink-0">Carpeta Drive:</span>
+                  <span className="font-mono text-slate-600 truncate">{GEX_DRIVE_FOLDER_PATH}</span>
+                </p>
+                <p className="flex flex-wrap items-center gap-1.5">
+                  <span className="font-semibold text-slate-700 shrink-0">Archivo Excel:</span>
+                  <span className="font-mono text-uss-blue font-bold truncate">
+                    BDSolicitudes_GEX_{alumno?.codUniv || 'USS'}_{plan.id}.xlsx
                   </span>
-                  {p}
-                </li>
-              ))}
-            </ol>
+                </p>
+                <p className="flex flex-wrap items-center gap-1.5">
+                  <span className="font-semibold text-slate-700 shrink-0">Marca temporal:</span>
+                  <span>{getFilaActual()['Marca temporal']}</span>
+                </p>
+              </div>
 
-            <p className="mt-6 text-xs text-slate-500">
-              ¿Dudas? WhatsApp 986 724 506 &bull; cinf@uss.edu.pe &bull; Lunes a viernes de 8:00 a.m. a 1:00 p.m. y de 2:00 p.m. a 6:00 p.m.
-            </p>
-            <button
-              type="button"
-              onClick={onVolver}
-              className="mt-5 h-11 px-5 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50 text-sm font-semibold text-slate-700 transition cursor-pointer"
-            >
-              Ver todos los planes
-            </button>
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => descargarExcelSolicitud(getFilaActual())}
+                  className="h-9 px-3.5 rounded-xl bg-uss-blue hover:bg-blue-800 text-white text-xs font-bold inline-flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Descargar Excel (.xlsx)
+                </button>
+
+                <a
+                  href={GEX_DRIVE_FOLDER_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-9 px-3.5 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                  Abrir carpeta en Google Drive
+                </a>
+
+                {obtenerSolicitudesGuardadas().length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => descargarExcelConsolidado(obtenerSolicitudesGuardadas())}
+                    className="h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-3 h-3 text-slate-500" />
+                    Consolidado ({obtenerSolicitudesGuardadas().length})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-3.5 border-t border-slate-100 pt-3">
+              <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Próximos pasos</h3>
+              <ol className="mt-1.5 space-y-1.5">
+                {plan.proceso.map((p, i) => (
+                  <li key={p} className="flex items-start gap-2 text-xs text-slate-700">
+                    <span
+                      className="w-4 h-4 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5"
+                      style={{ backgroundColor: plan.acento }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+              <p className="text-[11px] text-slate-500">
+                ¿Dudas? WhatsApp 986 724 506 &bull; cinf@uss.edu.pe
+              </p>
+              <button
+                type="button"
+                onClick={onVolver}
+                className="h-8 px-3.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition cursor-pointer"
+              >
+                Ver todos los planes
+              </button>
+            </div>
           </section>
         ) : (
-          <form onSubmit={enviar} noValidate className="bg-white rounded-3xl ring-1 ring-slate-200 shadow-sm p-5 sm:p-7 space-y-7">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: plan.acento }}>
-                Registro
-              </p>
-              <h2 className="text-2xl font-extrabold text-slate-900 leading-tight">{plan.nombre}</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                {esExamen ? 'Inscríbete al examen con tus datos.' : 'Envía tu archivo para la convalidación.'}
-              </p>
+          <form
+            onSubmit={enviar}
+            noValidate
+            className="bg-white rounded-2xl ring-1 ring-slate-200 shadow-sm p-3.5 sm:p-4.5 space-y-3"
+          >
+            {/* Cabecera del formulario */}
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: plan.acento }} />
+                <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight truncate">
+                  Registro &bull; {plan.nombre}
+                </h2>
+              </div>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+                {esExamen ? 'Examen CINF' : 'Convalidación'}
+              </span>
             </div>
 
-            <Paso n={1} titulo="Tus datos" color={plan.acento}>
+            {/* Paso 1: Tus datos */}
+            <section className="space-y-1">
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <span
+                    className="w-4 h-4 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: plan.acento }}
+                  >
+                    1
+                  </span>
+                  Tus datos académicos
+                </h3>
+                <span className="text-[10px] text-slate-400">Padrón oficial GEX</span>
+              </div>
+
               {!estudiante && (
                 <label className="block">
-                  <span className="text-sm font-semibold text-slate-700">Código universitario</span>
                   <input
                     value={codigo}
                     onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ''))}
                     inputMode="numeric"
                     maxLength={12}
-                    placeholder="Ej. 2251804844"
-                    className={`${CLASE_INPUT} mt-1.5 font-mono`}
+                    placeholder="Ingresa tu código universitario (ej. 2251804844)"
+                    className="w-full h-8.5 rounded-lg border border-slate-300 bg-white px-3 text-xs sm:text-sm font-mono placeholder:text-slate-400 outline-none transition focus:border-uss-blue focus:ring-2 focus:ring-uss-blue/15"
                   />
                   {codigo.trim().length >= 10 && !alumno && (
-                    <span className="mt-1.5 block text-xs text-amber-700">Ese código no está registrado en GEX.</span>
+                    <span className="mt-1 block text-[11px] text-amber-700">Ese código no está registrado en GEX.</span>
                   )}
                 </label>
               )}
-              {alumno && (
-                <dl className="grid gap-px sm:grid-cols-2 rounded-2xl overflow-hidden ring-1 ring-slate-200 bg-slate-200">
-                  <Dato label="Código" valor={alumno.codUniv} mono />
-                  <Dato label="Apellidos y nombres" valor={alumno.nombres} />
-                  <Dato label="Escuela" valor={alumno.escuela || '—'} />
-                  <Dato label="Correo institucional" valor={alumno.correoInstitucional || '—'} />
-                </dl>
-              )}
-              {alumno && <p className="text-xs text-slate-400">Tomados del registro del Programa GEX.</p>}
-            </Paso>
 
-            <Paso n={2} titulo="Contacto" color={plan.acento}>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block">
-                  <span className="text-sm font-semibold text-slate-700">Celular</span>
+              {alumno && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-50 rounded-xl p-2.5 ring-1 ring-slate-200/80">
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Código</span>
+                    <span className="text-xs font-bold text-slate-900 font-mono block truncate">{alumno.codUniv}</span>
+                  </div>
+                  <div className="min-w-0 sm:col-span-1">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Estudiante</span>
+                    <span className="text-xs font-bold text-slate-900 block truncate" title={alumno.nombres}>
+                      {alumno.nombres}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Escuela</span>
+                    <span className="text-xs font-semibold text-slate-800 block truncate" title={alumno.escuela || '—'}>
+                      {alumno.escuela || '—'}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Correo USS</span>
+                    <span className="text-xs font-semibold text-slate-800 block truncate" title={alumno.correoInstitucional || '—'}>
+                      {alumno.correoInstitucional || '—'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Paso 2: Contacto */}
+            <section className="space-y-1">
+              <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                <span
+                  className="w-4 h-4 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: plan.acento }}
+                >
+                  2
+                </span>
+                Datos de contacto
+              </h3>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-0.5">
+                    Celular <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     value={celular}
                     onChange={(e) => setCelular(e.target.value.replace(/\D/g, ''))}
                     inputMode="tel"
                     maxLength={9}
                     placeholder="9XX XXX XXX"
-                    className={`${CLASE_INPUT} mt-1.5 font-mono`}
+                    className="w-full h-8.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs sm:text-sm font-mono placeholder:text-slate-400 outline-none transition focus:border-uss-blue focus:ring-2 focus:ring-uss-blue/15"
                   />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Correo personal <span className="font-normal text-slate-400">(opcional)</span>
-                  </span>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-0.5">
+                    Correo personal <span className="text-slate-400 font-normal">(opcional)</span>
+                  </label>
                   <input
                     type="email"
                     value={correoPersonal}
                     onChange={(e) => setCorreoPersonal(e.target.value)}
                     maxLength={120}
                     placeholder="nombre@gmail.com"
-                    className={`${CLASE_INPUT} mt-1.5`}
+                    className="w-full h-8.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs sm:text-sm placeholder:text-slate-400 outline-none transition focus:border-uss-blue focus:ring-2 focus:ring-uss-blue/15"
                   />
-                </label>
+                </div>
               </div>
-            </Paso>
+            </section>
 
-            <Paso n={3} titulo={esExamen ? 'Examen' : 'Tu archivo'} color={plan.acento}>
+            {/* Paso 3: Examen / Archivo */}
+            <section className="space-y-1">
+              <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+                <span
+                  className="w-4 h-4 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: plan.acento }}
+                >
+                  3
+                </span>
+                {esExamen ? 'Programación del examen' : 'Documento a convalidar'}
+              </h3>
+
               {esExamen ? (
-                <p className="flex items-start gap-3 rounded-2xl bg-slate-50 ring-1 ring-slate-100 p-4 text-sm text-slate-600">
-                  <CalendarClock className="w-5 h-5 shrink-0" style={{ color: plan.acento }} />
-                  Te inscribes al examen de {plan.nombre}. El Centro de Informática programará la fecha y te la
-                  comunicará por celular o correo.
-                </p>
+                <div className="flex items-center gap-2 rounded-xl bg-slate-50 ring-1 ring-slate-200/80 px-3 py-2 text-xs text-slate-600">
+                  <CalendarClock className="w-4 h-4 shrink-0 text-uss-blue" />
+                  <span>
+                    Te inscribes al examen de <strong>{plan.nombre}</strong>. El Centro de Informática programará la fecha y te notificará por WhatsApp/correo.
+                  </span>
+                </div>
               ) : (
                 <SelectorArchivo archivo={archivo} onChange={setArchivo} color={plan.acento} />
               )}
               {declaracion && <Casilla marcada={declara} onChange={setDeclara} label={declaracion} />}
-            </Paso>
+            </section>
 
-            <Paso n={4} titulo="Confirmación" color={plan.acento}>
-              <Casilla
-                marcada={autoriza}
-                onChange={setAutoriza}
-                label="Autorizo al Centro de Informática USS a usar estos datos para gestionar mi solicitud."
-              />
+            {/* Paso 4: Confirmación y Envío */}
+            <section className="space-y-2 pt-1 border-t border-slate-100">
+              <label className="flex items-start gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5 cursor-pointer hover:bg-slate-100/70 transition">
+                <input
+                  type="checkbox"
+                  checked={autoriza}
+                  onChange={(e) => setAutoriza(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-[#073299] shrink-0"
+                />
+                <span className="text-[11px] sm:text-xs text-slate-700 leading-snug">
+                  Autorizo al Centro de Informática USS a usar estos datos para gestionar mi solicitud y generar mi registro en Excel/Drive.
+                </span>
+              </label>
 
               {error && (
-                <p role="alert" className="flex items-start gap-2 rounded-xl bg-red-50 ring-1 ring-red-200 px-3.5 py-2.5 text-sm text-red-700">
-                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <p role="alert" className="flex items-center gap-1.5 rounded-lg bg-red-50 ring-1 ring-red-200 px-3 py-1.5 text-xs text-red-700">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   {error}
                 </p>
               )}
 
-              <button
-                type="submit"
-                disabled={!!enviando}
-                className="w-full sm:w-auto h-12 px-6 rounded-xl text-sm font-bold text-white inline-flex items-center justify-center gap-2 transition hover:brightness-110 disabled:opacity-60 cursor-pointer"
-                style={{ backgroundColor: plan.acento }}
-              >
-                {enviando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                {enviando === 'subiendo'
-                  ? 'Subiendo archivo…'
-                  : enviando === 'registrando'
-                  ? 'Registrando…'
-                  : esExamen
-                  ? 'Inscribirme'
-                  : 'Enviar solicitud de convalidación'}
-              </button>
-            </Paso>
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                <span className="text-[10px] text-slate-400">
+                  Destino: <strong>BDSolicitudes-Gex</strong> (Drive y Excel)
+                </span>
+
+                <button
+                  type="submit"
+                  disabled={!!enviando}
+                  className="h-9 sm:h-10 px-5 rounded-xl text-xs sm:text-sm font-bold text-white inline-flex items-center justify-center gap-2 transition hover:brightness-110 disabled:opacity-60 cursor-pointer shadow-md"
+                  style={{ backgroundColor: plan.acento }}
+                >
+                  {enviando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  {enviando === 'subiendo'
+                    ? 'Subiendo archivo…'
+                    : enviando === 'registrando'
+                    ? 'Registrando solicitud…'
+                    : enviando === 'excel'
+                    ? 'Generando Excel…'
+                    : enviando === 'drive'
+                    ? 'Sincronizando con Drive…'
+                    : esExamen
+                    ? 'Inscribirme'
+                    : 'Enviar solicitud de convalidación'}
+                </button>
+              </div>
+            </section>
           </form>
         )}
       </div>
-    </div>
-  );
-}
-
-function Paso({ n, titulo, color, children }: { n: number; titulo: string; color: string; children: ReactNode }) {
-  return (
-    <section className="space-y-3">
-      <h3 className="flex items-center gap-2.5 text-base font-bold text-slate-900">
-        <span
-          className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0"
-          style={{ backgroundColor: color }}
-        >
-          {n}
-        </span>
-        {titulo}
-      </h3>
-      <div className="space-y-3 sm:pl-9">{children}</div>
-    </section>
-  );
-}
-
-function Dato({ label, valor, mono }: { label: string; valor: string; mono?: boolean }) {
-  return (
-    <div className="bg-slate-50 px-3.5 py-2.5 min-w-0">
-      <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</dt>
-      <dd className={`text-sm font-semibold text-slate-900 break-words ${mono ? 'font-mono' : ''}`}>{valor}</dd>
     </div>
   );
 }
@@ -609,11 +926,11 @@ function SelectorArchivo({
 
   if (archivo) {
     return (
-      <div className={`flex items-center gap-3 rounded-2xl px-4 py-3 ring-1 ${problema ? 'ring-red-200 bg-red-50' : 'ring-slate-200 bg-slate-50'}`}>
-        <Paperclip className="w-5 h-5 shrink-0" style={{ color }} />
+      <div className={`flex items-center gap-2 rounded-xl px-3 py-2 ring-1 ${problema ? 'ring-red-200 bg-red-50' : 'ring-slate-200 bg-slate-50'}`}>
+        <Paperclip className="w-4 h-4 shrink-0" style={{ color }} />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-800 truncate">{archivo.name}</p>
-          <p className={`text-xs ${problema ? 'text-red-700' : 'text-slate-500'}`}>
+          <p className="text-xs font-semibold text-slate-800 truncate">{archivo.name}</p>
+          <p className={`text-[10px] ${problema ? 'text-red-700' : 'text-slate-500'}`}>
             {problema ||
               (archivo.size < 1024 * 1024
                 ? `${Math.max(1, Math.round(archivo.size / 1024))} KB`
@@ -623,22 +940,20 @@ function SelectorArchivo({
         <button
           type="button"
           onClick={() => onChange(null)}
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 hover:bg-white hover:text-slate-800 transition cursor-pointer"
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-white hover:text-slate-800 transition cursor-pointer"
           aria-label="Quitar archivo"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5" />
         </button>
       </div>
     );
   }
 
   return (
-    <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 hover:border-slate-400 bg-slate-50/60 px-4 py-8 text-center cursor-pointer transition">
-      <Paperclip className="w-6 h-6" style={{ color }} />
-      <span className="text-sm font-semibold text-slate-800">Adjunta tu título técnico o certificado</span>
-      <span className="text-xs text-slate-500">
-        PDF, JPG o PNG, hasta 5 MB. Si tienes varios documentos, únelos en un solo PDF.
-      </span>
+    <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 hover:border-slate-400 bg-slate-50/60 px-3 py-2.5 text-center cursor-pointer transition">
+      <Paperclip className="w-4 h-4 text-slate-500 shrink-0" style={{ color }} />
+      <span className="text-xs font-semibold text-slate-800">Adjunta certificado o constancia</span>
+      <span className="text-[10px] text-slate-400">(PDF, JPG o PNG hasta 5 MB)</span>
       <input
         type="file"
         accept="application/pdf,image/jpeg,image/png"
@@ -651,14 +966,14 @@ function SelectorArchivo({
 
 function Casilla({ marcada, onChange, label }: { marcada: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <label className="flex items-start gap-3 rounded-xl ring-1 ring-slate-200 bg-white px-3.5 py-3 cursor-pointer hover:bg-slate-50 transition">
+    <label className="flex items-start gap-2.5 rounded-lg ring-1 ring-slate-200 bg-white px-3 py-2 cursor-pointer hover:bg-slate-50 transition">
       <input
         type="checkbox"
         checked={marcada}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 w-4 h-4 accent-[#073299] shrink-0"
+        className="mt-0.5 w-3.5 h-3.5 accent-[#073299] shrink-0"
       />
-      <span className="text-sm text-slate-700 leading-snug">{label}</span>
+      <span className="text-xs text-slate-700 leading-snug">{label}</span>
     </label>
   );
 }
