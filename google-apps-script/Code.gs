@@ -74,8 +74,8 @@ function doPost(e) {
     const estado = data['Estado'] || data['Estado Solicitud'] || 'Registrado';
 
     // 1. Guardar archivos adjuntos en la carpeta de Google Drive:
-    // BDSolicitudes-Gex > Adjuntos - Solicitudes GEX > [codUniv] - [estudiante]
-    const resultadoAdjuntos = procesarArchivosAdjuntosEnDrive(data, codUniv, estudiante);
+    // Junto a la hoja > Adjuntos - Solicitudes GEX > [codUniv] - [estudiante]
+    const resultadoAdjuntos = procesarArchivosAdjuntosEnDrive(data, codUniv, estudiante, ss);
     const textoAdjunto = resultadoAdjuntos ? resultadoAdjuntos.texto : adjunto;
 
     sheet.appendRow([
@@ -123,12 +123,12 @@ function doPost(e) {
  * BDSolicitudes-Gex > Adjuntos - Solicitudes GEX > [codUniv] - [estudiante]
  * Devuelve la fórmula HYPERLINK para la celda de Sheets y el enlace de acceso.
  */
-function procesarArchivosAdjuntosEnDrive(data, codUniv, estudiante) {
+function procesarArchivosAdjuntosEnDrive(data, codUniv, estudiante, ss) {
   if (!data || !Array.isArray(data.archivos) || data.archivos.length === 0) {
     return null;
   }
 
-  const carpetaBase = carpetaDestino();
+  const carpetaBase = carpetaDestino(ss);
   if (!carpetaBase) {
     return null;
   }
@@ -281,10 +281,41 @@ function getOrCreateSpreadsheet() {
   return ss;
 }
 
-/** La carpeta BDSolicitudes-Gex, o null si esta cuenta no puede abrirla */
-function carpetaDestino() {
+/**
+ * Obtiene la carpeta de destino para la hoja y los adjuntos:
+ * 1. La carpeta oficial FOLDER_ID (si esta cuenta tiene acceso directo)
+ * 2. La carpeta donde vive la hoja de cálculo activa
+ * 3. Mi unidad como último recurso
+ */
+function carpetaDestino(ss) {
   try {
-    return DriveApp.getFolderById(FOLDER_ID);
+    const f = DriveApp.getFolderById(FOLDER_ID);
+    if (f) return f;
+  } catch (e) {}
+
+  if (ss) {
+    try {
+      const archivoHoja = DriveApp.getFileById(ss.getId());
+      const padres = archivoHoja.getParents();
+      if (padres.hasNext()) {
+        return padres.next();
+      }
+    } catch (e) {}
+  }
+
+  try {
+    const activa = SpreadsheetApp.getActiveSpreadsheet();
+    if (activa) {
+      const archivoHoja = DriveApp.getFileById(activa.getId());
+      const padres = archivoHoja.getParents();
+      if (padres.hasNext()) {
+        return padres.next();
+      }
+    }
+  } catch (e) {}
+
+  try {
+    return DriveApp.getRootFolder();
   } catch (e) {
     return null;
   }
