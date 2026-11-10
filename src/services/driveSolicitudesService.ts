@@ -17,7 +17,12 @@ export const GEX_SHEET_NAME = 'USS_CINF_Solicitudes_GEX';
  * solicitud queda en Supabase y en el Excel descargado, pero NO en la hoja de Drive: la pantalla de
  * confirmación lo usa para no afirmar algo que no pasó.
  */
-export const GEX_DRIVE_CONFIGURADO = !!(import.meta.env.VITE_GEX_APPS_SCRIPT_URL as string | undefined)?.trim();
+const DEFAULT_APPS_SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbyQrDM0Bzti21eruxHKqG-bL0PtNLWTla6snVApWxFQSrTD56pBN3vOdMhS0IV4qjcp/exec';
+
+export const GEX_DRIVE_CONFIGURADO = !!(
+  (import.meta.env.VITE_GEX_APPS_SCRIPT_URL as string | undefined)?.trim() || DEFAULT_APPS_SCRIPT_URL
+);
 
 export interface ArchivoAdjuntoDrive {
   clave?: string;
@@ -123,7 +128,8 @@ export function construirFilaSolicitud({
 export async function sincronizarSolicitudConGoogleDrive(
   fila: FilaSolicitudGEX
 ): Promise<{ ok: boolean; mensaje: string }> {
-  const webhookUrl = (import.meta.env.VITE_GEX_APPS_SCRIPT_URL as string | undefined)?.trim();
+  const webhookUrl =
+    (import.meta.env.VITE_GEX_APPS_SCRIPT_URL as string | undefined)?.trim() || DEFAULT_APPS_SCRIPT_URL;
   if (!webhookUrl) return { ok: false, mensaje: 'Falta VITE_GEX_APPS_SCRIPT_URL: la solicitud no se envió a Drive.' };
 
   try {
