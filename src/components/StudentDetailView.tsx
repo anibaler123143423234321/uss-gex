@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import {
   ArrowLeft,
   User,
@@ -19,10 +19,23 @@ import {
   ShieldCheck,
   BarChart3,
   LayoutGrid,
+  ClipboardCheck,
+  XCircle,
+  AlertCircle,
+  Phone,
+  X,
+  RefreshCw,
+  Send,
+  Lock,
   type LucideIcon,
 } from 'lucide-react';
 import CourseIllustration, { HeroIllustration, type Ilustracion } from './CourseIllustration';
 import type { EstudianteGEX } from '../types/estudiante';
+import {
+  consultarSolicitudesEstudiante,
+  type SolicitudEstadoEstudiante,
+} from '../services/solicitudesService';
+import { CONTACTO_CINF, PLANES_COMPUTACION } from '../data/planesComputacion';
 
 interface Props {
   estudiante: EstudianteGEX;
@@ -45,8 +58,137 @@ interface Curso {
   tagApproved: string;
 }
 
+// Pasos oficiales del flujo de atención GEX CINF
+const PASOS_TRAMITE = [
+  {
+    paso: 1,
+    clave: 'solicitada',
+    titulo: 'Solicitud registrada',
+    subtitulo: 'Recepción CINF',
+    descripcion: 'Tus datos e inscripción fueron registrados con éxito.',
+  },
+  {
+    paso: 2,
+    clave: 'en_atencion',
+    titulo: 'Revisión y Finanzas',
+    subtitulo: 'Habilitación académica',
+    descripcion: 'Se valida tu expediente y se programan los cargos correspondientes.',
+  },
+  {
+    paso: 3,
+    clave: 'asignada',
+    titulo: 'Asignación académica',
+    subtitulo: 'Grupo y horario CINF',
+    descripcion: 'El Centro de Informática te asigna grupo, horario y acceso a plataformas.',
+  },
+  {
+    paso: 4,
+    clave: 'aprobada',
+    titulo: 'Acreditación final',
+    subtitulo: 'Registro de nota',
+    descripcion: 'Evaluación aprobada y expedición oficial de la constancia de acreditación.',
+  },
+];
+
+function getPasoActual(sol: SolicitudEstadoEstudiante): number {
+  if (sol.estado === 'aprobada') return 4;
+  if (sol.estado === 'asignada') return 3;
+  if (sol.estado === 'en_atencion') return 2;
+  if (sol.estado === 'solicitada') return 1;
+  return Math.min(4, Math.max(1, sol.paso || 1));
+}
+
+function getEstadoBadgeInfo(sol: SolicitudEstadoEstudiante) {
+  if (sol.estado === 'rechazada') {
+    return {
+      texto: 'Observada',
+      estilo: 'bg-rose-50 text-rose-700 ring-rose-200 hover:bg-rose-100',
+      Icon: XCircle,
+    };
+  }
+  if (sol.estado === 'aprobada' || sol.paso === 4) {
+    return {
+      texto: 'Acreditado (Paso 4/4)',
+      estilo: 'bg-emerald-50 text-emerald-700 ring-emerald-200 hover:bg-emerald-100',
+      Icon: CheckCircle2,
+    };
+  }
+  if (sol.estado === 'asignada' || sol.paso === 3) {
+    return {
+      texto: 'Asignado (Paso 3/4)',
+      estilo: 'bg-indigo-50 text-indigo-700 ring-indigo-200 hover:bg-indigo-100',
+      Icon: Sparkles,
+    };
+  }
+  if (sol.estado === 'en_atencion' || sol.paso === 2) {
+    return {
+      texto: 'En atención (Paso 2/4)',
+      estilo: 'bg-amber-50 text-amber-700 ring-amber-200 hover:bg-amber-100',
+      Icon: Clock,
+    };
+  }
+  return {
+    texto: 'En trámite (Paso 1/4)',
+    estilo: 'bg-sky-50 text-sky-700 ring-sky-200 hover:bg-sky-100',
+    Icon: Clock,
+  };
+}
+
+function getNombrePlan(planId: string): string {
+  const plan = PLANES_COMPUTACION.find((p) => p.id === planId);
+  return plan ? plan.nombre : planId.toUpperCase();
+}
+
+function formatFecha(fechaIso?: string): string {
+  if (!fechaIso) return 'Reciente';
+  try {
+    const d = new Date(fechaIso);
+    if (isNaN(d.getTime())) return fechaIso;
+    return d.toLocaleDateString('es-PE', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return fechaIso;
+  }
+}
+
 export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcreditar }: Props) {
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
+  const [solicitudes, setSolicitudes] = useState<SolicitudEstadoEstudiante[]>([]);
+  const [cargandoSolicitudes, setCargandoSolicitudes] = useState<boolean>(true);
+  const [modalSeguimientoAbierto, setModalSeguimientoAbierto] = useState<boolean>(false);
+
+  // Consulta en tiempo real de trámites y solicitudes registradas para este código
+  const cargarEstado = useCallback(async () => {
+    setCargandoSolicitudes(true);
+    try {
+      const data = await consultarSolicitudesEstudiante(e.codUniv);
+      setSolicitudes(data);
+    } catch (err) {
+      console.warn('[StudentDetailView] Error al consultar solicitudes:', err);
+    } finally {
+      setCargandoSolicitudes(false);
+    }
+  }, [e.codUniv]);
+
+  useEffect(() => {
+    cargarEstado();
+
+    const handleActualizada = () => {
+      cargarEstado();
+    };
+
+    window.addEventListener('gex_solicitud_actualizada', handleActualizada);
+    return () => {
+      window.removeEventListener('gex_solicitud_actualizada', handleActualizada);
+    };
+  }, [cargarEstado]);
+
+  const solicitudActiva = solicitudes.length > 0 ? solicitudes[0] : null;
 
   // 1. Separar apellidos y nombres
   const partes = e.nombres.trim().split(/\s+/);
@@ -195,7 +337,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
   const caso: 'sin-cursos' | 'en-curso' | 'acreditado' =
     !plan ? 'sin-cursos' : plan.aprobados >= plan.totalMeta ? 'acreditado' : 'en-curso';
 
-  /** Tarjeta de un curso: un solo dibujo propio en la esquina, sin mosaicos de fondo */
+  /** Tarjeta de un curso */
   const renderCurso = (curso: Curso) => {
     const esAprobado = curso.estado === 1;
     const { Icon } = curso;
@@ -287,7 +429,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
     );
   };
 
-  // Lleva a la pantalla de opciones de App, que conserva al estudiante en el header
+  // Botón estándar para abrir Menú de opciones
   const botonMenuOpciones = (
     <button
       type="button"
@@ -300,8 +442,8 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
   );
 
   /**
-   * Panel derecho del boceto (B). Arriba, a la misma altura que el carné de la izquierda,
-   * la estadística de cursos y el mensaje del caso; debajo, los cursos o el menú.
+   * Panel derecho del boceto (B).
+   * La dona refleja estrictamente el avance de cursos curriculares aprobados (0% si no registra cursos).
    */
   const renderPanel = () => {
     const totalMeta = plan ? plan.totalMeta : 3;
@@ -354,8 +496,8 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
           caso === 'acreditado' ? 'ring-emerald-200' : 'ring-slate-900/5'
         }`}
       >
-        {/* Encabezado: termina con la misma línea que el carné de la izquierda */}
-        <div className="relative px-3.5 py-2.5 sm:px-4 sm:py-2 grande:px-6 grande:py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 grande:gap-6">
+        {/* Encabezado: dona de cursos (siempre 0% si no tiene cursos) y texto descriptivo */}
+        <div className="relative px-3.5 py-2.5 sm:px-4 sm:py-2.5 grande:px-6 grande:py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 grande:gap-6">
           {caso === 'acreditado' && (
             <img
               src="/academic-seal.svg"
@@ -363,19 +505,55 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
               className="absolute -top-6 -right-6 w-28 h-28 pointer-events-none opacity-[0.08] select-none"
             />
           )}
-          {/* Dona de cursos */}
-          <DonaCursos total={totalMeta} aprobados={aprobados} className="w-24 h-24 2xl:w-28 2xl:h-28 grande:w-32 grande:h-32 mx-auto sm:mx-0 shrink-0" />
+
+          {/* Gráfica circular estricta de cursos aprobados */}
+          <DonaCursos
+            total={totalMeta}
+            aprobados={aprobados}
+            className="w-24 h-24 2xl:w-28 2xl:h-28 grande:w-32 grande:h-32 mx-auto sm:mx-0 shrink-0"
+          />
+
           <div className="min-w-0 flex-1 text-center sm:text-left relative">
             {encabezado}
           </div>
+
           {caso === 'en-curso' && <div className="sm:self-end shrink-0 relative">{botonMenuOpciones}</div>}
         </div>
 
-        {/* Cuerpo: los cursos del plan, o el menú si aún no hay cursos */}
+        {/* Cuerpo del panel */}
         {caso === 'sin-cursos' ? (
-          <div className="p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-3 min-h-0">
+          <div className="p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-3.5 min-h-0 flex-1">
             <HeroIllustration className="w-32 sm:w-36 grande:w-48 text-uss-blue/30" />
-            {botonMenuOpciones}
+
+            {/* Botones en el medio */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full">
+              {solicitudActiva ? (
+                <>
+                  {/* Botón Ver Estado: visible al medio junto al menú bloqueado */}
+                  <button
+                    type="button"
+                    onClick={() => setModalSeguimientoAbierto(true)}
+                    className="w-full sm:w-auto h-9 px-4 2xl:h-10 grande:h-11 grande:px-5 rounded-xl bg-uss-blue hover:bg-[#041d5f] text-white text-xs 2xl:text-sm font-bold inline-flex items-center justify-center gap-1.5 grande:gap-2 shadow-sm transition cursor-pointer"
+                  >
+                    <ClipboardCheck className="w-3.5 h-3.5 grande:w-4 grande:h-4 text-sky-200" />
+                    <span>Ver estado</span>
+                  </button>
+
+                  {/* Menú de opciones bloqueado porque ya se envió solicitud */}
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full sm:w-auto h-9 px-4 2xl:h-10 grande:h-11 grande:px-5 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 text-xs 2xl:text-sm font-semibold inline-flex items-center justify-center gap-1.5 grande:gap-2 cursor-not-allowed opacity-60 select-none"
+                    title={`Ya registraste una solicitud para el ${getNombrePlan(solicitudActiva.plan)}.`}
+                  >
+                    <Lock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Menú de opciones</span>
+                  </button>
+                </>
+              ) : (
+                botonMenuOpciones
+              )}
+            </div>
           </div>
         ) : (
           <div className="p-2.5 sm:p-3 grande:p-4 flex flex-col gap-2 grande:gap-3 min-h-0 flex-1">
@@ -435,11 +613,9 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
       {/* ========================================================================= */}
       {/* 2. FICHA (A) A LA IZQUIERDA Y UN SOLO PANEL (B) A LA DERECHA              */}
       {/* ========================================================================= */}
-      {/* Dos filas compartidas (encabezado y cuerpo): con subgrid la línea bajo el carné y la del */}
-      {/* panel derecho caen a la misma altura. Altura natural: no se estira a toda la pantalla   */}
       <div className="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-[auto_auto] gap-3 grande:gap-x-4 lg:gap-y-0 w-full">
         <aside className="lg:row-span-2 flex flex-col lg:grid lg:grid-rows-subgrid bg-white rounded-3xl lg:rounded-2xl ring-1 ring-slate-900/5 shadow-sm overflow-hidden">
-          {/* Credencial: fondo claro con la franja azul USS arriba, sin degradados ni dibujos de fondo */}
+          {/* Credencial: fondo claro con la franja azul USS arriba */}
           <div className="relative bg-[#f6f8fe] border-b border-slate-200 px-4 pt-5 pb-4 lg:px-3 lg:pt-3.5 lg:pb-3 grande:px-5 grande:pt-5 grande:pb-4 flex flex-col justify-center gap-3 lg:gap-2 grande:gap-3">
             <span className="absolute inset-x-0 top-0 h-1 bg-uss-blue" aria-hidden="true" />
 
@@ -449,7 +625,30 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
                 Carné GEX
               </span>
 
-              {caso === 'sin-cursos' ? (
+              {/* Insignia de estado */}
+              {cargandoSolicitudes ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] lg:text-[9px] grande:text-[11px] font-medium animate-pulse">
+                  <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                  Verificando...
+                </span>
+              ) : solicitudActiva ? (
+                (() => {
+                  const badge = getEstadoBadgeInfo(solicitudActiva);
+                  const IconBadge = badge.Icon;
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => setModalSeguimientoAbierto(true)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] lg:text-[9px] grande:text-[11px] font-bold ring-1 transition cursor-pointer group shadow-2xs ${badge.estilo}`}
+                      title="Haz clic para ver el estado de tu trámite"
+                    >
+                      <IconBadge className="w-3 h-3 lg:w-2.5 lg:h-2.5 shrink-0" />
+                      <span>{badge.texto}</span>
+                      <span className="text-[8px] opacity-70 group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+                    </button>
+                  );
+                })()
+              ) : caso === 'sin-cursos' ? (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] lg:text-[9px] grande:text-[11px] font-bold ring-1 ring-slate-200">
                   <Circle className="w-3 h-3 lg:w-2.5 lg:h-2.5" />
                   Sin iniciar
@@ -459,7 +658,12 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
                   <Clock className="w-3 h-3 lg:w-2.5 lg:h-2.5" />
                   En curso
                 </span>
-              ) : null}
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] lg:text-[9px] grande:text-[11px] font-bold ring-1 ring-emerald-200">
+                  <CheckCircle2 className="w-3 h-3 lg:w-2.5 lg:h-2.5" />
+                  Acreditado
+                </span>
+              )}
             </div>
 
             {/* Avatar + Nombre */}
@@ -506,34 +710,45 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
 
           {/* Debajo de la línea: datos en una sola columna y el pie de la ficha */}
           <div className="flex flex-col min-h-0">
-          <dl className="flex-1 flex flex-col divide-y divide-slate-100 px-4 lg:px-3.5 grande:px-5 min-h-0">
-            {datos.map(({ Icon, label, valor }) => (
-              <div key={label} className="flex items-center justify-between gap-2 py-2.5 lg:py-1.5 2xl:py-2.5 grande:py-3 min-w-0">
-                <dt className="flex items-center gap-1.5 text-[11px] lg:text-[10px] 2xl:text-[11px] grande:text-xs font-bold uppercase tracking-wider text-slate-400 shrink-0">
-                  <Icon className="w-3.5 h-3.5 lg:w-3 lg:h-3 2xl:w-3.5 2xl:h-3.5 grande:w-4 grande:h-4 text-uss-blue/70 shrink-0" />
-                  {label}
-                </dt>
-                <dd className="min-w-0 text-xs lg:text-[11.5px] 2xl:text-sm grande:text-[15px] font-semibold text-slate-900 leading-snug text-right truncate">
-                  {valor}
-                </dd>
-              </div>
-            ))}
-          </dl>
+            <dl className="flex-1 flex flex-col divide-y divide-slate-100 px-4 lg:px-3.5 grande:px-5 min-h-0">
+              {datos.map(({ Icon, label, valor }) => (
+                <div key={label} className="flex items-center justify-between gap-2 py-2.5 lg:py-1.5 2xl:py-2.5 grande:py-3 min-w-0">
+                  <dt className="flex items-center gap-1.5 text-[11px] lg:text-[10px] 2xl:text-[11px] grande:text-xs font-bold uppercase tracking-wider text-slate-400 shrink-0">
+                    <Icon className="w-3.5 h-3.5 lg:w-3 lg:h-3 2xl:w-3.5 2xl:h-3.5 grande:w-4 grande:h-4 text-uss-blue/70 shrink-0" />
+                    {label}
+                  </dt>
+                  <dd className="min-w-0 text-xs lg:text-[11.5px] 2xl:text-sm grande:text-[15px] font-semibold text-slate-900 leading-snug text-right truncate">
+                    {valor}
+                  </dd>
+                </div>
+              ))}
+            </dl>
 
-          {/* Pie de la ficha */}
-          <div className="px-3.5 py-2 lg:px-3 lg:py-1.5 grande:px-5 grande:py-2.5 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between text-[10px] grande:text-xs text-slate-500 shrink-0">
-            <span className="inline-flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-uss-blue" />
-              Verificación CINF &bull; USS
-            </span>
-            <span className="font-mono text-[9px] text-slate-400">GEX 2026</span>
-          </div>
+            {/* Pie de la ficha */}
+            <div className="px-3.5 py-2 lg:px-3 lg:py-1.5 grande:px-5 grande:py-2.5 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between text-[10px] grande:text-xs text-slate-500 shrink-0">
+              <span className="inline-flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-uss-blue" />
+                Verificación CINF &bull; USS
+              </span>
+              <span className="font-mono text-[9px] text-slate-400">GEX 2026</span>
+            </div>
           </div>
         </aside>
 
         {renderPanel()}
       </div>
 
+      {/* Modal interactivo de Estado de Solicitud */}
+      {modalSeguimientoAbierto && (
+        <ModalSeguimientoSolicitud
+          estudiante={e}
+          solicitudes={solicitudes}
+          cargando={cargandoSolicitudes}
+          onClose={() => setModalSeguimientoAbierto(false)}
+          onRecargar={cargarEstado}
+          onOpenMenuOpciones={onOpenComoAcreditar}
+        />
+      )}
     </div>
   );
 }
@@ -542,7 +757,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
 const COLOR_APROBADO = '#10B981';
 const COLOR_PENDIENTE = '#94A3B8';
 
-/** Dona de los cursos del plan: un segmento por curso (3 en tradicional, 4 en rutas), verde si está aprobado y gris si no */
+/** Dona de los cursos del plan: un segmento por curso, verde si completado y gris si no */
 function DonaCursos({
   total = 3,
   aprobados = 0,
@@ -552,7 +767,6 @@ function DonaCursos({
   aprobados: number;
   className?: string;
 }) {
-  // Mismas proporciones que el Pie del panel: radio interior 52, exterior 75 y 3° entre segmentos
   const radio = 63.5;
   const grosor = 23;
   const circunferencia = 2 * Math.PI * radio;
@@ -582,6 +796,295 @@ function DonaCursos({
         <span className="text-xl 2xl:text-2xl font-black text-slate-900 leading-none font-mono">
           {porcentaje}%
         </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Modal de Seguimiento de Estado de Trámites GEX para el Estudiante.
+ * Diseño ancho en una sola pantalla sin scroll.
+ */
+interface ModalSeguimientoProps {
+  estudiante: EstudianteGEX;
+  solicitudes: SolicitudEstadoEstudiante[];
+  cargando: boolean;
+  onClose: () => void;
+  onRecargar: () => void;
+  onOpenMenuOpciones?: () => void;
+}
+
+function ModalSeguimientoSolicitud({
+  estudiante: e,
+  solicitudes,
+  cargando,
+  onClose,
+  onRecargar,
+}: ModalSeguimientoProps) {
+  useEffect(() => {
+    const handleKeyDown = (ev: KeyboardEvent) => {
+      if (ev.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  const solicitudPrincipal = solicitudes[0] ?? null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200">
+      <div
+        className="bg-white rounded-3xl shadow-2xl max-w-4xl xl:max-w-5xl w-full border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+        role="dialog"
+        aria-modal="true"
+      >
+        {/* Header del Modal */}
+        <div className="px-5 sm:px-6 py-3.5 border-b border-slate-200 bg-[#f8fafc] flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-uss-blue flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-xs">
+              <ClipboardCheck className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-blue-50 text-uss-blue ring-1 ring-blue-200">
+                  Estado de Solicitud GEX
+                </span>
+                <span className="text-xs font-mono font-bold text-uss-blue bg-blue-50/50 px-2 py-0.5 rounded">
+                  #{e.codUniv}
+                </span>
+                <span className="text-xs text-slate-400 hidden sm:inline">&bull;</span>
+                <span className="text-xs font-medium text-slate-500 truncate hidden sm:inline">{e.escuela}</span>
+              </div>
+              <h3 className="text-base sm:text-lg font-extrabold text-slate-900 truncate mt-0.5" title={e.nombres}>
+                {e.nombres}
+              </h3>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer shrink-0"
+            aria-label="Cerrar modal"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Contenido en una sola pantalla sin scroll */}
+        <div className="p-5 sm:p-6 flex flex-col gap-3.5">
+          {cargando ? (
+            <div className="py-12 flex flex-col items-center justify-center text-center gap-3">
+              <RefreshCw className="w-8 h-8 text-uss-blue animate-spin" />
+              <p className="text-sm font-semibold text-slate-700">Consultando estado en tiempo real...</p>
+              <p className="text-xs text-slate-500">Verificando en Centro de Informática y registros GEX</p>
+            </div>
+          ) : !solicitudPrincipal ? (
+            <div className="py-8 flex flex-col items-center justify-center text-center gap-3">
+              <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                <Circle className="w-7 h-7 stroke-1" />
+              </div>
+              <div className="max-w-md">
+                <h4 className="text-base font-bold text-slate-900">
+                  No registras solicitudes activas
+                </h4>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                  Aún no encontramos un trámite de acreditación registrado con el código <strong>{e.codUniv}</strong>.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 mt-2 flex-wrap justify-center">
+                <button
+                  type="button"
+                  onClick={onRecargar}
+                  className="px-3.5 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Volver a verificar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Bloque Superior: Plan y Stepper Horizontal de 4 pasos */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs flex flex-col gap-3">
+                {/* Cabecera del plan */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-uss-blue font-mono bg-blue-50 px-2 py-0.5 rounded ring-1 ring-blue-100">
+                      Modalidad elegida
+                    </span>
+                    <h4 className="text-base sm:text-lg font-extrabold text-slate-900">
+                      {getNombrePlan(solicitudPrincipal.plan)}
+                    </h4>
+                    <span className="text-slate-300 hidden sm:inline">&bull;</span>
+                    <p className="text-xs text-slate-500">
+                      Registrada el: <strong>{formatFecha(solicitudPrincipal.created_at)}</strong>
+                    </p>
+                  </div>
+
+                  {(() => {
+                    const badge = getEstadoBadgeInfo(solicitudPrincipal);
+                    const IconBadge = badge.Icon;
+                    return (
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ring-1 shrink-0 ${badge.estilo}`}>
+                        <IconBadge className="w-3.5 h-3.5" />
+                        {badge.texto}
+                      </span>
+                    );
+                  })()}
+                </div>
+
+                {/* Stepper Horizontal de 4 pasos */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
+                  {PASOS_TRAMITE.map((pasoItem) => {
+                    const pasoActual = getPasoActual(solicitudPrincipal);
+                    const completado =
+                      pasoItem.paso < pasoActual ||
+                      (pasoItem.paso === 4 && solicitudPrincipal.estado === 'aprobada');
+                    const activo =
+                      pasoItem.paso === pasoActual && solicitudPrincipal.estado !== 'aprobada';
+
+                    return (
+                      <div
+                        key={pasoItem.paso}
+                        className={`rounded-xl p-2.5 sm:p-3 border transition-all flex flex-col justify-between ${
+                          completado
+                            ? 'bg-emerald-50/60 border-emerald-200/90 text-emerald-900 shadow-2xs'
+                            : activo
+                            ? 'bg-blue-50/80 border-blue-300 ring-2 ring-blue-500/20 shadow-xs'
+                            : 'bg-slate-50/60 border-slate-200/60 text-slate-400 opacity-65'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span
+                            className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-mono font-bold shrink-0 ${
+                              completado
+                                ? 'bg-emerald-600 text-white'
+                                : activo
+                                ? 'bg-uss-blue text-white shadow-xs'
+                                : 'bg-slate-200 text-slate-500'
+                            }`}
+                          >
+                            {completado ? <Check className="w-3 h-3 stroke-[3]" /> : pasoItem.paso}
+                          </span>
+                          <span
+                            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                              completado
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : activo
+                                ? 'bg-blue-100 text-uss-blue'
+                                : 'bg-slate-200/80 text-slate-500'
+                            }`}
+                          >
+                            {completado ? 'Listo' : activo ? 'En curso' : 'Pendiente'}
+                          </span>
+                        </div>
+
+                        <div className="mt-1.5 min-w-0">
+                          <h6
+                            className={`text-xs font-bold leading-tight truncate ${
+                              activo ? 'text-uss-blue' : completado ? 'text-emerald-900' : 'text-slate-700'
+                            }`}
+                          >
+                            {pasoItem.titulo}
+                          </h6>
+                          <p className="text-[10px] text-slate-500 leading-tight mt-0.5 line-clamp-1">
+                            {pasoItem.subtitulo}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Bloque Inferior: 2 Columnas (Izquierda: Qué sigue y Observación · Derecha: Canales de Atención CINF) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {/* Columna 1: Observaciones y Qué sigue */}
+                <div className="flex flex-col gap-2.5">
+                  {solicitudPrincipal.comentario ? (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 sm:p-3 flex items-start gap-2.5">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="text-xs min-w-0">
+                        <strong className="text-amber-900 block font-bold">Observación del Centro de Informática:</strong>
+                        <span className="text-amber-800 mt-0.5 block">{solicitudPrincipal.comentario}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex items-center gap-2 text-xs text-slate-600">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Tu trámite está en cola de revisión habitual sin observaciones pendientes.</span>
+                    </div>
+                  )}
+
+                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/80 flex-1 flex flex-col justify-center">
+                    <h6 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-1">
+                      ¿Qué sigue en tu trámite?
+                    </h6>
+                    <ol className="text-xs text-slate-600 space-y-1 list-decimal list-inside">
+                      <li>La Dirección del Programa envía la lista a Finanzas del Estudiante.</li>
+                      <li>Finanzas programa las tasas académicas según aranceles vigentes.</li>
+                      <li>El CINF te asigna en tu grupo y horario, notificándote a tu correo o WhatsApp.</li>
+                    </ol>
+                  </div>
+                </div>
+
+                {/* Columna 2: Tarjeta WhatsApp y Canales de Atención */}
+                <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                      <Phone className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h5 className="text-xs sm:text-sm font-bold text-emerald-950">
+                        Atención directa CINF
+                      </h5>
+                      <p className="text-xs text-emerald-800 mt-0.5 leading-snug">
+                        WhatsApp: <strong>{CONTACTO_CINF.whatsapp}</strong>
+                      </p>
+                      <p className="text-[11px] text-emerald-700 mt-0.5">
+                        Horario: {CONTACTO_CINF.horario} &bull; {CONTACTO_CINF.correo}
+                      </p>
+                    </div>
+                  </div>
+
+                  <a
+                    href={`${CONTACTO_CINF.whatsappUrl}?text=${encodeURIComponent(
+                      `Hola CINF, consulto el avance de mi trámite GEX (Código: ${e.codUniv} - Estudiante: ${e.nombres}).`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    Escribir por WhatsApp al CINF
+                  </a>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Footer del Modal */}
+        <div className="px-5 sm:px-6 py-3 border-t border-slate-200 bg-[#f8fafc] flex items-center justify-between gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={onRecargar}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${cargando ? 'animate-spin' : ''}`} />
+            Actualizar estado
+          </button>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition cursor-pointer"
+          >
+            Cerrar
+          </button>
+        </div>
       </div>
     </div>
   );

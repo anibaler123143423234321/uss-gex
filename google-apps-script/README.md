@@ -39,4 +39,23 @@ Este script permite que cada vez que un estudiante haga clic en **"Inscribirme"*
      VITE_GEX_DRIVE_FOLDER_ID=13ga9IRDc3CHvSZ1IXnlHtv8w_k9GBryp
      ```
 
-¡Listo! Cada registro creará automáticamente una nueva fila con estilo institucional en la hoja de cálculo de Google Drive y también generará el archivo Excel descargable.
+¡Listo! Cada registro crea una fila en la hoja de cálculo de Google Drive con las 9 columnas oficiales:
+
+1. `Fecha y Hora`
+2. `Código Universitario`
+3. `Estudiante`
+4. `Escuela`
+5. `Celular / WhatsApp`
+6. `Correo`
+7. `Trámite / Plan`
+8. `Documento Adjunto`
+9. `Estado`
+
+## Si cambias `Code.gs`
+
+Pegar el código nuevo no basta: la URL `/exec` sigue ejecutando la versión publicada. Ve a **Implementar > Gestionar implementaciones > ✏️ Editar > Versión: Nueva versión > Implementar**. La URL no cambia.
+
+## Comprobar que funciona
+
+Abre la URL `/exec` en el navegador. Debe responder `"status":"online"`. Si dice `"carpetaAccesible":false`, la cuenta que publicó el script no es editora de la carpeta `BDSolicitudes-Gex`: la hoja se crea igual, pero en "Mi unidad" de esa cuenta. Para que quede en la carpeta, publica el script con una cuenta editora de la carpeta o vincúlalo a una hoja creada dentro de ella (paso 1).
+

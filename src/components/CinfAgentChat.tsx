@@ -9,12 +9,24 @@ import {
   MapPin,
   GraduationCap,
 } from 'lucide-react';
+import {
+  CONTACTO_CINF,
+  DOCUMENTOS_PLAN,
+  NOTA_COSTOS,
+  PLAZO_SOLICITUD,
+  PLANES_COMPUTACION,
+  POLITICAS_GEX,
+  type PlanOpcion,
+} from '../data/planesComputacion';
 import type { EstudianteGEX } from '../types/estudiante';
 
 interface Props {
   estudiante?: EstudianteGEX | null;
   estudiantes?: EstudianteGEX[];
   onNavigateComoAcreditar?: () => void;
+  ocultarDock?: boolean;
+  /** Planes vigentes (los del panel); el agente responde con sus precios y requisitos */
+  planes?: PlanOpcion[];
 }
 
 interface Message {
@@ -254,7 +266,96 @@ Datos registrados:
 • Para consultas sobre convalidaciones, contáctanos en nuestros canales de atención CINF.`;
 }
 
-export default function CinfAgentChat({ estudiante, estudiantes = [] }: Props) {
+// ---------------------------------------------------------------------------
+// Conocimiento del agente sobre las formas de acreditar (Programa Gente con Experiencia)
+// ---------------------------------------------------------------------------
+// Fuente: uss-gex/documentos (anexo de la Resolución de Directorio N.° 0039-A-2026/PD-USS y láminas
+// del CINF). Los precios, requisitos y pasos salen de los planes que edita el panel, para que el
+// agente nunca diga un costo distinto al de las tarjetas.
+
+const sinTildes = (texto: string) => texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+function fichaPlan(plan: PlanOpcion): string {
+  const lineas = [`**${plan.nombre}** — ${plan.resumen}`, `• **Costo:** ${plan.precio} (${plan.precioNota})`];
+  plan.etapas.forEach((e) => lineas.push(`• **${e.periodo}:** ${e.costo} — ${e.detalle}`));
+  if (plan.requisitos.length) {
+    lineas.push('', '**Requisitos:**');
+    plan.requisitos.forEach((r) => lineas.push(`• ${r}`));
+  }
+  lineas.push(`• **Plazo de solicitud:** ${PLAZO_SOLICITUD}`);
+  const documentos = DOCUMENTOS_PLAN[plan.id] ?? [];
+  if (documentos.length) {
+    lineas.push('', '**Documentos que subes al inscribirte** (PDF, JPG o PNG, hasta 5 MB cada uno):');
+    documentos.forEach((d) => lineas.push(`• ${d.etiqueta}${d.obligatorio ? '' : ' (opcional: si ya pagaste)'}`));
+  }
+  if (plan.proceso.length) {
+    lineas.push('', '**Proceso:**');
+    plan.proceso.forEach((p, i) => lineas.push(`${i + 1}. ${p}`));
+  }
+  lineas.push('', `**Obtienes:** ${plan.documento}`);
+  return lineas.join('\n');
+}
+
+const COMO_INSCRIBIRSE = 'Para inscribirte entra a **Menú de opciones**, elige la opción y pulsa **Inscribirme**.';
+
+/** Responde preguntas sobre las formas de acreditar; null si la consulta no trata de eso */
+export function responderSobreAcreditacion(consulta: string, planes: PlanOpcion[]): string | null {
+  const q = sinTildes(consulta);
+  const plan = (id: PlanOpcion['id']) => planes.find((p) => p.id === id);
+  const tiene = (...palabras: string[]) => palabras.some((p) => q.includes(p));
+
+  // Temas transversales primero: "plazo de la validación" pregunta por el plazo, no por la validación
+  if (tiene('plazo', 'fecha limite', 'hasta cuando', 'cuando vence')) {
+    return `📅 **Plazo para presentar la solicitud**\nEn las 4 opciones puedes presentar tu solicitud **${PLAZO_SOLICITUD}**.\n\nEl curso de acreditación (Programa GEX) se lleva en los meses no curriculares: enero a marzo y agosto.\n\n${COMO_INSCRIBIRSE}`;
+  }
+  if (tiene('certificado', 'constancia', 'diploma')) {
+    return `🎓 **Certificado y constancia**\n• **Curso de acreditación (Programa GEX):** certificado de 50 horas y constancia.\n• **Validación de competencias:** solo constancia.\n• **Convalidación:** solo constancia.\n\nEl certificado solo se emite cuando cursas y apruebas el curso.`;
+  }
+  if (tiene('cambio de fecha', 'reserva', 'traslado', 'desaprob', 'jal', 'inhabilit', 'politica', 'norma', 'regla', 'bachiller')) {
+    return `📌 **Políticas del programa**\n${POLITICAS_GEX.map((p) => `• ${p}`).join('\n')}`;
+  }
+
+  if (tiene('convalid', 'titulo tecnico', 'titulo profesional tecnico')) {
+    const p = plan('convalidacion');
+    return p ? `${fichaPlan(p)}\n\n${COMO_INSCRIBIRSE}` : null;
+  }
+  if (tiene('validacion', 'validar', 'examen', 'sin cursar', 'experiencia laboral')) {
+    const p = plan('validacion');
+    return p ? `${fichaPlan(p)}\n\nEs solo un examen: no llevas clases.\n\n${COMO_INSCRIBIRSE}` : null;
+  }
+  if (tiene('protech', 'ruta', 'taller de certificacion', 'mos')) {
+    const p = plan('protech');
+    return p ? `${fichaPlan(p)}\n\n${COMO_INSCRIBIRSE}` : null;
+  }
+  if (tiene('gex', 'curso de acreditacion', 'cisco', 'netacad', 'etapa', 'cronograma', 'zoom', 'master')) {
+    const p = plan('gex');
+    return p ? `${fichaPlan(p)}\n\n${COMO_INSCRIBIRSE}` : null;
+  }
+
+  if (tiene('costo', 'precio', 'cuanto', 'pago', 'pagar', 'tasa', 'inversion', 'cuota')) {
+    const lineas = planes.map((p) => `• **${p.nombre}:** ${p.precio} (${p.precioNota})`);
+    return `💰 **Costos para acreditar Computación**\n${lineas.join('\n')}\n\n${NOTA_COSTOS}`;
+  }
+  if (tiene('requisito')) {
+    const conRequisitos = planes.filter((p) => p.requisitos.length > 0);
+    return conRequisitos
+      .map((p) => `**${p.nombre}:**\n${p.requisitos.map((r) => `• ${r}`).join('\n')}`)
+      .join('\n\n');
+  }
+  if (tiene('cuando pago', 'pago primero', 'pagar primero', 'antes de pagar', 'comprobante', 'voucher')) {
+    return `💳 **¿Cuándo se paga?**\nPrimero te inscribes y subes tus documentos. El Centro de Informática revisa tu solicitud y se programa el pago de la tasa; recién ahí pagas.\n• **Validación:** pagas antes de rendir el examen.\n• **Convalidación:** pagas después de que se verifican tus documentos.\n\nSi ya pagaste, puedes subir tu comprobante al inscribirte (es opcional).`;
+  }
+  if (tiene('inscrib', 'registr', 'matricul', 'adjunt', 'archivo', 'documento', 'subir')) {
+    return `📝 **Cómo te inscribes**\n1. Entra a **Menú de opciones**.\n2. Elige tu forma de acreditar y pulsa **Inscribirme**.\n3. Deja tu celular; en validación y convalidación sube además cada documento requerido (PDF, JPG o PNG, hasta 5 MB cada uno).\n\nEl Centro de Informática recibe tu solicitud, programa el pago y te contacta por WhatsApp o correo. Plazo: ${PLAZO_SOLICITUD}.`;
+  }
+  if (tiene('opcion', 'forma', 'acredit', 'como hago', 'que puedo')) {
+    const lineas = planes.map((p, i) => `${i + 1}. **${p.nombre}** (${p.precio}) — ${p.resumen}`);
+    return `🧭 **Formas de acreditar Computación en Gente con Experiencia**\n${lineas.join('\n')}\n\nPregúntame por cualquiera de ellas o por costos, requisitos, certificado o plazo.`;
+  }
+  return null;
+}
+
+export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDock, planes = PLANES_COMPUTACION }: Props) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [dockDismissed, setDockDismissed] = useState<boolean>(false);
@@ -491,10 +592,12 @@ export default function CinfAgentChat({ estudiante, estudiantes = [] }: Props) {
 
       if (query.includes('telefono') || query.includes('contacto') || query.includes('celular') || query.includes('atencion') || query.includes('atención') || query.includes('horario')) {
         respuesta = `📞 **Canales Oficiales de Atención CINF:**
-• **WhatsApp / Teléfono:** +51 979 000 000
-• **Correo:** centro.informatica@uss.edu.pe
-• **Horario:** Lunes a Viernes de 8:00 a.m. a 6:00 p.m.
-• **Ubicación:** Campus Chiclayo - Pabellón Centro de Informática.`;
+• **WhatsApp / Teléfono:** +51 ${CONTACTO_CINF.whatsapp}
+• **Correo:** ${CONTACTO_CINF.correo}
+• **Horario:** ${CONTACTO_CINF.horario}
+• **Ubicación:** ${CONTACTO_CINF.direccion}`;
+      } else if (responderSobreAcreditacion(trimmed, planes)) {
+        respuesta = responderSobreAcreditacion(trimmed, planes)!;
       } else {
         const estActual =
           estudiante ||
@@ -557,7 +660,7 @@ export default function CinfAgentChat({ estudiante, estudiantes = [] }: Props) {
       {/* ===================================================================== */}
       {/* 1. INPUT DOCK FLOTANTE INFERIOR                                       */}
       {/* ===================================================================== */}
-      {!dockDismissed && !isOpen && (
+      {!dockDismissed && !isOpen && !ocultarDock && (
         <aside
           aria-label="Asistente Virtual"
           className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-[520px] transition-all animate-in fade-in slide-in-from-bottom-2 duration-200"

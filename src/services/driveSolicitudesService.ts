@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx';
 import type { EstudianteGEX } from '../types/estudiante';
 import type { PlanOpcion } from '../data/planesComputacion';
 import type { Adjunto } from './solicitudesService';
@@ -13,33 +12,26 @@ export const GEX_DRIVE_FOLDER_PATH = 'Compartido conmigo > CINF GEX > BDSolicitu
 export const GEX_DRIVE_FOLDER_URL = `https://drive.google.com/drive/u/1/folders/${GEX_DRIVE_FOLDER_ID}`;
 export const GEX_SHEET_NAME = 'USS_CINF_Solicitudes_GEX';
 
-const STORAGE_KEY = 'gex_solicitudes_acumuladas';
+/**
+ * La portada solo llega a Drive por el webhook de Apps Script (google-apps-script/). Sin su URL la
+ * solicitud queda en Supabase y en el Excel descargado, pero NO en la hoja de Drive: la pantalla de
+ * confirmación lo usa para no afirmar algo que no pasó.
+ */
+export const GEX_DRIVE_CONFIGURADO = !!(import.meta.env.VITE_GEX_APPS_SCRIPT_URL as string | undefined)?.trim();
 
 export interface FilaSolicitudGEX {
-  'Marca temporal': string;
+  'Fecha y Hora': string;
   'Código Universitario': string;
-  'Apellidos y Nombres': string;
-  'Escuela Profesional': string;
-  'Correo Institucional': string;
-  'Celular': string;
-  'Correo Personal': string;
-  'Plan Seleccionado': string;
-  'ID Plan': string;
-  'Tipo de Trámite': string;
-  'Costo / Inversión': string;
-  'Condición de Estudio': string;
-  'Campus': string;
-  'Modalidad': string;
-  'Ciclo': string | number;
-  'Archivo Adjunto': string;
-  'Ruta Archivo': string;
-  'Autoriza Datos': string;
-  'Declaración Requisitos': string;
-  'Estado Solicitud': string;
-  'Carpeta Drive Destino': string;
+  'Estudiante': string;
+  'Escuela': string;
+  'Celular / WhatsApp': string;
+  'Correo': string;
+  'Trámite / Plan': string;
+  'Documento Adjunto': string;
+  'Estado': string;
 }
 
-/** Formatea fecha y hora en formato estándar peruano DD/MM/AAAA HH:mm:ss */
+/** Formatea fecha y hora en formato estándar peruano DD/MM/AAAA HH:mm */
 export function formatearFechaPeru(date: Date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   const d = pad(date.getDate());
@@ -47,12 +39,11 @@ export function formatearFechaPeru(date: Date = new Date()): string {
   const y = date.getFullYear();
   const h = pad(date.getHours());
   const min = pad(date.getMinutes());
-  const s = pad(date.getSeconds());
-  return `${d}/${m}/${y} ${h}:${min}:${s}`;
+  return `${d}/${m}/${y} ${h}:${min}`;
 }
 
 /**
- * Construye la fila tipada con todos los atributos requeridos de la solicitud
+ * Construye la fila limpia y optimizada para la hoja de Google Sheets (9 columnas esenciales)
  */
 export function construirFilaSolicitud({
   alumno,
@@ -61,7 +52,6 @@ export function construirFilaSolicitud({
   correoPersonal,
   esExamen,
   adjunto,
-  declaracion,
 }: {
   alumno: EstudianteGEX;
   plan: PlanOpcion;
@@ -71,151 +61,53 @@ export function construirFilaSolicitud({
   adjunto?: Adjunto;
   declaracion?: string;
 }): FilaSolicitudGEX {
+  const correoInst = alumno.correoInstitucional?.trim() || '';
+  const correoPers = correoPersonal?.trim() || '';
+  const correo =
+    correoInst && correoPers && correoInst !== correoPers
+      ? `${correoInst} (${correoPers})`
+      : correoInst || correoPers || '—';
+
+  const tramite =
+    plan.id === 'convalidacion'
+      ? 'Convalidación de Cursos'
+      : `${plan.nombre} (${esExamen ? 'Examen' : 'Convalidación'})`;
+
   return {
-    'Marca temporal': formatearFechaPeru(),
+    'Fecha y Hora': formatearFechaPeru(),
     'Código Universitario': alumno.codUniv,
-    'Apellidos y Nombres': alumno.nombres,
-    'Escuela Profesional': alumno.escuela || '—',
-    'Correo Institucional': alumno.correoInstitucional || '—',
-    'Celular': celular.trim(),
-    'Correo Personal': correoPersonal?.trim() || '—',
-    'Plan Seleccionado': plan.nombre,
-    'ID Plan': plan.id,
-    'Tipo de Trámite': esExamen ? 'Examen' : 'Convalidación',
-    'Costo / Inversión': `${plan.precio} (${plan.precioNota || 'Tarifa oficial'})`,
-    'Condición de Estudio': alumno.condicionEstudio || 'Gente con Experiencia',
-    'Campus': alumno.campus || 'Chiclayo',
-    'Modalidad': alumno.modalidad || 'Virtual',
-    'Ciclo': alumno.nCicCodigo || '—',
-    'Archivo Adjunto': adjunto?.nombre || (esExamen ? 'N/A - Examen' : 'Sin archivo'),
-    'Ruta Archivo': adjunto?.path || '—',
-    'Autoriza Datos': 'Sí - Autorizado por el estudiante',
-    'Declaración Requisitos': declaracion || 'Aceptado',
-    'Estado Solicitud': 'Registrado',
-    'Carpeta Drive Destino': `${GEX_DRIVE_FOLDER_NAME} [ID: ${GEX_DRIVE_FOLDER_ID}]`,
+    'Estudiante': alumno.nombres,
+    'Escuela': alumno.escuela || '—',
+    'Celular / WhatsApp': celular.trim(),
+    'Correo': correo,
+    'Trámite / Plan': tramite,
+    'Documento Adjunto': adjunto?.nombre || (esExamen ? 'N/A - Examen' : 'Sin archivo'),
+    'Estado': 'Registrado',
   };
 }
 
 /**
- * Crea un libro de trabajo Excel (.xlsx) con anchos de columna optimizados
- */
-export function crearWorkbookSolicitudes(filas: FilaSolicitudGEX[], nombreHoja = 'Solicitudes_GEX'): XLSX.WorkBook {
-  const ws = XLSX.utils.json_to_sheet(filas);
-
-  // Anchos de columna institucionales para lectura cómoda
-  ws['!cols'] = [
-    { wch: 20 }, // Marca temporal
-    { wch: 16 }, // Código Universitario
-    { wch: 36 }, // Apellidos y Nombres
-    { wch: 26 }, // Escuela Profesional
-    { wch: 32 }, // Correo Institucional
-    { wch: 15 }, // Celular
-    { wch: 28 }, // Correo Personal
-    { wch: 24 }, // Plan Seleccionado
-    { wch: 12 }, // ID Plan
-    { wch: 16 }, // Tipo de Trámite
-    { wch: 25 }, // Costo / Inversión
-    { wch: 24 }, // Condición de Estudio
-    { wch: 15 }, // Campus
-    { wch: 15 }, // Modalidad
-    { wch: 10 }, // Ciclo
-    { wch: 32 }, // Archivo Adjunto
-    { wch: 35 }, // Ruta Archivo
-    { wch: 18 }, // Autoriza Datos
-    { wch: 32 }, // Declaración Requisitos
-    { wch: 18 }, // Estado Solicitud
-    { wch: 40 }, // Carpeta Drive Destino
-  ];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
-  return wb;
-}
-
-/**
- * Descarga el archivo Excel binario de la solicitud (.xlsx)
- */
-export function descargarExcelSolicitud(fila: FilaSolicitudGEX): void {
-  const wb = crearWorkbookSolicitudes([fila], 'Solicitud_GEX');
-  const filename = `BDSolicitudes_GEX_${fila['Código Universitario']}_${fila['ID Plan']}.xlsx`;
-  XLSX.writeFile(wb, filename);
-}
-
-/**
- * Descarga el consolidado acumulado de todas las solicitudes registradas
- */
-export function descargarExcelConsolidado(filas: FilaSolicitudGEX[]): void {
-  const wb = crearWorkbookSolicitudes(filas, 'BDSolicitudes_GEX');
-  const filename = 'USS_CINF_BDSolicitudes_GEX_Consolidado.xlsx';
-  XLSX.writeFile(wb, filename);
-}
-
-/**
- * Guarda y acumula la solicitud en localStorage para respaldo y consolidado
- */
-export function guardarSolicitudEnHistorial(fila: FilaSolicitudGEX): FilaSolicitudGEX[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const lista: FilaSolicitudGEX[] = raw ? JSON.parse(raw) : [];
-    // Filtrar si ya existe este código con la misma marca de tiempo
-    const filtrada = lista.filter(
-      (item) =>
-        !(
-          item['Código Universitario'] === fila['Código Universitario'] &&
-          item['ID Plan'] === fila['ID Plan'] &&
-          item['Marca temporal'] === fila['Marca temporal']
-        )
-    );
-    filtrada.unshift(fila);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtrada));
-    return filtrada;
-  } catch (err) {
-    console.warn('[DriveService] Error al guardar en localStorage:', err);
-    return [fila];
-  }
-}
-
-/**
- * Obtiene la lista acumulada de solicitudes
- */
-export function obtenerSolicitudesGuardadas(): FilaSolicitudGEX[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Envía la fila al Webhook de Google Apps Script vinculado a la carpeta BDSolicitudes-Gex
- * Si no está configurada la URL del Webhook, reporta con elegancia sin romper el flujo.
+ * Envía la fila al webhook de Apps Script, que la agrega a la hoja de Drive del Centro de Informática.
+ * El registro vive en Drive y en Supabase: al estudiante no se le descarga ningún Excel ni se guardan
+ * sus datos en el navegador. Se lee la respuesta (el webhook admite CORS con text/plain) porque con
+ * 'no-cors' un error del script, como no tener acceso a la carpeta, pasaba por éxito sin dejar rastro.
  */
 export async function sincronizarSolicitudConGoogleDrive(
   fila: FilaSolicitudGEX
 ): Promise<{ ok: boolean; mensaje: string }> {
   const webhookUrl = (import.meta.env.VITE_GEX_APPS_SCRIPT_URL as string | undefined)?.trim();
-
-  if (!webhookUrl) {
-    return {
-      ok: true,
-      mensaje: 'Guardado en Excel y base de datos. Para envío en tiempo real a Google Sheets, vincula el script de Drive.',
-    };
-  }
+  if (!webhookUrl) return { ok: false, mensaje: 'Falta VITE_GEX_APPS_SCRIPT_URL: la solicitud no se envió a Drive.' };
 
   try {
-    await fetch(webhookUrl, {
+    const res = await fetch(webhookUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
-      },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(fila),
-      mode: 'no-cors',
     });
-
-    return { ok: true, mensaje: 'Sincronizado con Google Drive (BDSolicitudes-Gex)' };
+    const json = (await res.json()) as { status?: string; error?: string; message?: string };
+    if (json.status !== 'success') return { ok: false, mensaje: json.error || json.message || 'El script de Drive respondió con error.' };
+    return { ok: true, mensaje: 'Guardado en la hoja de Drive.' };
   } catch (error) {
-    console.warn('[DriveService] No se pudo enviar al Webhook de Google Apps Script:', error);
-    return { ok: false, mensaje: 'Guardado localmente. La sincronización remota con Drive no respondió.' };
+    return { ok: false, mensaje: `El script de Drive no respondió: ${(error as Error).message}` };
   }
 }

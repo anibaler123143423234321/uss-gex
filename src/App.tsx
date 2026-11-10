@@ -177,7 +177,7 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen ${selected && !mostrarComoAcreditar ? 'lg:h-screen lg:overflow-hidden' : ''} bg-[#f2f5fb] text-slate-900 flex flex-col selection:bg-uss-blue selection:text-white`}
+      className={`min-h-screen ${selected ? 'lg:h-screen lg:overflow-hidden' : ''} bg-[#f2f5fb] text-slate-900 flex flex-col selection:bg-uss-blue selection:text-white`}
     >
       {restaurando ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 py-24 text-slate-500">
@@ -186,13 +186,14 @@ export default function App() {
         </div>
       ) : mostrarComoAcreditar ? (
         /* VISTA: MENÚ DE OPCIONES (misma sesión del estudiante) */
-        <div className="flex-1 flex flex-col w-full bg-[#f2f5fb] xl:min-h-0">
+        <div className="flex-1 flex flex-col w-full bg-[#f2f5fb] lg:min-h-0 lg:overflow-hidden">
           {/* Header institucional: mantiene la sesión del estudiante */}
-          <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 py-2.5 px-4 sm:px-6 w-full shrink-0 shadow-xs">
+          <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 py-2 sm:py-2.5 px-4 sm:px-6 w-full shrink-0 shadow-xs">
             <div className="max-w-7xl grande:max-w-[1600px] mx-auto flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 <button
-                  onClick={cerrarOpciones}
+                  // Un solo botón para regresar: del registro a las opciones y de las opciones a la ficha
+                  onClick={planElegido ? () => setPlanElegido(null) : cerrarOpciones}
                   type="button"
                   className="shrink-0 inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer"
                   title="Volver"
@@ -227,11 +228,11 @@ export default function App() {
 
           {/* Planes para acreditar Computación y registro del elegido. El footer es el general.
               En monitores grandes se ensancha para que el comparativo de las 4 tarjetas quepa en una línea */}
-          <main
-            className={`flex-1 w-full max-w-7xl grande:max-w-[1600px] mx-auto px-3 sm:px-6 ${
-              planElegido ? 'py-2 sm:py-3 lg:py-2.5 flex flex-col justify-start min-h-0' : 'py-6 sm:py-10 xl:py-5 xl:flex xl:flex-col'
-            }`}
-          >
+          {/* En escritorio la página no hace scroll (lg:h-screen): lo hace este contenedor, a todo el ancho
+              para que la barra quede en el borde de la ventana. En el celular el espacio de abajo evita que el
+              botón flotante del Agente CINF tape el de enviar */}
+          <div className="flex-1 min-h-0 lg:overflow-y-auto">
+          <main className="w-full max-w-7xl grande:max-w-[1600px] mx-auto px-4 sm:px-6 pt-5 pb-24 lg:pt-3 lg:pb-2">
             <MenuOpciones
               titulo={config.menuTitulo}
               subtitulo={config.menuSubtitulo}
@@ -242,6 +243,7 @@ export default function App() {
               onPlan={setPlanElegido}
             />
           </main>
+          </div>
         </div>
       ) : selected ? (
         <div className="flex-1 flex flex-col w-full lg:h-full lg:min-h-0 lg:overflow-hidden">
@@ -372,7 +374,9 @@ export default function App() {
         <CinfAgentChat
           estudiante={selected}
           estudiantes={estudiantes}
+          planes={config.planes}
           onNavigateComoAcreditar={() => setMostrarComoAcreditar(true)}
+          ocultarDock={mostrarComoAcreditar}
         />
       )}
     </div>

@@ -21,7 +21,8 @@ export interface NuevaSolicitud {
   celular: string;
   plan: PlanOpcionId;
   /** Respuestas propias de cada plan (declaraciones, correo personal…) */
-  datos: Record<string, string | boolean>;
+  datos: Record<string, unknown>;
+  /** El primero de los documentos: la tabla guarda uno en columnas; la lista completa va en datos.adjuntos */
   adjunto?: Adjunto;
 }
 
@@ -34,8 +35,10 @@ export function revisarAdjunto(archivo: File): string {
 }
 
 /**
- * Sube el archivo de convalidación al bucket privado. Con la anon key solo se puede
- * subir a convalidacion/: nadie puede listarlo ni descargarlo desde la portada.
+ * Sube el archivo del estudiante al bucket privado. Con la anon key solo se puede
+ * subir a convalidacion/ (política de la migración v23): nadie puede listarlo ni descargarlo
+ * desde la portada. Los adjuntos de validación van a la misma carpeta para no depender de otra
+ * migración; el panel los distingue por el plan de la solicitud, no por la ruta.
  */
 export async function subirAdjunto(codUniv: string, archivo: File): Promise<Adjunto> {
   const extension = archivo.type === 'application/pdf' ? 'pdf' : archivo.type === 'image/png' ? 'png' : 'jpg';
@@ -78,4 +81,93 @@ export async function registrarSolicitud(s: NuevaSolicitud): Promise<void> {
         : 'No se pudo registrar la solicitud.'
     );
   }
+}
+
+export type EstadoSolicitudGex = 'solicitada' | 'en_atencion' | 'asignada' | 'aprobada' | 'rechazada';
+
+export interface SolicitudEstadoEstudiante {
+  id: number;
+  cod_univ: string;
+  plan: PlanOpcionId;
+  estado: EstadoSolicitudGex;
+  paso: number;
+  comentario: string | null;
+  created_at: string;
+  actualizado_en: string;
+}
+
+/**
+ * Consulta el estado en vivo de las solicitudes de un estudiante por su código universitario.
+ * Prueba en cascada:
+ *   1. Supabase directo (tbl_gex_solicitudes)
+ *   2. Backend CINF si está disponible (/api/gex/solicitudes/estado/:cod)
+ *   3. Memoria local de la sesión (sessionStorage)
+ */
+export async function consultarSolicitudesEstudiante(codUniv: string): Promise<SolicitudEstadoEstudiante[]> {
+  const codigo = codUniv.trim();
+  if (!codigo) return [];
+
+  // 1. Intentar consultar directamente a Supabase
+  try {
+    const { data, error } = await supabase
+      .from('tbl_gex_solicitudes')
+      .select('id, cod_univ, plan, estado, paso, comentario, created_at, actualizado_en')
+      .eq('cod_univ', codigo)
+      .order('created_at', { ascending: false });
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return data as SolicitudEstadoEstudiante[];
+    }
+  } catch (err) {
+    console.warn('[solicitudesService] Consulta directa no disponible:', err);
+  }
+
+  // 2. Intentar consultar al backend CINF si estuviera configurado
+  const backendUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL;
+  if (backendUrl) {
+    try {
+      const res = await fetch(`${String(backendUrl).replace(/\/+$/, '')}/api/gex/solicitudes/estado/${codigo}`);
+      const json = await res.json();
+      if (json?.success && Array.isArray(json.data) && json.data.length > 0) {
+        return json.data as SolicitudEstadoEstudiante[];
+      }
+    } catch {
+      // Ignorar fallback
+    }
+  }
+
+  // 3. Fallback a sessionStorage si el alumno envió una solicitud recientemente
+  try {
+    const cacheDetalle = sessionStorage.getItem(`gex.solicitud_detalle.${codigo}`);
+    if (cacheDetalle) {
+      const parsed = JSON.parse(cacheDetalle) as SolicitudEstadoEstudiante;
+      if (parsed && parsed.cod_univ === codigo) {
+        return [parsed];
+      }
+    }
+
+    const planesIds: PlanOpcionId[] = ['gex', 'protech', 'validacion', 'convalidacion'];
+    for (const pid of planesIds) {
+      const sesionKey = `gex.solicitud.${codigo}.${pid}`;
+      const fechaEnvio = sessionStorage.getItem(sesionKey);
+      if (fechaEnvio) {
+        return [
+          {
+            id: 0,
+            cod_univ: codigo,
+            plan: pid,
+            estado: 'solicitada',
+            paso: 1,
+            comentario: 'Tu solicitud ha sido recibida con éxito y está en espera de revisión.',
+            created_at: fechaEnvio,
+            actualizado_en: fechaEnvio,
+          },
+        ];
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  return [];
 }
