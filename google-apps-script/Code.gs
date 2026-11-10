@@ -92,12 +92,22 @@ function doPost(e) {
 
     const filaInsertada = sheet.getLastRow();
 
-    // 2. Establecer hipervínculo clickeable a Drive en la columna 8 (Documento Adjunto)
-    if (resultadoAdjuntos && resultadoAdjuntos.formula) {
+    // 2. Establecer hipervínculo nativo a Drive en la columna 8 (Documento Adjunto)
+    // Usa newRichTextValue para evitar #ERROR! por configuración regional (coma vs punto y coma)
+    if (resultadoAdjuntos && resultadoAdjuntos.url) {
       try {
-        sheet.getRange(filaInsertada, 8).setFormula(resultadoAdjuntos.formula);
-      } catch (errFormula) {
-        console.warn('No se pudo aplicar setFormula:', errFormula);
+        const richText = SpreadsheetApp.newRichTextValue()
+          .setText(resultadoAdjuntos.texto)
+          .setLinkUrl(resultadoAdjuntos.url)
+          .build();
+        sheet.getRange(filaInsertada, 8).setRichTextValue(richText);
+      } catch (errRich) {
+        try {
+          const formulaEs = `=HYPERLINK("${resultadoAdjuntos.url}"; "${resultadoAdjuntos.texto.replace(/"/g, '""')}")`;
+          sheet.getRange(filaInsertada, 8).setValue(formulaEs);
+        } catch (errFormula) {
+          sheet.getRange(filaInsertada, 8).setValue(resultadoAdjuntos.url);
+        }
       }
     }
 
