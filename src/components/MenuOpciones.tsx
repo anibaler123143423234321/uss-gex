@@ -236,22 +236,22 @@ function TarjetaPlan({ plan, numero, onElegir }: { plan: PlanOpcion; numero: num
     >
       {/* 1. Encabezado */}
       <div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ backgroundColor: `${plan.acento}14`, color: plan.acento }}
           >
             <Icon className="w-5 h-5" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-bold uppercase tracking-wider" style={{ color: plan.acento }}>
               Opción {numero}
             </p>
-            <p className="text-xs text-slate-500 truncate">{plan.etiqueta}</p>
+            <p className="text-xs text-slate-500 truncate" title={plan.etiqueta}>{plan.etiqueta}</p>
           </div>
           {plan.insignia && (
             <span
-              className="ml-auto shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
+              className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-2xs"
               style={{ backgroundColor: plan.acento }}
             >
               {plan.insignia}

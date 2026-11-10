@@ -81,7 +81,7 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
     resumen: 'Clases virtuales, curso CISCO y evaluación final en los meses no curriculares.',
     precio: 'S/ 100',
     precioNota: 'al mes · enero a marzo',
-    insignia: 'Con certificado',
+    insignia: 'Certificado o constancia',
     etapas: [
       { duracion: '3 meses', periodo: 'Enero – Marzo', costo: 'S/ 100 por mes', detalle: 'Clases virtuales, talleres y master class' },
       { duracion: '4 meses', periodo: 'Abril – Julio', costo: 'Gratis', detalle: 'Asincrónico · Curso CISCO' },
@@ -274,7 +274,14 @@ export const CONTACTO_CINF = {
 /** Completa los planes guardados con los oficiales; siempre salen los 4, en el orden oficial (Opción 1 a 4). */
 export function mezclarPlanes(guardados: unknown): PlanOpcion[] {
   const lista = Array.isArray(guardados) ? (guardados as Partial<PlanOpcion>[]) : [];
-  return PLANES_COMPUTACION.map((oficial) => ({ ...oficial, ...(lista.find((p) => p?.id === oficial.id) ?? {}) }));
+  return PLANES_COMPUTACION.map((oficial) => {
+    const guardado = lista.find((p) => p?.id === oficial.id) ?? {};
+    const insignia =
+      guardado.insignia === 'Con certificado'
+        ? 'Certificado o constancia'
+        : (guardado.insignia !== undefined ? guardado.insignia : oficial.insignia);
+    return { ...oficial, ...guardado, insignia };
+  });
 }
 
 export const NOTA_COSTOS = '* Costos por apertura vigentes en el semestre actual.';
