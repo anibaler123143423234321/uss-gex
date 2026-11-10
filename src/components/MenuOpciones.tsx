@@ -224,7 +224,7 @@ function TituloSeccion({ children }: { children: ReactNode }) {
 /** Tarjeta de un plan en la lista: en xl ocupa todas las filas compartidas del subgrid */
 function TarjetaPlan({ plan, numero, onElegir }: { plan: PlanOpcion; numero: number; onElegir: () => void }) {
   const Icon = iconoPlan(plan.icono);
-  const destacado = !!plan.insignia;
+  const destacado = plan.id === 'gex';
   const conDetalle = plan.etapas.length > 0 || plan.requisitos.length > 0;
 
   return (

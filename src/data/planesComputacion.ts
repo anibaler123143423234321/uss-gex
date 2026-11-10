@@ -81,7 +81,7 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
     resumen: 'Clases virtuales, curso CISCO y evaluación final en los meses no curriculares.',
     precio: 'S/ 100',
     precioNota: 'al mes · enero a marzo',
-    insignia: 'Certificado o constancia',
+    insignia: 'Certificado',
     etapas: [
       { duracion: '3 meses', periodo: 'Enero – Marzo', costo: 'S/ 100 por mes', detalle: 'Clases virtuales, talleres y master class' },
       { duracion: '4 meses', periodo: 'Abril – Julio', costo: 'Gratis', detalle: 'Asincrónico · Curso CISCO' },
@@ -110,7 +110,7 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
     resumen: 'Si ya trabajas y usas herramientas digitales en tu entorno profesional, acredita con un examen, sin cursar.',
     precio: 'S/.',
     precioNota: 'según tasa vigente',
-    insignia: '',
+    insignia: 'Constancia',
     etapas: [],
     requisitos: [
       'Presentar la solicitud formal hasta el 15 de diciembre',
@@ -138,7 +138,7 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
     resumen: 'Si ya cuentas con formación técnica y experiencia laboral, reconoce tu título en Computación o carrera afín.',
     precio: 'Trámite',
     precioNota: 'según tasa vigente',
-    insignia: '',
+    insignia: 'Constancia',
     etapas: [],
     requisitos: [
       'Presentar la solicitud formal hasta el 15 de diciembre',
@@ -167,7 +167,7 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
     resumen: '3 cursos de tu ruta de aprendizaje y 1 taller de certificación internacional.',
     precio: 'S/ 420',
     precioNota: 'por curso · taller S/ 340 (Sede Chiclayo)',
-    insignia: '',
+    insignia: 'Certificado',
     etapas: [],
     requisitos: [],
     incluye: [
@@ -276,10 +276,10 @@ export function mezclarPlanes(guardados: unknown): PlanOpcion[] {
   const lista = Array.isArray(guardados) ? (guardados as Partial<PlanOpcion>[]) : [];
   return PLANES_COMPUTACION.map((oficial) => {
     const guardado = lista.find((p) => p?.id === oficial.id) ?? {};
-    const insignia =
-      guardado.insignia === 'Con certificado'
-        ? 'Certificado o constancia'
-        : (guardado.insignia !== undefined ? guardado.insignia : oficial.insignia);
+    let insignia = guardado.insignia;
+    if (!insignia || insignia === 'Con certificado' || insignia === 'Certificado o constancia') {
+      insignia = oficial.insignia;
+    }
     return { ...oficial, ...guardado, insignia };
   });
 }
