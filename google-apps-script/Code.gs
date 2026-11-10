@@ -73,6 +73,11 @@ function doPost(e) {
     const adjunto = data['Documento Adjunto'] || data['Archivo Adjunto'] || '';
     const estado = data['Estado'] || data['Estado Solicitud'] || 'Registrado';
 
+    // 1. Guardar archivos adjuntos en la carpeta de Google Drive:
+    // BDSolicitudes-Gex > Adjuntos - Solicitudes GEX > [codUniv] - [estudiante]
+    const resultadoAdjuntos = procesarArchivosAdjuntosEnDrive(data, codUniv, estudiante);
+    const textoAdjunto = resultadoAdjuntos ? resultadoAdjuntos.texto : adjunto;
+
     sheet.appendRow([
       fechaHora,
       codUniv,
@@ -81,17 +86,29 @@ function doPost(e) {
       celular,
       correo,
       tramite,
-      adjunto,
+      textoAdjunto,
       estado,
     ]);
+
+    const filaInsertada = sheet.getLastRow();
+
+    // 2. Establecer hipervínculo clickeable a Drive en la columna 8 (Documento Adjunto)
+    if (resultadoAdjuntos && resultadoAdjuntos.formula) {
+      try {
+        sheet.getRange(filaInsertada, 8).setFormula(resultadoAdjuntos.formula);
+      } catch (errFormula) {
+        console.warn('No se pudo aplicar setFormula:', errFormula);
+      }
+    }
 
     return ContentService.createTextOutput(
       JSON.stringify({
         status: 'success',
         message: 'Solicitud agregada correctamente a BDSolicitudes-Gex en Drive',
         hoja: ss.getUrl(),
-        fila: sheet.getLastRow(),
+        fila: filaInsertada,
         columnas: HEADERS.length,
+        adjuntos: resultadoAdjuntos ? { guardados: true, url: resultadoAdjuntos.url } : null,
       })
     ).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
@@ -99,6 +116,90 @@ function doPost(e) {
       JSON.stringify({ status: 'error', error: err.toString() })
     ).setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+/**
+ * Guarda los archivos adjuntos en una subcarpeta dedicada en Google Drive:
+ * BDSolicitudes-Gex > Adjuntos - Solicitudes GEX > [codUniv] - [estudiante]
+ * Devuelve la fórmula HYPERLINK para la celda de Sheets y el enlace de acceso.
+ */
+function procesarArchivosAdjuntosEnDrive(data, codUniv, estudiante) {
+  if (!data || !Array.isArray(data.archivos) || data.archivos.length === 0) {
+    return null;
+  }
+
+  const carpetaBase = carpetaDestino();
+  if (!carpetaBase) {
+    return null;
+  }
+
+  try {
+    // 1. Obtener o crear carpeta contenedora: "Adjuntos - Solicitudes GEX"
+    let carpetaAdjuntos;
+    const itAdj = carpetaBase.getFoldersByName('Adjuntos - Solicitudes GEX');
+    if (itAdj.hasNext()) {
+      carpetaAdjuntos = itAdj.next();
+    } else {
+      carpetaAdjuntos = carpetaBase.createFolder('Adjuntos - Solicitudes GEX');
+    }
+
+    // 2. Obtener o crear subcarpeta del estudiante: "[codUniv] - [estudiante]"
+    const nombreCarpetaEstudiante = (`${codUniv} - ${estudiante}`).trim() || codUniv || 'Estudiante';
+    let carpetaEstudiante;
+    const itEst = carpetaAdjuntos.getFoldersByName(nombreCarpetaEstudiante);
+    if (itEst.hasNext()) {
+      carpetaEstudiante = itEst.next();
+    } else {
+      carpetaEstudiante = carpetaAdjuntos.createFolder(nombreCarpetaEstudiante);
+    }
+
+    const urlCarpetaEstudiante = carpetaEstudiante.getUrl();
+    const guardados = [];
+
+    // 3. Decodificar y crear cada archivo en la subcarpeta
+    for (let i = 0; i < data.archivos.length; i++) {
+      const arch = data.archivos[i];
+      if (!arch || !arch.base64) continue;
+
+      try {
+        const bytes = Utilities.base64Decode(arch.base64);
+        const mime = arch.tipo || 'application/octet-stream';
+        const prefijo = arch.etiqueta ? `${arch.etiqueta} - ` : '';
+        const nombreArchivo = `${prefijo}${arch.nombre || 'documento'}`;
+        const blob = Utilities.newBlob(bytes, mime, nombreArchivo);
+        const archivoCreado = carpetaEstudiante.createFile(blob);
+
+        guardados.push({
+          nombre: arch.etiqueta ? `${arch.etiqueta} (${arch.nombre})` : arch.nombre || 'Documento',
+          url: archivoCreado.getUrl(),
+        });
+      } catch (errArchivo) {
+        console.warn('Error al guardar archivo en Drive:', errArchivo);
+      }
+    }
+
+    // 4. Si se guardaron archivos, generar fórmula HYPERLINK para la celda
+    if (guardados.length === 1) {
+      const g = guardados[0];
+      const etiquetaSegura = g.nombre.replace(/"/g, '""');
+      return {
+        formula: `=HYPERLINK("${g.url}", "📄 ${etiquetaSegura}")`,
+        texto: `${g.nombre} (Drive)`,
+        url: g.url,
+      };
+    } else if (guardados.length > 1) {
+      const etiquetaSegura = `📁 Ver ${guardados.length} archivos (${nombreCarpetaEstudiante})`.replace(/"/g, '""');
+      return {
+        formula: `=HYPERLINK("${urlCarpetaEstudiante}", "${etiquetaSegura}")`,
+        texto: `Ver ${guardados.length} archivos en carpeta Drive`,
+        url: urlCarpetaEstudiante,
+      };
+    }
+  } catch (errGeneral) {
+    console.warn('Error en procesarArchivosAdjuntosEnDrive:', errGeneral);
+  }
+
+  return null;
 }
 
 /** Formato institucional USS: Azul #073299 con texto blanco y negrita */

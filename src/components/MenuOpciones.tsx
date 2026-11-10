@@ -34,8 +34,10 @@ import { registrarSolicitud, revisarAdjunto, subirAdjunto, type Adjunto } from '
 import {
   GEX_DRIVE_FOLDER_ID,
   GEX_DRIVE_FOLDER_NAME,
+  archivoABase64,
   construirFilaSolicitud,
   sincronizarSolicitudConGoogleDrive,
+  type ArchivoAdjuntoDrive,
 } from '../services/driveSolicitudesService';
 import type { EstudianteGEX } from '../types/estudiante';
 
@@ -497,20 +499,45 @@ function RegistroPlan({
     if (problema || !alumno) return;
 
     try {
-      // Se suben uno por uno: si alguno falla no se registra una solicitud a medias
+      // Se suben uno por uno: se respalda en Supabase y se prepara para Google Drive
       const adjuntos: (Adjunto & { clave: string; etiqueta: string })[] = [];
+      const archivosParaDrive: ArchivoAdjuntoDrive[] = [];
+
       for (const doc of documentos) {
         const archivo = archivos[doc.clave];
         if (!archivo) continue;
         setEnviando('subiendo');
-        adjuntos.push({ clave: doc.clave, etiqueta: doc.etiqueta, ...(await subirAdjunto(alumno.codUniv, archivo)) });
+
+        // Respaldo en Supabase Storage
+        try {
+          const resSubida = await subirAdjunto(alumno.codUniv, archivo);
+          adjuntos.push({ clave: doc.clave, etiqueta: doc.etiqueta, ...resSubida });
+        } catch (errSubida) {
+          console.warn('[GEX] Advertencia al subir adjunto a Supabase:', errSubida);
+        }
+
+        // Conversión a Base64 para guardarlo en la carpeta de Google Drive
+        try {
+          const base64 = await archivoABase64(archivo);
+          archivosParaDrive.push({
+            clave: doc.clave,
+            etiqueta: doc.etiqueta,
+            nombre: archivo.name,
+            tipo: archivo.type,
+            tamano: archivo.size,
+            base64,
+          });
+        } catch (errB64) {
+          console.warn('[GEX] Error al codificar adjunto para Drive:', errB64);
+        }
       }
+
       // La tabla guarda un archivo en columnas (el primero); la lista completa viaja en datos.adjuntos
       const adjunto: Adjunto | undefined = adjuntos[0];
       // En el Excel van todos los nombres en la misma celda
       const adjuntoFila = adjunto && { ...adjunto, nombre: adjuntos.map((a) => `${a.etiqueta}: ${a.nombre}`).join(' | ') };
 
-      // 1. Construir fila de la solicitud con todos los atributos requeridos
+      // 1. Construir fila de la solicitud con todos los atributos requeridos y los archivos para Drive
       const fila = construirFilaSolicitud({
         alumno,
         plan,
@@ -519,6 +546,7 @@ function RegistroPlan({
         esExamen,
         adjunto: adjuntoFila,
         declaracion,
+        archivos: archivosParaDrive,
       });
 
       // 2. Registrar en Supabase (tbl_gex_solicitudes)

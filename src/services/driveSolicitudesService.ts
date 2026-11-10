@@ -19,6 +19,15 @@ export const GEX_SHEET_NAME = 'USS_CINF_Solicitudes_GEX';
  */
 export const GEX_DRIVE_CONFIGURADO = !!(import.meta.env.VITE_GEX_APPS_SCRIPT_URL as string | undefined)?.trim();
 
+export interface ArchivoAdjuntoDrive {
+  clave?: string;
+  etiqueta?: string;
+  nombre: string;
+  tipo: string;
+  tamano: number;
+  base64: string;
+}
+
 export interface FilaSolicitudGEX {
   'Fecha y Hora': string;
   'Código Universitario': string;
@@ -29,6 +38,22 @@ export interface FilaSolicitudGEX {
   'Trámite / Plan': string;
   'Documento Adjunto': string;
   'Estado': string;
+  /** Lista de adjuntos en Base64 para guardar en la carpeta de Google Drive */
+  archivos?: ArchivoAdjuntoDrive[];
+}
+
+/** Convierte un objeto File del navegador a cadena Base64 para enviarlo a Drive */
+export function archivoABase64(archivo: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const resultado = reader.result as string;
+      const base64 = resultado.includes(',') ? resultado.split(',')[1] : resultado;
+      resolve(base64);
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(archivo);
+  });
 }
 
 /** Formatea fecha y hora en formato estándar peruano DD/MM/AAAA HH:mm */
@@ -52,6 +77,7 @@ export function construirFilaSolicitud({
   correoPersonal,
   esExamen,
   adjunto,
+  archivos,
 }: {
   alumno: EstudianteGEX;
   plan: PlanOpcion;
@@ -60,6 +86,7 @@ export function construirFilaSolicitud({
   esExamen: boolean;
   adjunto?: Adjunto;
   declaracion?: string;
+  archivos?: ArchivoAdjuntoDrive[];
 }): FilaSolicitudGEX {
   const correoInst = alumno.correoInstitucional?.trim() || '';
   const correoPers = correoPersonal?.trim() || '';
@@ -83,6 +110,7 @@ export function construirFilaSolicitud({
     'Trámite / Plan': tramite,
     'Documento Adjunto': adjunto?.nombre || (esExamen ? 'N/A - Examen' : 'Sin archivo'),
     'Estado': 'Registrado',
+    ...(archivos && archivos.length > 0 ? { archivos } : {}),
   };
 }
 
