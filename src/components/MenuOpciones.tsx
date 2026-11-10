@@ -234,9 +234,18 @@ function TarjetaPlan({ plan, numero, onElegir }: { plan: PlanOpcion; numero: num
       }`}
       style={destacado ? ({ '--tw-ring-color': plan.acento } as CSSProperties) : undefined}
     >
+      {plan.insignia && (
+        <span
+          className="absolute -top-2.5 right-4 z-10 rounded-full px-3 py-0.5 text-[10px] font-bold tracking-wide text-white shadow-sm"
+          style={{ backgroundColor: plan.acento }}
+        >
+          {plan.insignia}
+        </span>
+      )}
+
       {/* 1. Encabezado */}
       <div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ backgroundColor: `${plan.acento}14`, color: plan.acento }}
@@ -247,16 +256,8 @@ function TarjetaPlan({ plan, numero, onElegir }: { plan: PlanOpcion; numero: num
             <p className="text-xs font-bold uppercase tracking-wider" style={{ color: plan.acento }}>
               Opción {numero}
             </p>
-            <p className="text-xs text-slate-500 truncate" title={plan.etiqueta}>{plan.etiqueta}</p>
+            <p className="text-xs text-slate-500 leading-tight mt-0.5" title={plan.etiqueta}>{plan.etiqueta}</p>
           </div>
-          {plan.insignia && (
-            <span
-              className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-2xs"
-              style={{ backgroundColor: plan.acento }}
-            >
-              {plan.insignia}
-            </span>
-          )}
         </div>
         <h3 className="mt-4 text-xl font-extrabold text-slate-900 leading-tight">{plan.nombre}</h3>
         <p className="mt-1.5 text-sm text-slate-600 leading-snug">{plan.resumen}</p>
