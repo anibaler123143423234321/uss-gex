@@ -337,10 +337,11 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
   const caso: 'sin-cursos' | 'en-curso' | 'acreditado' =
     !plan ? 'sin-cursos' : plan.aprobados >= plan.totalMeta ? 'acreditado' : 'en-curso';
 
-  /** Tarjeta de un curso */
-  const renderCurso = (curso: Curso) => {
+  /** Tarjeta de un curso: 2 en la primera fila y el tercero a todo el ancho en la segunda */
+  const renderCurso = (curso: Curso, index: number, total: number) => {
     const esAprobado = curso.estado === 1;
     const { Icon } = curso;
+    const ocupaTodoElAncho = total === 3 && index === 2;
 
     return (
       <div
@@ -353,7 +354,9 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
               }
             : undefined
         }
-        className={`rounded-xl border px-3 py-2 sm:px-3.5 sm:py-2.5 relative overflow-hidden group flex-1 flex flex-col justify-center gap-1.5 min-h-[76px] grande:px-5 grande:py-4 grande:gap-2.5 grande:min-h-[128px] grande:rounded-2xl transition-shadow ${
+        className={`rounded-xl border px-3 py-2 sm:px-3.5 sm:py-2.5 relative overflow-hidden group flex flex-col justify-center gap-1.5 min-h-[76px] grande:px-5 grande:py-4 grande:gap-2.5 grande:min-h-[128px] grande:rounded-2xl transition-shadow ${
+          ocupaTodoElAncho ? 'col-span-1 sm:col-span-2' : 'col-span-1'
+        } ${
           esAprobado ? 'bg-white shadow-sm hover:shadow-md' : 'bg-white border-slate-200'
         }`}
       >
@@ -407,7 +410,11 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
         </div>
 
         {/* Título del curso con ícono */}
-        <div className="flex items-center gap-2.5 grande:gap-3.5 relative z-10 pr-10 lg:pr-20 grande:pr-28">
+        <div
+          className={`flex items-center gap-2.5 grande:gap-3.5 relative z-10 ${
+            ocupaTodoElAncho ? 'pr-10 lg:pr-20 grande:pr-28' : 'pr-8 sm:pr-12'
+          }`}
+        >
           <div
             style={esAprobado ? { backgroundColor: curso.acento } : undefined}
             className={`w-8 h-8 2xl:w-9 2xl:h-9 rounded-lg grande:w-11 grande:h-11 grande:rounded-xl flex items-center justify-center shrink-0 ${
@@ -420,7 +427,12 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
             <h4 className="text-sm 2xl:text-base grande:text-lg font-bold text-slate-900 leading-tight">
               {curso.nombre}
             </h4>
-            <p className={`text-[11px] 2xl:text-[13px] grande:text-sm leading-tight mt-0.5 grande:mt-1 ${esAprobado ? 'text-slate-700 font-medium' : 'text-slate-500'}`}>
+            <p
+              className={`text-[11px] 2xl:text-[13px] grande:text-sm leading-tight mt-0.5 grande:mt-1 ${
+                ocupaTodoElAncho ? '' : 'truncate'
+              } ${esAprobado ? 'text-slate-700 font-medium' : 'text-slate-500'}`}
+              title={esAprobado ? `✓ ${curso.tagApproved}` : curso.descripcion}
+            >
               {esAprobado ? `✓ ${curso.tagApproved}` : curso.descripcion}
             </p>
           </div>
@@ -556,8 +568,8 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
             </div>
           </div>
         ) : (
-          <div className="p-2.5 sm:p-3 grande:p-4 flex flex-col gap-2 grande:gap-3 min-h-0 flex-1">
-            {cursosLista.map(renderCurso)}
+          <div className="p-2.5 sm:p-3 grande:p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 grande:gap-3 min-h-0 flex-1">
+            {cursosLista.map((c, idx) => renderCurso(c, idx, cursosLista.length))}
           </div>
         )}
       </section>
