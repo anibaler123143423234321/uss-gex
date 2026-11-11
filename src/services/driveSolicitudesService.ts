@@ -83,6 +83,8 @@ export function construirFilaSolicitud({
   esExamen,
   adjunto,
   archivos,
+  turno,
+  fechaEntrevista,
 }: {
   alumno: EstudianteGEX;
   plan: PlanOpcion;
@@ -92,6 +94,8 @@ export function construirFilaSolicitud({
   adjunto?: Adjunto;
   declaracion?: string;
   archivos?: ArchivoAdjuntoDrive[];
+  turno?: string;
+  fechaEntrevista?: string;
 }): FilaSolicitudGEX {
   const correoInst = alumno.correoInstitucional?.trim() || '';
   const correoPers = correoPersonal?.trim() || '';
@@ -100,10 +104,14 @@ export function construirFilaSolicitud({
       ? `${correoInst} (${correoPers})`
       : correoInst || correoPers || '—';
 
-  const tramite =
+  let tramite =
     plan.id === 'convalidacion'
       ? 'Convalidación de Cursos'
-      : `${plan.nombre} (${esExamen ? 'Examen' : 'Convalidación'})`;
+      : `${plan.nombre.replace(/\n+/g, ' ')} (${esExamen ? 'Examen' : 'Convalidación'})`;
+
+  if (fechaEntrevista) {
+    tramite += ` · Entrevista: ${fechaEntrevista}${turno ? ` (${turno})` : ''}`;
+  }
 
   return {
     'Fecha y Hora': formatearFechaPeru(),

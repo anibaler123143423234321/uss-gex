@@ -37,6 +37,8 @@ import {
 } from '../services/solicitudesService';
 import { CONTACTO_CINF, PLANES_COMPUTACION } from '../data/planesComputacion';
 
+const ACADEMIC_SEAL = `${import.meta.env.BASE_URL}academic-seal.svg`;
+
 interface Props {
   estudiante: EstudianteGEX;
   onBack: () => void;
@@ -136,7 +138,7 @@ function getEstadoBadgeInfo(sol: SolicitudEstadoEstudiante) {
 
 function getNombrePlan(planId: string): string {
   const plan = PLANES_COMPUTACION.find((p) => p.id === planId);
-  return plan ? plan.nombre : planId.toUpperCase();
+  return plan ? plan.nombre.replace(/\n+/g, ' ') : planId.toUpperCase();
 }
 
 function formatFecha(fechaIso?: string): string {
@@ -512,7 +514,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
         <div className="relative px-3.5 py-2.5 sm:px-4 sm:py-2.5 grande:px-6 grande:py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 grande:gap-6">
           {caso === 'acreditado' && (
             <img
-              src="/academic-seal.svg"
+              src={ACADEMIC_SEAL}
               alt=""
               className="absolute -top-6 -right-6 w-28 h-28 pointer-events-none opacity-[0.08] select-none"
             />
@@ -612,7 +614,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
         </button>
 
         <div className="flex items-center gap-1.5 text-xs 2xl:text-sm text-slate-500 min-w-0">
-          <span>Portal GEX</span>
+          <a href="/" title="Ir al inicio" className="hover:text-uss-blue hover:underline">Portal GEX</a>
           <span>/</span>
           <span className="font-semibold text-slate-800 truncate">{e.escuela}</span>
           <span>/</span>

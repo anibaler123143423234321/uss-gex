@@ -28,6 +28,21 @@ export interface DescuentoPlan {
   fin: string;
 }
 
+export interface ItemIncluyeGex {
+  texto: string;
+  activo: boolean;
+  /** (_*) en la pizarra: hay que aprobar ese curso (p. ej. Cisco NetAcad) para poder acreditar */
+  obligatorio?: boolean;
+}
+
+/** Certificado o constancia que emite el plan. requierePago es el asterisco (*) de la pizarra */
+export interface DocumentoEmitidoGex {
+  emite: boolean;
+  /** "50 horas", "90 horas por curso"… vacío si no hay detalle */
+  detalle: string;
+  requierePago: boolean;
+}
+
 /** Una tarjeta del Menú de opciones. Se edita en el panel; los 4 id son fijos. */
 export interface PlanOpcion {
   id: PlanOpcionId;
@@ -41,12 +56,22 @@ export interface PlanOpcion {
   precioNota: string;
   /** Vacío = sin insignia */
   insignia: string;
+  /** Fecha y hora límite en formato ISO local YYYY-MM-DDTHH:mm (ej. "2026-12-15T23:59") */
+  fechaLimite?: string;
   etapas: EtapaPlan[];
   requisitos: string[];
-  incluye: string[];
+  incluye: (ItemIncluyeGex | string)[];
   documento: string;
   /** Lo que sigue después de registrarse */
   proceso: string[];
+  /** Matriz oficial del Centro de Informática (pizarra): público, requisito y cómo se acredita */
+  dirigidoA: string;
+  requisitoPrincipal: string;
+  formaAcreditacion: string;
+  certificado: DocumentoEmitidoGex;
+  constancia: DocumentoEmitidoGex;
+  /** Texto del botón de la tarjeta: Inscripción, Entrevista, Solicitud, Ver horarios */
+  textoBoton: string;
   /** Sin descuento si falta */
   descuento?: DescuentoPlan;
 }
@@ -60,7 +85,142 @@ export const ICONOS_PLAN: Record<string, LucideIcon> = {
   Puzzle, Wrench, Briefcase, Users, Presentation, Video, Globe, Rocket, Sparkles, Zap,
 };
 
+export interface ItemCronogramaPizarra {
+  mes: string;
+  monto: string;
+  montoNumero: number;
+  esCero: boolean;
+  detalle?: string;
+  esSeparador?: boolean;
+}
+
+/**
+ * Cronograma financiero mensual oficial de Computación GEX (fijado en pizarra).
+ * Suma total exacta: 100 + 100 + 100 + 0 + 0 + 0 + 0 + 250 = S/ 550.00.
+ */
+export const CRONOGRAMA_GEX_PIZARRA: ItemCronogramaPizarra[] = [
+  { mes: 'Enero 2027', monto: '100.00', montoNumero: 100, esCero: false, detalle: 'Clases virtuales y talleres' },
+  { mes: 'Feb 2027', monto: '100.00', montoNumero: 100, esCero: false, detalle: 'Clases virtuales y talleres' },
+  { mes: 'Marzo 2027', monto: '100.00', montoNumero: 100, esCero: false, detalle: 'Clases virtuales y master class' },
+  { mes: 'Abr', monto: '0.00', montoNumero: 0, esCero: true, detalle: 'Asincrónico · Curso CISCO' },
+  { mes: 'May', monto: '0.00', montoNumero: 0, esCero: true, detalle: 'Asincrónico · Curso CISCO' },
+  { mes: 'Jun', monto: '0.00', montoNumero: 0, esCero: true, detalle: 'Asincrónico · Curso CISCO' },
+  { mes: 'Jul', monto: '0.00', montoNumero: 0, esCero: true, detalle: 'Asincrónico · Curso CISCO' },
+  { mes: 'Agosto', monto: '250.00', montoNumero: 250, esCero: false, detalle: 'Resolución de casos y evaluación final', esSeparador: true },
+];
+
+export const TOTAL_CRONOGRAMA_GEX = '550.00';
+
 export const iconoPlan = (nombre: string): LucideIcon => ICONOS_PLAN[nombre] ?? Sparkles;
+
+/**
+ * Fila "Incluye" de la matriz oficial (pizarra del Centro de Informática). Van en el mismo orden en
+ * los 4 planes para que el portal las alinee como una tabla: Zoom, asincrónico, Cisco y examen.
+ */
+export const COMPARATIVA_OFICIAL: Record<PlanOpcionId, ItemIncluyeGex[]> = {
+  gex: [
+    { texto: 'Sesiones en vivo por Zoom', activo: true },
+    { texto: 'Sesiones asincrónicas', activo: true },
+    { texto: 'Certificado Cisco NetAcad', activo: true, obligatorio: true },
+    { texto: 'Evaluación integral', activo: true },
+  ],
+  validacion: [
+    { texto: 'Sesiones en vivo por Zoom', activo: false },
+    { texto: 'Sesiones asincrónicas', activo: false },
+    { texto: 'Certificado Cisco', activo: false },
+    { texto: 'Examen de certificación', activo: true },
+  ],
+  convalidacion: [
+    { texto: 'Sesiones en vivo por Zoom', activo: false },
+    { texto: 'Sesiones asincrónicas', activo: false },
+    { texto: 'Certificado Cisco', activo: false },
+    { texto: 'Examen de certificación', activo: false },
+  ],
+  protech: [
+    { texto: 'Sesiones en vivo por Zoom (cronograma de 3, 2 o 1 mes)', activo: true },
+    { texto: 'Sesiones asincrónicas', activo: false },
+    { texto: 'Certificado Cisco gratis', activo: true, obligatorio: true },
+    { texto: 'Taller de certificación internacional', activo: true },
+  ],
+};
+
+/**
+ * Lo demás de la matriz oficial por plan. Rige mientras el panel no lo edite: mezclarPlanes completa
+ * con esto los planes guardados antes de que existieran estos campos.
+ */
+export const MATRIZ_OFICIAL: Record<PlanOpcionId, {
+  dirigidoA: string;
+  requisitoPrincipal: string;
+  formaAcreditacion: string;
+  certificado: DocumentoEmitidoGex;
+  constancia: DocumentoEmitidoGex;
+  textoBoton: string;
+}> = {
+  gex: {
+    dirigidoA: 'Estudiantes de pregrado de la modalidad Gente con Experiencia',
+    requisitoPrincipal: 'Ninguno',
+    formaAcreditacion: 'Curso GEX',
+    certificado: { emite: true, detalle: '50 horas', requierePago: true },
+    constancia: { emite: true, detalle: '', requierePago: true },
+    textoBoton: 'Inscripción',
+  },
+  validacion: {
+    dirigidoA: 'Estudiantes con conocimientos de nivel avanzado en Informática',
+    requisitoPrincipal: 'Entrevista previa',
+    formaAcreditacion: 'Examen de certificación',
+    certificado: { emite: false, detalle: '', requierePago: false },
+    constancia: { emite: true, detalle: '', requierePago: true },
+    textoBoton: 'Entrevista',
+  },
+  convalidacion: {
+    dirigidoA: 'Estudiantes con título profesional técnico en Computación o carrera afín',
+    requisitoPrincipal: 'Título profesional o título técnico legalizado',
+    formaAcreditacion: 'Resolución de convalidación',
+    certificado: { emite: false, detalle: '', requierePago: false },
+    constancia: { emite: true, detalle: '', requierePago: false },
+    textoBoton: 'Solicitud',
+  },
+  protech: {
+    dirigidoA: 'Estudiantes de pregrado USS',
+    requisitoPrincipal: 'Ninguno',
+    formaAcreditacion: '3 cursos + 1 taller',
+    certificado: { emite: true, detalle: '90 horas por curso', requierePago: true },
+    constancia: { emite: true, detalle: '', requierePago: false },
+    textoBoton: 'Ver horarios',
+  },
+};
+
+/**
+ * Normaliza "Incluye". Las listas viejas eran solo textos (viñetas sin ✓ ni —, de antes de la matriz):
+ * esas se reemplazan por la fila oficial. Una lista con objetos es la que editó el panel y se respeta.
+ */
+export function normalizarIncluye(incluye: unknown, planId?: PlanOpcionId): ItemIncluyeGex[] {
+  const lista = Array.isArray(incluye) ? incluye : [];
+  const editada = lista.some((item) => item && typeof item === 'object');
+  if (editada) {
+    return lista
+      .map((item) => {
+        if (!item || typeof item !== 'object') return null;
+        const obj = item as { texto?: unknown; activo?: unknown; obligatorio?: unknown };
+        const texto = String(obj.texto ?? '').trim();
+        if (!texto) return null;
+        return { texto, activo: obj.activo !== false, ...(obj.obligatorio === true ? { obligatorio: true } : {}) };
+      })
+      .filter((x): x is ItemIncluyeGex => x !== null);
+  }
+  return planId ? COMPARATIVA_OFICIAL[planId].map((x) => ({ ...x })) : [];
+}
+
+/** Un certificado o constancia guardado a medias se completa con el oficial */
+export function normalizarDocumento(valor: unknown, oficial: DocumentoEmitidoGex): DocumentoEmitidoGex {
+  if (!valor || typeof valor !== 'object') return { ...oficial };
+  const v = valor as Partial<Record<keyof DocumentoEmitidoGex, unknown>>;
+  return {
+    emite: typeof v.emite === 'boolean' ? v.emite : oficial.emite,
+    detalle: typeof v.detalle === 'string' ? v.detalle : oficial.detalle,
+    requierePago: typeof v.requierePago === 'boolean' ? v.requierePago : oficial.requierePago,
+  };
+}
 
 /**
  * Valores oficiales de las formas de acreditar Computación en el Programa Gente con Experiencia.
@@ -79,21 +239,18 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
     etiqueta: 'Curso de acreditación',
     nombre: 'Programa GEX',
     resumen: 'Clases virtuales, curso CISCO y evaluación final en los meses no curriculares.',
-    precio: 'S/ 100',
-    precioNota: 'al mes · enero a marzo',
+    precio: 'S/ 550',
+    precioNota: 'Pago total: 3 meses de S/ 100 + S/ 250 final',
     insignia: 'Certificado',
+    fechaLimite: '2026-12-15T23:59',
     etapas: [
       { duracion: '3 meses', periodo: 'Enero – Marzo', costo: 'S/ 100 por mes', detalle: 'Clases virtuales, talleres y master class' },
       { duracion: '4 meses', periodo: 'Abril – Julio', costo: 'Gratis', detalle: 'Asincrónico · Curso CISCO' },
       { duracion: '1 mes', periodo: 'Agosto', costo: 'S/ 250', detalle: 'Resolución de casos aplicados' },
     ],
     requisitos: [],
-    incluye: [
-      'Sesiones por Zoom, talleres y webinars',
-      'Masterclass de acompañamiento académico',
-      'Alfabetización digital en Cisco NetAcad, con insignias digitales',
-      'Evaluación integral de competencias en agosto',
-    ],
+    incluye: COMPARATIVA_OFICIAL.gex,
+    ...MATRIZ_OFICIAL.gex,
     documento: 'Certificado de 50 horas y constancia',
     proceso: [
       'La Dirección del Programa de Experiencia Laboral envía la lista de participantes habilitados a Finanzas del Estudiante.',
@@ -108,25 +265,25 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
     etiqueta: 'Reconocimiento de experiencia',
     nombre: 'Validación de competencias',
     resumen: 'Si ya trabajas y usas herramientas digitales en tu entorno profesional, acredita con un examen, sin cursar.',
-    precio: 'S/.',
-    precioNota: 'según tasa vigente',
+    precio: 'S/ 340',
+    precioNota: 'Derecho de examen de certificación',
     insignia: 'Constancia',
+    fechaLimite: '2026-12-15T23:59',
     etapas: [],
     requisitos: [
+      'Entrevista previa con el Centro de Informática',
       'Presentar la solicitud formal hasta el 15 de diciembre',
       'Realizar el pago de las tasas administrativas vigentes',
       'No estar matriculado en el curso de acreditación',
     ],
-    incluye: [
-      'Examen teórico-práctico en Microsoft Word o Microsoft Excel',
-      'Alineado al sílabo vigente y a contextos laborales reales',
-    ],
+    incluye: COMPARATIVA_OFICIAL.validacion,
+    ...MATRIZ_OFICIAL.validacion,
     documento: 'Solo constancia (no se emite certificado)',
     proceso: [
-      'Presentación de la solicitud.',
-      'El Centro de Informática la revisa y se programa el pago de la tasa.',
-      'Examen teórico-práctico en Microsoft Word o Microsoft Excel, alineado al sílabo vigente.',
-      'Registro del resultado en el sistema académico.',
+      'Solicitas tu entrevista y eliges el turno que te acomoda.',
+      'El Centro de Informática te contacta para la entrevista previa.',
+      'Si la apruebas, se programa el pago del derecho de examen.',
+      'Rindes el examen de certificación en Microsoft Word o Microsoft Excel.',
     ],
   },
   {
@@ -136,20 +293,18 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
     etiqueta: 'Estudios previos',
     nombre: 'Convalidación',
     resumen: 'Si ya cuentas con formación técnica y experiencia laboral, reconoce tu título en Computación o carrera afín.',
-    precio: 'Trámite',
-    precioNota: 'según tasa vigente',
+    precio: 'S/ 120',
+    precioNota: 'Trámite de resolución de convalidación',
     insignia: 'Constancia',
+    fechaLimite: '2026-12-15T23:59',
     etapas: [],
     requisitos: [
-      'Presentar la solicitud formal hasta el 15 de diciembre',
-      'Copia legalizada o fedateada del Título Profesional Técnico en Computación o carrera afín',
-      'Certificado de estudios y sílabos oficiales',
+      'Título profesional o título técnico legalizado',
+      'Certificado de estudios',
       'Título emitido por una institución oficialmente reconocida',
     ],
-    incluye: [
-      'Verificación de la documentación oficial',
-      'Evaluación de equivalencia de competencias y contenidos',
-    ],
+    incluye: COMPARATIVA_OFICIAL.convalidacion,
+    ...MATRIZ_OFICIAL.convalidacion,
     documento: 'Solo constancia (no se emite certificado)',
     proceso: [
       'Verificación de la documentación oficial.',
@@ -166,63 +321,47 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
     nombre: 'PROTECH XP',
     resumen: '3 cursos de tu ruta de aprendizaje y 1 taller de certificación internacional.',
     precio: 'S/ 420',
-    precioNota: 'por curso · taller S/ 340 (Sede Chiclayo)',
+    precioNota: 'Por cada curso de la ruta',
     insignia: 'Certificado',
+    fechaLimite: '2026-12-15T23:59',
     etapas: [],
     requisitos: [],
-    incluye: [
-      '3 cursos de tu ruta de aprendizaje',
-      '1 taller de certificación internacional',
-      'Puedes llevar los cursos de tu ruta en paralelo',
-      'Certificación Internacional Microsoft Office Specialist',
-    ],
+    incluye: COMPARATIVA_OFICIAL.protech,
+    ...MATRIZ_OFICIAL.protech,
     documento: 'Certificación Internacional Microsoft Office',
-    proceso: ['El Centro de Informática programará la fecha de tu examen y te la comunicará por celular o correo.'],
+    proceso: [
+      'Eliges el cronograma y el turno que prefieres.',
+      'El Centro de Informática te confirma la sección y el horario disponibles.',
+      'Te matriculas en tus cursos y en el taller de certificación.',
+    ],
   },
 ];
 
 /**
- * Cómo se acredita cada opción, según la sección 2 del documento: el curso cierra con la evaluación
- * integral de agosto, la validación es solo un examen y la convalidación es documental (no lleva
- * examen). No se edita en el panel porque de esto depende el formulario.
+ * Qué abre el botón de cada opción (pizarra oficial). Es fijo por opción porque de él depende el
+ * formulario; el panel solo cambia el texto del botón.
  */
-export const MODALIDAD: Record<PlanOpcionId, { corta: string; registro: string }> = {
-  gex: { corta: 'Curso y evaluación', registro: 'Inscripción al curso' },
-  validacion: { corta: 'Examen', registro: 'Inscripción al examen' },
-  convalidacion: { corta: 'Documentos', registro: 'Solicitud de convalidación' },
-  protech: { corta: 'Cursos y taller', registro: 'Inscripción' },
+export type AccionPlan = 'inscripcion' | 'entrevista' | 'solicitud' | 'horarios';
+export const ACCION_PLAN: Record<PlanOpcionId, AccionPlan> = {
+  gex: 'inscripcion',
+  validacion: 'entrevista',
+  convalidacion: 'solicitud',
+  protech: 'horarios',
 };
 
-/** Una fila del comparativo de las tarjetas: va en el mismo orden en los 4 planes, como una página de precios */
-export interface FilaComparativa {
-  /** Se muestra con "–" en los planes que no lo incluyen */
-  texto: string;
-  /** Planes que sí lo incluyen; true usa el mismo texto, un string lo cambia solo para ese plan */
-  planes: Partial<Record<PlanOpcionId, true | string>>;
-}
+/** Turnos de atención del Centro de Informática: para la entrevista o el horario que prefiere el estudiante */
+export const TURNOS_CINF = [
+  { clave: 'manana', etiqueta: 'Mañana', detalle: 'Lunes a viernes · 8:00 a. m. – 1:00 p. m.' },
+  { clave: 'tarde', etiqueta: 'Tarde', detalle: 'Lunes a viernes · 2:00 p. m. – 6:00 p. m.' },
+  { clave: 'sabado', etiqueta: 'Sábado', detalle: 'Sábados · 9:00 a. m. – 12:00 p. m.' },
+] as const;
 
-// Misma fuente que PLANES_COMPUTACION. Según la tabla de certificación (sección 2 y lámina 12): el
-// curso da certificado de 50 horas y constancia; validación y convalidación, solo constancia. La
-// convalidación es documental, por eso no lleva evaluación.
-export const COMPARATIVA: FilaComparativa[] = [
-  { texto: 'Sesiones por Zoom, talleres y master class', planes: { gex: true, protech: 'Sesiones por Zoom' } },
-  { texto: 'Curso asincrónico en Cisco NetAcad', planes: { gex: 'Curso asincrónico gratis en Cisco NetAcad' } },
-  { texto: 'Cursos de tu ruta y taller de certificación', planes: { protech: '3 cursos de tu ruta y 1 taller de certificación' } },
-  {
-    texto: 'Acreditas sin cursar',
-    planes: { validacion: 'Acreditas tu experiencia, sin cursar', convalidacion: 'Acreditas con tu título técnico, sin cursar' },
-  },
-  {
-    texto: 'Examen o evaluación final',
-    planes: {
-      gex: 'Evaluación integral en agosto',
-      validacion: 'Examen en Word o Excel',
-      protech: 'Examen al final',
-    },
-  },
-  { texto: 'Certificado', planes: { gex: 'Certificado de 50 horas', protech: 'Certificación internacional' } },
-  { texto: 'Constancia de cumplimiento', planes: { gex: true, protech: true, validacion: true, convalidacion: true } },
-];
+/** Cronogramas de PROTECH XP según la pizarra: el mismo curso en 3, 2 o 1 mes */
+export const CRONOGRAMAS_PROTECH = ['3 meses', '2 meses', '1 mes'] as const;
+
+/** Leyenda de los asteriscos de la matriz oficial */
+export const LEYENDA_PAGO = '* Requiere el pago de la tasa administrativa oficial.';
+export const LEYENDA_OBLIGATORIO = '(_*) Aprobación obligatoria del curso Cisco NetAcad.';
 
 /** Un documento que el estudiante sube al registrarse */
 export interface DocumentoPlan {
@@ -238,17 +377,63 @@ const COMPROBANTE: DocumentoPlan = { clave: 'pago', etiqueta: 'Comprobante de pa
 
 /**
  * Documentos que pide cada plan, uno por requisito de la sección 2 del documento oficial.
- * Programa GEX y PROTECH XP no piden archivos: el estudiante solo deja sus datos.
+ * Solo convalidación pide archivos; las demás opciones solo dejan sus datos.
  */
+// Validación ya no pide archivos al inscribirse: según la pizarra empieza con una entrevista previa
 export const DOCUMENTOS_PLAN: Partial<Record<PlanOpcionId, DocumentoPlan[]>> = {
-  validacion: [{ clave: 'solicitud', etiqueta: 'Solicitud formal', obligatorio: true }, COMPROBANTE],
   convalidacion: [
-    { clave: 'solicitud', etiqueta: 'Solicitud formal', obligatorio: true },
-    { clave: 'titulo', etiqueta: 'Título técnico legalizado o fedateado', obligatorio: true },
-    { clave: 'estudios', etiqueta: 'Certificado de estudios y sílabos', obligatorio: true },
+    { clave: 'titulo', etiqueta: 'Título profesional o título técnico legalizado', obligatorio: true },
+    { clave: 'estudios', etiqueta: 'Certificado de estudios', obligatorio: true },
     COMPROBANTE,
   ],
 };
+
+const MESES_ES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre',
+];
+
+export function formatearFechaLimite(fechaIso?: string): string {
+  if (!fechaIso || typeof fechaIso !== 'string') return 'hasta el 15 de diciembre';
+  const limpia = fechaIso.trim();
+  if (!limpia) return 'hasta el 15 de diciembre';
+
+  const [fechaPart, horaPart] = limpia.split('T');
+  const partesFecha = fechaPart.split('-').map(Number);
+  if (partesFecha.length < 3 || isNaN(partesFecha[1]) || isNaN(partesFecha[2])) {
+    return 'hasta el 15 de diciembre';
+  }
+
+  const dia = partesFecha[2];
+  const mes = MESES_ES[partesFecha[1] - 1] ?? 'diciembre';
+
+  if (!horaPart) {
+    return `hasta el ${dia} de ${mes}`;
+  }
+
+  const [hStr, mStr] = horaPart.split(':');
+  const h = Number(hStr);
+  const m = Number(mStr);
+  if (isNaN(h) || isNaN(m)) {
+    return `hasta el ${dia} de ${mes}`;
+  }
+
+  const periodo = h >= 12 ? 'p. m.' : 'a. m.';
+  const hora12 = h % 12 === 0 ? 12 : h % 12;
+  const minutos = m === 0 ? '' : `:${String(m).padStart(2, '0')}`;
+
+  return `hasta el ${dia} de ${mes} · ${hora12}${minutos} ${periodo}`;
+}
+
+export function estaPlazoVencido(fechaIso?: string): boolean {
+  if (!fechaIso) return false;
+  try {
+    const d = new Date(fechaIso);
+    return !isNaN(d.getTime()) && Date.now() > d.getTime();
+  } catch {
+    return false;
+  }
+}
 
 /** Fecha límite para presentar la solicitud en las 4 opciones (la indicó el Centro de Informática) */
 export const PLAZO_SOLICITUD = 'hasta el 15 de diciembre';
@@ -268,7 +453,7 @@ export const CONTACTO_CINF = {
   whatsappUrl: 'https://wa.me/51986724506',
   correo: 'centro.informatica@uss.edu.pe',
   direccion: 'Elías Aguirre N.° 933, 1.er piso — Chiclayo',
-  horario: 'Lunes a viernes · 8:00 a. m. – 1:00 p. m. y 2:00 p. m. – 6:00 p. m.',
+  horario: 'Lunes a viernes · 8:00 a. m. – 1:00 p. m. y 2:00 p. m. – 6:00 p. m. | Sábados · 9:00 a. m. – 12:00 p. m.',
 };
 
 /** Completa los planes guardados con los oficiales; siempre salen los 4, en el orden oficial (Opción 1 a 4). */
@@ -280,7 +465,29 @@ export function mezclarPlanes(guardados: unknown): PlanOpcion[] {
     if (!insignia || insignia === 'Con certificado' || insignia === 'Certificado o constancia') {
       insignia = oficial.insignia;
     }
-    return { ...oficial, ...guardado, insignia };
+    // Los planes guardados antes de la matriz oficial no traen estos campos: rigen los oficiales
+    const textoO = (valor: unknown, porDefecto: string) => (typeof valor === 'string' ? valor : porDefecto);
+    const requisitos = oficial.id === 'convalidacion'
+      ? oficial.requisitos
+      : (Array.isArray(guardado.requisitos) ? guardado.requisitos : oficial.requisitos);
+    const requisitoPrincipal = oficial.id === 'convalidacion'
+      ? oficial.requisitoPrincipal
+      : textoO(guardado.requisitoPrincipal, oficial.requisitoPrincipal);
+
+    return {
+      ...oficial,
+      ...guardado,
+      insignia,
+      requisitos,
+      fechaLimite: typeof guardado.fechaLimite === 'string' && guardado.fechaLimite.trim() ? guardado.fechaLimite : oficial.fechaLimite || '2026-12-15T23:59',
+      incluye: normalizarIncluye(guardado.incluye, oficial.id),
+      dirigidoA: textoO(guardado.dirigidoA, oficial.dirigidoA),
+      requisitoPrincipal,
+      formaAcreditacion: textoO(guardado.formaAcreditacion, oficial.formaAcreditacion),
+      textoBoton: guardado.textoBoton || oficial.textoBoton,
+      certificado: normalizarDocumento(guardado.certificado, oficial.certificado),
+      constancia: normalizarDocumento(guardado.constancia, oficial.constancia),
+    };
   });
 }
 

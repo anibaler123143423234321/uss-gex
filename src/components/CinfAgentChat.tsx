@@ -16,6 +16,8 @@ import {
   PLAZO_SOLICITUD,
   PLANES_COMPUTACION,
   POLITICAS_GEX,
+  LEYENDA_PAGO,
+  formatearFechaLimite,
   type PlanOpcion,
 } from '../data/planesComputacion';
 import type { EstudianteGEX } from '../types/estudiante';
@@ -275,14 +277,24 @@ Datos registrados:
 
 const sinTildes = (texto: string) => texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
+const textoDoc = (d: PlanOpcion['certificado']) =>
+  d.emite ? `sí${d.detalle ? ` (${d.detalle})` : ''}${d.requierePago ? ' *' : ''}` : 'no';
+
 function fichaPlan(plan: PlanOpcion): string {
-  const lineas = [`**${plan.nombre}** — ${plan.resumen}`, `• **Costo:** ${plan.precio} (${plan.precioNota})`];
+  const costo = plan.precioNota ? `${plan.precio} (${plan.precioNota})` : plan.precio;
+  const lineas = [
+    `**${plan.nombre.replace(/\n+/g, ' ')}** — ${plan.resumen}`,
+    `• **Costo:** ${costo}`,
+    `• **Dirigido a:** ${plan.dirigidoA}`,
+    `• **Requisito previo:** ${plan.requisitoPrincipal || 'Ninguno'}`,
+    `• **Acreditación:** ${plan.formaAcreditacion}`,
+  ];
   plan.etapas.forEach((e) => lineas.push(`• **${e.periodo}:** ${e.costo} — ${e.detalle}`));
   if (plan.requisitos.length) {
     lineas.push('', '**Requisitos:**');
     plan.requisitos.forEach((r) => lineas.push(`• ${r}`));
   }
-  lineas.push(`• **Plazo de solicitud:** ${PLAZO_SOLICITUD}`);
+  lineas.push(`• **Plazo de solicitud:** ${formatearFechaLimite(plan.fechaLimite)}`);
   const documentos = DOCUMENTOS_PLAN[plan.id] ?? [];
   if (documentos.length) {
     lineas.push('', '**Documentos que subes al inscribirte** (PDF, JPG o PNG, hasta 5 MB cada uno):');
@@ -292,11 +304,12 @@ function fichaPlan(plan: PlanOpcion): string {
     lineas.push('', '**Proceso:**');
     plan.proceso.forEach((p, i) => lineas.push(`${i + 1}. ${p}`));
   }
-  lineas.push('', `**Obtienes:** ${plan.documento}`);
+  lineas.push('', `**Certificado:** ${textoDoc(plan.certificado)} · **Constancia:** ${textoDoc(plan.constancia)}`);
+  if (plan.certificado.requierePago || plan.constancia.requierePago) lineas.push(LEYENDA_PAGO);
   return lineas.join('\n');
 }
 
-const COMO_INSCRIBIRSE = 'Para inscribirte entra a **Menú de opciones**, elige la opción y pulsa **Inscribirme**.';
+const COMO_INSCRIBIRSE = 'Para registrarte entra a **Menú de opciones**, elige la opción y pulsa su botón (Inscripción, Entrevista, Solicitud o Ver horarios).';
 
 /** Responde preguntas sobre las formas de acreditar; null si la consulta no trata de eso */
 export function responderSobreAcreditacion(consulta: string, planes: PlanOpcion[]): string | null {
@@ -309,7 +322,10 @@ export function responderSobreAcreditacion(consulta: string, planes: PlanOpcion[
     return `📅 **Plazo para presentar la solicitud**\nEn las 4 opciones puedes presentar tu solicitud **${PLAZO_SOLICITUD}**.\n\nEl curso de acreditación (Programa GEX) se lleva en los meses no curriculares: enero a marzo y agosto.\n\n${COMO_INSCRIBIRSE}`;
   }
   if (tiene('certificado', 'constancia', 'diploma')) {
-    return `🎓 **Certificado y constancia**\n• **Curso de acreditación (Programa GEX):** certificado de 50 horas y constancia.\n• **Validación de competencias:** solo constancia.\n• **Convalidación:** solo constancia.\n\nEl certificado solo se emite cuando cursas y apruebas el curso.`;
+    const lineas = planes.map(
+      (p) => `• **${p.nombre.replace(/\n+/g, ' ')}:** certificado ${textoDoc(p.certificado)} · constancia ${textoDoc(p.constancia)}`
+    );
+    return `🎓 **Certificado y constancia**\n${lineas.join('\n')}\n\n${LEYENDA_PAGO}`;
   }
   if (tiene('cambio de fecha', 'reserva', 'traslado', 'desaprob', 'jal', 'inhabilit', 'politica', 'norma', 'regla', 'bachiller')) {
     return `📌 **Políticas del programa**\n${POLITICAS_GEX.map((p) => `• ${p}`).join('\n')}`;
@@ -319,11 +335,11 @@ export function responderSobreAcreditacion(consulta: string, planes: PlanOpcion[
     const p = plan('convalidacion');
     return p ? `${fichaPlan(p)}\n\n${COMO_INSCRIBIRSE}` : null;
   }
-  if (tiene('validacion', 'validar', 'examen', 'sin cursar', 'experiencia laboral')) {
+  if (tiene('validacion', 'validar', 'examen', 'sin cursar', 'experiencia laboral', 'entrevista')) {
     const p = plan('validacion');
-    return p ? `${fichaPlan(p)}\n\nEs solo un examen: no llevas clases.\n\n${COMO_INSCRIBIRSE}` : null;
+    return p ? `${fichaPlan(p)}\n\nEmpieza con una entrevista previa; luego rindes el examen de certificación, sin llevar clases.\n\n${COMO_INSCRIBIRSE}` : null;
   }
-  if (tiene('protech', 'ruta', 'taller de certificacion', 'mos')) {
+  if (tiene('protech', 'ruta', 'taller de certificacion', 'mos', 'horario')) {
     const p = plan('protech');
     return p ? `${fichaPlan(p)}\n\n${COMO_INSCRIBIRSE}` : null;
   }
@@ -333,13 +349,13 @@ export function responderSobreAcreditacion(consulta: string, planes: PlanOpcion[
   }
 
   if (tiene('costo', 'precio', 'cuanto', 'pago', 'pagar', 'tasa', 'inversion', 'cuota')) {
-    const lineas = planes.map((p) => `• **${p.nombre}:** ${p.precio} (${p.precioNota})`);
+    const lineas = planes.map((p) => `• **${p.nombre.replace(/\n+/g, ' ')}:** ${p.precio} (${p.precioNota})`);
     return `💰 **Costos para acreditar Computación**\n${lineas.join('\n')}\n\n${NOTA_COSTOS}`;
   }
   if (tiene('requisito')) {
     const conRequisitos = planes.filter((p) => p.requisitos.length > 0);
     return conRequisitos
-      .map((p) => `**${p.nombre}:**\n${p.requisitos.map((r) => `• ${r}`).join('\n')}`)
+      .map((p) => `**${p.nombre.replace(/\n+/g, ' ')}:**\n${p.requisitos.map((r) => `• ${r}`).join('\n')}`)
       .join('\n\n');
   }
   if (tiene('cuando pago', 'pago primero', 'pagar primero', 'antes de pagar', 'comprobante', 'voucher')) {
@@ -349,7 +365,7 @@ export function responderSobreAcreditacion(consulta: string, planes: PlanOpcion[
     return `📝 **Cómo te inscribes**\n1. Entra a **Menú de opciones**.\n2. Elige tu forma de acreditar y pulsa **Inscribirme**.\n3. Deja tu celular; en validación y convalidación sube además cada documento requerido (PDF, JPG o PNG, hasta 5 MB cada uno).\n\nEl Centro de Informática recibe tu solicitud, programa el pago y te contacta por WhatsApp o correo. Plazo: ${PLAZO_SOLICITUD}.`;
   }
   if (tiene('opcion', 'forma', 'acredit', 'como hago', 'que puedo')) {
-    const lineas = planes.map((p, i) => `${i + 1}. **${p.nombre}** (${p.precio}) — ${p.resumen}`);
+    const lineas = planes.map((p, i) => `${i + 1}. **${p.nombre.replace(/\n+/g, ' ')}** (${p.precio}) — ${p.resumen}`);
     return `🧭 **Formas de acreditar Computación en Gente con Experiencia**\n${lineas.join('\n')}\n\nPregúntame por cualquiera de ellas o por costos, requisitos, certificado o plazo.`;
   }
   return null;

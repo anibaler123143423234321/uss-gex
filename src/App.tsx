@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ArrowLeft, Hash, User, Mail, ShieldCheck, Loader2 } from 'lucide-react';
+import { RefreshCw, ArrowLeft, Hash, User, Mail, ShieldCheck, Loader2, Home } from 'lucide-react';
 import SearchBar from './components/SearchBar';
 import StudentDetailView from './components/StudentDetailView';
 import MenuOpciones from './components/MenuOpciones';
@@ -13,6 +13,7 @@ import type { PlanOpcionId } from './data/planesComputacion';
 
 // Consulta abierta en la pestaña: sobrevive a F5 y se borra al cerrar la pestaña
 const CLAVE_SESION = 'gex.sesion';
+const LOGO_USS = `${import.meta.env.BASE_URL}logo.png`;
 
 interface SesionGex {
   codUniv?: string;
@@ -202,25 +203,34 @@ export default function App() {
                   <ArrowLeft className="w-4 h-4" />
                   <span className="hidden sm:inline">Volver</span>
                 </button>
-                <img
-                  src="/logo.png"
-                  alt="Logo USS"
-                  className="h-7 sm:h-8 w-auto object-contain"
-                />
-                <div className="border-l border-slate-200 pl-3 min-w-0">
-                  <h1 className="text-sm font-bold text-uss-blue leading-tight truncate">
-                    {config.titulo} {config.palabraDestacada}
-                  </h1>
-                  <p className="text-[11px] text-slate-500 truncate">Conoce cómo acreditar</p>
-                </div>
+                <a
+                  href="/"
+                  title="Ir al inicio"
+                  className="flex items-center gap-2.5 sm:gap-3 min-w-0 group hover:opacity-90 transition"
+                >
+                  <img
+                    src={LOGO_USS}
+                    alt="Logo USS"
+                    className="h-7 sm:h-8 w-auto object-contain"
+                  />
+                  <div className="border-l border-slate-200 pl-3 min-w-0">
+                    <h1 className="text-sm font-bold text-uss-blue leading-tight truncate">
+                      {config.titulo} {config.palabraDestacada}
+                    </h1>
+                    <p className="text-[11px] text-slate-500 truncate">Conoce cómo acreditar</p>
+                  </div>
+                </a>
               </div>
 
               <div className="flex items-center gap-2">
-                {selected && (
-                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-uss-blue text-xs font-medium border border-blue-100">
-                    Estudiante: <strong className="font-semibold">{selected.nombres.split(' ')[0]}</strong> ({selected.codUniv})
-                  </span>
-                )}
+                <a
+                  href="/"
+                  className="shrink-0 h-9 px-2.5 sm:px-3 rounded-xl transition cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200"
+                  title="Ir al inicio"
+                >
+                  <Home className="w-4 h-4 lg:w-3.5 lg:h-3.5" />
+                  <span className="hidden sm:inline">Inicio</span>
+                </a>
                 {botonSincronizar(false)}
               </div>
             </div>
@@ -258,18 +268,34 @@ export default function App() {
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <img
-                src="/logo.png"
-                alt="Logo USS"
-                className="h-7 sm:h-8 w-auto object-contain"
-              />
-              <div className="border-l border-slate-200 pl-2.5 min-w-0">
-                <h1 className="text-sm font-bold text-uss-blue leading-tight truncate">
-                  {config.titulo} {config.palabraDestacada}
-                </h1>
-                <p className="text-[11px] lg:text-[10px] text-slate-500 truncate">Portal oficial de verificación</p>
+              <a
+                href="/"
+                title="Ir al inicio"
+                className="flex items-center gap-2.5 min-w-0 group hover:opacity-90 transition"
+              >
+                <img
+                  src={LOGO_USS}
+                  alt="Logo USS"
+                  className="h-7 sm:h-8 w-auto object-contain"
+                />
+                <div className="border-l border-slate-200 pl-2.5 min-w-0">
+                  <h1 className="text-sm font-bold text-uss-blue leading-tight truncate">
+                    {config.titulo} {config.palabraDestacada}
+                  </h1>
+                  <p className="text-[11px] lg:text-[10px] text-slate-500 truncate">Portal oficial de verificación</p>
+                </div>
+              </a>
+              <div className="ml-auto flex items-center gap-2">
+                <a
+                  href="/"
+                  className="shrink-0 h-9 px-2.5 sm:px-3 rounded-xl transition cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200"
+                  title="Ir al inicio"
+                >
+                  <Home className="w-4 h-4 lg:w-3.5 lg:h-3.5" />
+                  <span className="hidden sm:inline">Inicio</span>
+                </a>
+                {botonSincronizar(false)}
               </div>
-              <div className="ml-auto">{botonSincronizar(false)}</div>
             </div>
           </header>
 
@@ -295,14 +321,28 @@ export default function App() {
 
             <div className="relative max-w-4xl mx-auto">
               <div className="flex items-center justify-between gap-3">
-                <span className="inline-flex items-center rounded-2xl bg-white px-3 py-1.5 shadow-lg shadow-black/10">
+                <a
+                  href="/"
+                  title="Ir al inicio"
+                  className="inline-flex items-center rounded-2xl bg-white px-3 py-1.5 shadow-lg shadow-black/10 hover:bg-slate-50 transition"
+                >
                   <img
-                    src="/logo.png"
+                    src={LOGO_USS}
                     alt="Logo Universidad Señor de Sipán"
                     className="h-8 sm:h-10 w-auto object-contain"
                   />
-                </span>
-                {botonSincronizar(true)}
+                </a>
+                <div className="flex items-center gap-2">
+                  <a
+                    href="/"
+                    className="shrink-0 h-9 px-2.5 sm:px-3 rounded-xl transition cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20"
+                    title="Ir al inicio"
+                  >
+                    <Home className="w-4 h-4 lg:w-3.5 lg:h-3.5" />
+                    <span className="hidden sm:inline">Inicio</span>
+                  </a>
+                  {botonSincronizar(true)}
+                </div>
               </div>
 
               <div className="mt-9 sm:mt-12 text-center">

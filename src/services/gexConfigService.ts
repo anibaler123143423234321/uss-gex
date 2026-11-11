@@ -21,7 +21,7 @@ export const DEFAULT_GEX_CONFIG: GexPortalConfig = {
   subtitulo: 'Portal oficial de consulta y verificación de estudiantes GEX — Universidad Señor de Sipán',
   badge: 'Centro de Informática • USS',
   menuTitulo: 'Elige cómo acreditar Computación',
-  menuSubtitulo: 'Formas oficiales del Centro de Informática para el Programa Gente con Experiencia.',
+  menuSubtitulo: '',
   planes: PLANES_COMPUTACION,
   searchByEmail: true,
   searchByCode: true,
@@ -32,11 +32,18 @@ export const DEFAULT_GEX_CONFIG: GexPortalConfig = {
 const STORAGE_KEY = 'uss_gex_portal_config';
 const FILA = 'portal_config';
 
-const mezclar = (parcial: Partial<GexPortalConfig> | null | undefined): GexPortalConfig => ({
-  ...DEFAULT_GEX_CONFIG,
-  ...(parcial ?? {}),
-  planes: mezclarPlanes(parcial?.planes),
-});
+const mezclar = (parcial: Partial<GexPortalConfig> | null | undefined): GexPortalConfig => {
+  const menuSubtitulo =
+    parcial?.menuSubtitulo === 'Formas oficiales del Centro de Informática para el Programa Gente con Experiencia.'
+      ? ''
+      : (parcial?.menuSubtitulo ?? DEFAULT_GEX_CONFIG.menuSubtitulo);
+  return {
+    ...DEFAULT_GEX_CONFIG,
+    ...(parcial ?? {}),
+    menuSubtitulo,
+    planes: mezclarPlanes(parcial?.planes),
+  };
+};
 
 function guardarCopia(config: GexPortalConfig): void {
   try {
