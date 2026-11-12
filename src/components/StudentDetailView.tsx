@@ -26,7 +26,6 @@ import {
   X,
   RefreshCw,
   Send,
-  Lock,
   type LucideIcon,
 } from 'lucide-react';
 import CourseIllustration, { HeroIllustration, type Ilustracion } from './CourseIllustration';
@@ -531,7 +530,33 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
             {encabezado}
           </div>
 
-          {caso === 'en-curso' && <div className="sm:self-end shrink-0 relative">{botonMenuOpciones}</div>}
+          <div className="sm:self-end shrink-0 relative flex items-center gap-2">
+            {/* Si tiene solicitud activa, botón visible en la esquina superior derecha */}
+            {solicitudActiva && (
+              <button
+                type="button"
+                onClick={() => setModalSeguimientoAbierto(true)}
+                className="h-8.5 px-3 2xl:h-9 grande:h-10 grande:px-3.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-uss-blue text-xs font-bold inline-flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer"
+                title="Abrir seguimiento de solicitud en modal"
+              >
+                <ClipboardCheck className="w-3.5 h-3.5 text-uss-blue" />
+                <span>Ver estado</span>
+              </button>
+            )}
+
+            {/* Menú de opciones siempre desbloqueado y disponible arriba a la derecha */}
+            {(caso === 'en-curso' || solicitudActiva) && (
+              <button
+                type="button"
+                onClick={onOpenComoAcreditar}
+                className="h-8.5 px-3.5 2xl:h-9 grande:h-10 grande:px-4 rounded-xl bg-uss-blue hover:bg-[#041d5f] text-white text-xs 2xl:text-sm font-bold inline-flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer"
+                title="Ver planes de acreditación GEX"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Menú de opciones</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Cuerpo del panel */}
@@ -543,24 +568,25 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full">
               {solicitudActiva ? (
                 <>
-                  {/* Botón Ver Estado: visible al medio junto al menú bloqueado */}
+                  {/* Botón Ver Estado: visible al medio, abre el modal en este mismo HTML */}
                   <button
                     type="button"
                     onClick={() => setModalSeguimientoAbierto(true)}
-                    className="w-full sm:w-auto h-9 px-4 2xl:h-10 grande:h-11 grande:px-5 rounded-xl bg-uss-blue hover:bg-[#041d5f] text-white text-xs 2xl:text-sm font-bold inline-flex items-center justify-center gap-1.5 grande:gap-2 shadow-sm transition cursor-pointer"
+                    className="w-full sm:w-auto h-9 px-5 2xl:h-10 grande:h-11 grande:px-6 rounded-xl bg-uss-blue hover:bg-[#041d5f] text-white text-xs 2xl:text-sm font-bold inline-flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+                    title="Ver el estado de tu trámite en un modal"
                   >
-                    <ClipboardCheck className="w-3.5 h-3.5 grande:w-4 grande:h-4 text-sky-200" />
+                    <ClipboardCheck className="w-4 h-4 text-sky-200" />
                     <span>Ver estado</span>
                   </button>
 
-                  {/* Menú de opciones bloqueado porque ya se envió solicitud */}
+                  {/* Menú de opciones: NUNCA BLOQUEADO, disponible y activo */}
                   <button
                     type="button"
-                    disabled
-                    className="w-full sm:w-auto h-9 px-4 2xl:h-10 grande:h-11 grande:px-5 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 text-xs 2xl:text-sm font-semibold inline-flex items-center justify-center gap-1.5 grande:gap-2 cursor-not-allowed opacity-60 select-none"
-                    title={`Ya registraste una solicitud para el ${getNombrePlan(solicitudActiva.plan)}.`}
+                    onClick={onOpenComoAcreditar}
+                    className="w-full sm:w-auto h-9 px-4 2xl:h-10 grande:h-11 grande:px-5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-uss-blue text-xs 2xl:text-sm font-bold inline-flex items-center justify-center gap-1.5 grande:gap-2 shadow-2xs transition cursor-pointer"
+                    title="Explorar o cambiar de plan de acreditación"
                   >
-                    <Lock className="w-3.5 h-3.5 text-slate-400" />
+                    <LayoutGrid className="w-3.5 h-3.5 text-uss-blue" />
                     <span>Menú de opciones</span>
                   </button>
                 </>
@@ -834,6 +860,7 @@ function ModalSeguimientoSolicitud({
   cargando,
   onClose,
   onRecargar,
+  onOpenMenuOpciones,
 }: ModalSeguimientoProps) {
   useEffect(() => {
     const handleKeyDown = (ev: KeyboardEvent) => {
@@ -1081,7 +1108,7 @@ function ModalSeguimientoSolicitud({
         </div>
 
         {/* Footer del Modal */}
-        <div className="px-5 sm:px-6 py-3 border-t border-slate-200 bg-[#f8fafc] flex items-center justify-between gap-2 shrink-0">
+        <div className="px-5 sm:px-6 py-3 border-t border-slate-200 bg-[#f8fafc] flex items-center justify-between gap-2 shrink-0 flex-wrap">
           <button
             type="button"
             onClick={onRecargar}
@@ -1091,13 +1118,29 @@ function ModalSeguimientoSolicitud({
             Actualizar estado
           </button>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition cursor-pointer"
-          >
-            Cerrar
-          </button>
+          <div className="flex items-center gap-2">
+            {onOpenMenuOpciones && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenMenuOpciones();
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-uss-blue text-xs font-bold inline-flex items-center gap-1.5 ring-1 ring-blue-200 transition cursor-pointer"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Menú de opciones</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition cursor-pointer"
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
     </div>
