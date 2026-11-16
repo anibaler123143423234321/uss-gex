@@ -20,7 +20,7 @@ export default function ResultCard({ estudiante }: Props) {
     <div className="w-full max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-lg overflow-hidden">
         {/* Header con color USS */}
-        <div className="bg-gradient-to-r from-[#073299] to-[#0a47d1] px-6 py-4">
+        <div className="bg-uss-blue px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
               <GraduationCap className="w-5 h-5 text-white" />
@@ -39,7 +39,7 @@ export default function ResultCard({ estudiante }: Props) {
             <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
               <User className="w-5 h-5 text-[#073299] dark:text-blue-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">
                   Apellidos
                 </p>
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
@@ -52,7 +52,7 @@ export default function ResultCard({ estudiante }: Props) {
             <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
               <User className="w-5 h-5 text-[#073299] dark:text-blue-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">
                   Nombres
                 </p>
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
@@ -65,7 +65,7 @@ export default function ResultCard({ estudiante }: Props) {
             <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
               <School className="w-5 h-5 text-[#073299] dark:text-blue-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">
                   Escuela
                 </p>
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
@@ -78,7 +78,7 @@ export default function ResultCard({ estudiante }: Props) {
             <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
               <Hash className="w-5 h-5 text-[#073299] dark:text-blue-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">
                   Código Universitario
                 </p>
                 <p className="text-sm font-mono font-semibold text-slate-900 dark:text-slate-100 mt-0.5">

@@ -289,7 +289,7 @@ export const PLANES_COMPUTACION: PlanOpcion[] = [
   {
     id: 'convalidacion',
     icono: 'FileBadge',
-    acento: '#7c3aed',
+    acento: '#0f766e',
     etiqueta: 'Estudios previos',
     nombre: 'Convalidación',
     resumen: 'Si ya cuentas con formación técnica y experiencia laboral, reconoce tu título en Computación o carrera afín.',
@@ -457,6 +457,15 @@ export const CONTACTO_CINF = {
 };
 
 /** Completa los planes guardados con los oficiales; siempre salen los 4, en el orden oficial (Opción 1 a 4). */
+/**
+ * La paleta del portal es azul y oro USS: un acento violeta guardado en el panel se muestra en verde
+ * azulado. Solo cambia el color en pantalla; el valor guardado en tbl_gex_config no se toca.
+ */
+const VIOLETAS = new Set(['#7c3aed', '#6d28d9', '#8b5cf6', '#a855f7', '#9333ea', '#6366f1', '#4f46e5', '#4338ca', '#5b21b6']);
+export function sinVioleta(acento: string): string {
+  return VIOLETAS.has(acento.trim().toLowerCase()) ? '#0f766e' : acento;
+}
+
 export function mezclarPlanes(guardados: unknown): PlanOpcion[] {
   const lista = Array.isArray(guardados) ? (guardados as Partial<PlanOpcion>[]) : [];
   return PLANES_COMPUTACION.map((oficial) => {
@@ -477,6 +486,7 @@ export function mezclarPlanes(guardados: unknown): PlanOpcion[] {
     return {
       ...oficial,
       ...guardado,
+      acento: sinVioleta(typeof guardado.acento === 'string' ? guardado.acento : oficial.acento),
       insignia,
       requisitos,
       fechaLimite: typeof guardado.fechaLimite === 'string' && guardado.fechaLimite.trim() ? guardado.fechaLimite : oficial.fechaLimite || '2026-12-15T23:59',

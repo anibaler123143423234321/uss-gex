@@ -49,3 +49,81 @@
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
 }
+
+/* ---------------------------------------------------------------------------
+   Capa de movimiento (Taste-Skill 2.5): pocas reglas, las mismas en toda la app
+   --------------------------------------------------------------------------- */
+:root {
+  --gex-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Botones: suben 1px al pasar el mouse y bajan al presionar */
+.gex-btn {
+  transition: transform 140ms var(--gex-ease), background-color 140ms, color 140ms, box-shadow 140ms;
+}
+.gex-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.gex-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+  transition-duration: 60ms;
+}
+
+/* Tarjetas con enlace o acción: suben 2px */
+.gex-card {
+  transition: transform 200ms var(--gex-ease), box-shadow 200ms var(--gex-ease);
+}
+.gex-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Foto dentro de su marco: zoom 1.03 al pasar el mouse */
+.gex-foto img {
+  transition: transform 700ms var(--gex-ease);
+}
+.gex-foto:hover img {
+  transform: scale(1.03);
+}
+
+/* Portada: entra una vez al cargar, texto primero y la foto después */
+.gex-enter > * {
+  animation: gex-subir 560ms var(--gex-ease) both;
+}
+.gex-enter > *:nth-child(2) { animation-delay: 70ms; }
+.gex-enter > *:nth-child(3) { animation-delay: 140ms; }
+.gex-enter > *:nth-child(4) { animation-delay: 210ms; }
+.gex-enter > *:nth-child(5) { animation-delay: 280ms; }
+.gex-enter-foto {
+  animation: gex-foto 1100ms var(--gex-ease) 120ms both;
+}
+
+@keyframes gex-subir {
+  from { opacity: 0; transform: translateY(12px); }
+}
+@keyframes gex-foto {
+  from { opacity: 0; transform: scale(1.04); }
+}
+
+/* Foco visible y consistente en toda la app */
+:where(a, button, [role='button'], input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #ffc53d;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gex-btn, .gex-card, .gex-foto img { transition: none; }
+  .gex-btn:hover, .gex-btn:active, .gex-card:hover, .gex-foto:hover img { transform: none; }
+  .gex-enter > *, .gex-enter-foto, .animate-in { animation: none; }
+}
+
+/* Contenedor de la portada: mismo margen a la izquierda y a la derecha (80px escritorio, 48px tablet, 20px celular) */
+.wrap {
+  width: min(100% - 2 * 80px, 1280px);
+  margin-inline: auto;
+}
+@media (max-width: 1023px) {
+  .wrap { width: min(100% - 2 * 48px, 1280px); }
+}
+@media (max-width: 639px) {
+  .wrap { width: calc(100% - 2 * 20px); }
+}

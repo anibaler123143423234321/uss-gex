@@ -8,6 +8,10 @@ interface Props {
   loading?: boolean;
   config?: GexPortalConfig;
   onSelect: (estudiante: EstudianteGEX | null) => void;
+  /** id del input, para que la portada le ponga una etiqueta visible */
+  inputId?: string;
+  /** Si viene, se muestra un botón principal al lado que abre la ficha del primer resultado */
+  textoBoton?: string;
 }
 
 type CoincidenciaRazon = 'correo' | 'codigo' | 'nombre';
@@ -22,7 +26,7 @@ interface ResultadoBusqueda {
  * Aplica cascada de prioridad estricta:
  * 1° Correo institucional -> 2° Código universitario -> 3° Nombres y apellidos (si no existen en los anteriores).
  */
-export default function SearchBar({ estudiantes, loading = false, config, onSelect }: Props) {
+export default function SearchBar({ estudiantes, loading = false, config, onSelect, inputId, textoBoton }: Props) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
@@ -169,26 +173,39 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
     );
   };
 
+  // Botón principal: abre la ficha del primer resultado; sin texto suficiente, lleva al campo
+  const verPrimerResultado = () => {
+    if (filtered.length > 0) {
+      handleSelect(filtered[0]);
+      return;
+    }
+    if (query.trim().length >= 2) setOpen(true);
+    inputRef.current?.focus();
+  };
+
   return (
     <div ref={wrapperRef} className="relative w-full max-w-4xl mx-auto">
+      <div className={textoBoton ? 'flex flex-col sm:flex-row gap-2.5' : ''}>
       {/* Input de consulta sobre el Excel */}
-      <div className="relative group">
+      <div className="relative group flex-1 min-w-0">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
           {loading ? (
             <Loader2 className="w-5 h-5 text-uss-blue animate-spin" />
           ) : (
-            <Search className="w-5 h-5 text-slate-400 group-focus-within:text-uss-blue transition-colors" />
+            <Search className="w-5 h-5 text-slate-500 group-focus-within:text-uss-blue transition-colors" />
           )}
         </div>
         <input
           ref={inputRef}
+          id={inputId}
           type="text"
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder="Buscar por correo, código o nombres..."
-          className="w-full h-14 sm:h-16 pl-12 pr-20 rounded-2xl border-2 border-white bg-white text-base text-slate-900 placeholder:text-slate-400 focus:border-uss-blue focus:ring-4 focus:ring-uss-blue/15 outline-none transition-all shadow-xl shadow-[#041d5f]/15"
+          placeholder="Código, correo o apellidos"
+          className="w-full h-14 sm:h-16 pl-12 pr-24 rounded-xl border-2 border-white bg-white text-base text-slate-900 placeholder:text-slate-500 focus:border-uss-blue focus:ring-4 focus:ring-[#ffc53d] focus-visible:outline-none outline-none transition-[box-shadow,border-color]"
           role="combobox"
+          aria-controls="resultados-gex"
           aria-expanded={open}
           aria-autocomplete="list"
         />
@@ -199,7 +216,7 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
             <button
               type="button"
               onClick={clearQuery}
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition cursor-pointer"
+              className="w-11 h-11 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition cursor-pointer"
               aria-label="Limpiar búsqueda"
             >
               <X className="w-4 h-4" />
@@ -211,7 +228,9 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
             onClick={() => {
               if (filtered.length > 0) setOpen(!open);
             }}
-            className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition cursor-pointer"
+            className="w-11 h-11 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition cursor-pointer"
+            aria-label={open ? 'Ocultar resultados' : 'Ver resultados'}
+            aria-expanded={open}
           >
             <ChevronDown
               className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`}
@@ -219,17 +238,28 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
           </button>
         </div>
       </div>
+      {textoBoton && (
+        <button
+          type="button"
+          onClick={verPrimerResultado}
+          className="gex-btn shrink-0 h-14 sm:h-16 px-6 rounded-xl bg-[#ffc53d] hover:bg-[#ffd36b] text-[#0b1630] text-base font-bold cursor-pointer"
+        >
+          {textoBoton}
+        </button>
+      )}
+      </div>
 
       {/* Dropdown con coincidencias encontradas en el Excel */}
       {open && (
         <ul
           ref={listRef}
+          id="resultados-gex"
           role="listbox"
-          className="absolute z-50 mt-2 w-full max-h-[60vh] sm:max-h-80 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150 divide-y divide-slate-100"
+          className="absolute z-50 mt-2 w-full max-h-[60vh] sm:max-h-80 overflow-auto rounded-xl border border-slate-200 bg-white text-slate-900 shadow-[0_18px_40px_-12px_rgba(4,29,95,0.45)] animate-in fade-in slide-in-from-top-1 duration-150 divide-y divide-slate-100"
         >
           {filteredWithReason.length === 0 && query.trim().length >= 2 ? (
-            <li className="px-4 py-6 text-center text-sm text-slate-400">
-              No se encontraron coincidencias en el Excel para &ldquo;{query}&rdquo;.
+            <li className="px-4 py-6 text-center text-sm text-slate-600">
+              Ningún estudiante GEX coincide con &ldquo;{query}&rdquo;. Revisa el código o prueba con tu correo @uss.edu.pe.
             </li>
           ) : (
             filteredWithReason.map(({ est, razon }, i) => (
@@ -256,8 +286,8 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
                       </span>
                       {est.correoInstitucional && (
                         <>
-                          <span className="hidden sm:inline text-slate-300">&bull;</span>
-                          <span className="text-xs text-slate-400 truncate">
+                          <span className="hidden sm:inline text-slate-400">&bull;</span>
+                          <span className="text-xs text-slate-500 truncate">
                             {highlight(est.correoInstitucional)}
                           </span>
                         </>

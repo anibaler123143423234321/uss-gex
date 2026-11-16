@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ArrowLeft, Hash, User, Mail, ShieldCheck, Loader2, Home } from 'lucide-react';
+import { RefreshCw, ArrowLeft, ArrowUpRight, Loader2, Home } from 'lucide-react';
 import SearchBar from './components/SearchBar';
 import StudentDetailView from './components/StudentDetailView';
 import MenuOpciones from './components/MenuOpciones';
 import CinfAgentChat from './components/CinfAgentChat';
-import { HeroIllustration } from './components/CourseIllustration';
 import { fetchExcelFromDrive } from './services/driveSheetService';
 import { sincronizarAutomaticoDriveASupabase, getCargaExcelVigente } from './services/cargasService';
 import { gexConfigService, DEFAULT_GEX_CONFIG, type GexPortalConfig } from './services/gexConfigService';
@@ -13,7 +12,10 @@ import type { PlanOpcionId } from './data/planesComputacion';
 
 // Consulta abierta en la pestaña: sobrevive a F5 y se borra al cerrar la pestaña
 const CLAVE_SESION = 'gex.sesion';
-const LOGO_USS = `${import.meta.env.BASE_URL}logo.png`;
+const LOGO_USS = `${import.meta.env.BASE_URL}logo-uss.png`;
+const FOTO_CAMPUS = `${import.meta.env.BASE_URL}campus-uss.jpg`;
+const FOTO_CAMPUS_800 = `${import.meta.env.BASE_URL}campus-uss-800.jpg`;
+const SUBTITULO_POR_DEFECTO = DEFAULT_GEX_CONFIG.subtitulo;
 
 interface SesionGex {
   codUniv?: string;
@@ -37,12 +39,18 @@ function guardarSesion(sesion: SesionGex): void {
   }
 }
 
-// Formas de búsqueda que se explican en la portada, cada una con su propio color
+// Formas de búsqueda que se explican bajo el buscador
 const FORMAS_DE_BUSQUEDA = [
-  { Icon: Hash, titulo: 'Código universitario', ejemplo: 'Ej. 2251804844', tono: 'bg-blue-50 text-uss-blue ring-blue-100' },
-  { Icon: User, titulo: 'Apellidos o nombres', ejemplo: 'Ej. García Pérez', tono: 'bg-amber-50 text-amber-700 ring-amber-100' },
-  { Icon: Mail, titulo: 'Correo institucional', ejemplo: 'Ej. usuario@uss.edu.pe', tono: 'bg-emerald-50 text-emerald-700 ring-emerald-100' },
+  { titulo: 'Código', ejemplo: '2251804844' },
+  { titulo: 'Apellidos', ejemplo: 'García Pérez' },
+  { titulo: 'Correo', ejemplo: '@uss.edu.pe' },
 ];
+
+/** "S/ 120" → 120. Devuelve null si el texto del panel no trae un número */
+function montoDe(precio: string): number | null {
+  const n = Number(precio.replace(/[^0-9.]/g, ''));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
 
 export default function App() {
   const [estudiantes, setEstudiantes] = useState<EstudianteGEX[]>([]);
@@ -163,10 +171,10 @@ export default function App() {
     <button
       onClick={() => cargarDesdeDrive(false)}
       disabled={cargando}
-      className={`shrink-0 h-9 px-2.5 sm:px-3 rounded-xl transition disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold ${
+      className={`gex-btn shrink-0 min-w-11 justify-center px-2.5 sm:px-3 rounded-xl disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5 font-semibold ${
         sobreAzul
-          ? 'bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20'
-          : 'bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200'
+          ? 'h-11 text-sm bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/30'
+          : 'h-11 lg:h-9 text-xs bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200'
       }`}
       title="Sincronizar con Google Sheets en tiempo real"
       aria-label="Sincronizar con Google Sheets"
@@ -175,6 +183,148 @@ export default function App() {
       <span className="hidden sm:inline">Sincronizar</span>
     </button>
   );
+
+  // Portada: el subtítulo del panel solo se usa si alguien lo cambió; si no, se explica qué hace la página
+  const subtituloPortada =
+    config.subtitulo && config.subtitulo !== SUBTITULO_POR_DEFECTO
+      ? config.subtitulo
+      : 'Escribe tu código, correo o apellidos y ve qué cursos de Computación ya aprobaste y cómo acreditar los que faltan.';
+  const planMasBarato = config.planes
+    .map((p) => ({ nombre: p.nombre, monto: montoDe(p.precio) }))
+    .filter((p): p is { nombre: string; monto: number } => p.monto !== null)
+    .sort((a, b) => a.monto - b.monto)[0];
+  const precioMinimo = planMasBarato ? `S/ ${planMasBarato.monto}` : null;
+
+  const portada = (
+    /* PORTADA: una pantalla azul con el buscador, los datos en vivo y la foto del campus.
+       Estructura Taste-Skill: header.nav encima del hero, main > section.hero > .wrap > .hero-text */
+    <>
+      <a
+        href="#contenido"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-uss-blue focus:font-semibold"
+      >
+        Saltar al contenido
+      </a>
+      <header className="nav absolute inset-x-0 top-0 z-20 bg-uss-blue text-white">
+        <div className="wrap flex items-center justify-between gap-3 h-[76px]">
+          <a href="/" title="Ir al Portal CINF" className="inline-flex items-center min-h-11 shrink-0">
+            <img
+              src={LOGO_USS}
+              alt="Universidad Señor de Sipán"
+              width={851}
+              height={293}
+              className="h-9 sm:h-11 w-auto brightness-0 invert"
+            />
+          </a>
+          <div className="flex items-center gap-2">
+            {botonSincronizar(true)}
+            <a
+              href="/"
+              className="gex-btn shrink-0 h-11 px-3 sm:px-4 rounded-xl inline-flex items-center gap-1.5 text-sm font-semibold bg-white text-uss-blue hover:bg-blue-50"
+            >
+              <span className="hidden sm:inline">Ir al Portal CINF</span>
+              <span className="sm:hidden">Portal</span>
+              <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <main id="contenido">
+        <section
+          aria-labelledby="portada-titulo"
+          data-enter
+          className="hero min-h-[100svh] flex flex-col bg-uss-blue text-white pt-[76px]"
+        >
+          <div className="wrap flex-1 flex flex-col">
+            <div className="hero-text flex-1 grid lg:grid-cols-12 gap-x-6 gap-y-8 items-start my-auto py-8 lg:py-10">
+              <div className="lg:col-span-7 gex-enter">
+                <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.14em] text-[#ffc53d]">
+                  {config.badge || 'Centro de Informática USS'}
+                </p>
+                <h1
+                  id="portada-titulo"
+                  className="mt-4 font-display text-[2.15rem] leading-[1.06] sm:text-5xl xl:text-[3.6rem] font-extrabold tracking-tight text-balance"
+                >
+                  Acreditación en Computación para{' '}
+                  <span className="text-[#ffc53d]">
+                    {[config.titulo, config.palabraDestacada].filter(Boolean).join(' ') || 'Gente con Experiencia'}
+                  </span>
+                </h1>
+                <p className="mt-4 text-base sm:text-lg text-blue-100 max-w-xl leading-relaxed">
+                  {subtituloPortada}
+                </p>
+
+                <div className="mt-7">
+                  <label htmlFor="buscar-estudiante" className="block text-sm font-semibold text-white mb-2">
+                    Busca al estudiante
+                  </label>
+                  <SearchBar
+                    estudiantes={estudiantes}
+                    loading={cargando}
+                    config={config}
+                    onSelect={(est) => setSelected(est)}
+                    inputId="buscar-estudiante"
+                    textoBoton="Ver mi avance"
+                  />
+                  <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-blue-100" aria-label="Puedes buscar por">
+                    {FORMAS_DE_BUSQUEDA.map(({ titulo, ejemplo }) => (
+                      <li key={titulo} className="inline-flex items-baseline gap-1.5">
+                        <span className="font-semibold text-white">{titulo}</span>
+                        <span className="hidden sm:inline text-blue-200">{ejemplo}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <dl className="mt-9 grid grid-cols-3 gap-4 border-t border-white/20 pt-5">
+                  <div>
+                    <dt className="sr-only">Estudiantes GEX registrados</dt>
+                    <dd className="text-2xl sm:text-3xl font-extrabold tabular-nums">
+                      {cargando && estudiantes.length === 0 ? '—' : estudiantes.length.toLocaleString('es-PE')}
+                    </dd>
+                    <dd className="text-xs sm:text-sm text-blue-100 mt-1">estudiantes GEX</dd>
+                  </div>
+                  <div>
+                    <dt className="sr-only">Formas de acreditar</dt>
+                    <dd className="text-2xl sm:text-3xl font-extrabold tabular-nums">{config.planes.length}</dd>
+                    <dd className="text-xs sm:text-sm text-blue-100 mt-1">formas de acreditar Computación</dd>
+                  </div>
+                  <div>
+                    <dt className="sr-only">Precio más bajo</dt>
+                    <dd className="text-2xl sm:text-3xl font-extrabold tabular-nums">{precioMinimo ?? '—'}</dd>
+                    <dd className="text-xs sm:text-sm text-blue-100 mt-1">
+                      {planMasBarato ? `desde, por ${planMasBarato.nombre.toLowerCase()}` : 'según la forma que elijas'}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="hidden lg:block lg:col-span-5 self-stretch gex-foto gex-enter-foto overflow-hidden rounded-2xl min-h-[420px]">
+                <img
+                  src={FOTO_CAMPUS}
+                  srcSet={`${FOTO_CAMPUS_800} 800w, ${FOTO_CAMPUS} 1280w`}
+                  sizes="(min-width: 1024px) 1200px, 100vw"
+                  alt="Campus de la Universidad Señor de Sipán en Chiclayo, con el letrero USS en los jardines"
+                  width={1280}
+                  height={784}
+                  fetchPriority="high"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            <p className="pb-7 text-xs text-blue-200">
+              Universidad Señor de Sipán · Centro de Informática CINF · Portal GEX
+            </p>
+          </div>
+        </section>
+      </main>
+    </>
+  );
+
+  // La portada va sin envoltorio: header.nav y main quedan directo en #root
+  if (!restaurando && !mostrarComoAcreditar && !selected) return portada;
 
   return (
     <div
@@ -196,7 +346,7 @@ export default function App() {
                   // Un solo botón para regresar: del registro a las opciones y de las opciones a la ficha
                   onClick={planElegido ? () => setPlanElegido(null) : cerrarOpciones}
                   type="button"
-                  className="shrink-0 inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer"
+                  className="gex-btn shrink-0 inline-flex items-center justify-center gap-1.5 h-11 lg:h-9 min-w-11 px-2.5 sm:px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer"
                   title="Volver"
                   aria-label="Volver"
                 >
@@ -225,7 +375,7 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <a
                   href="/"
-                  className="shrink-0 h-9 px-2.5 sm:px-3 rounded-xl transition cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200"
+                  className="gex-btn shrink-0 h-11 lg:h-9 min-w-11 justify-center px-2.5 sm:px-3 rounded-xl transition cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200"
                   title="Ir al inicio"
                 >
                   <Home className="w-4 h-4 lg:w-3.5 lg:h-3.5" />
@@ -263,7 +413,7 @@ export default function App() {
               <button
                 onClick={() => setSelected(null)}
                 type="button"
-                className="lg:hidden w-9 h-9 -ml-1 rounded-xl flex items-center justify-center text-slate-600 hover:text-uss-blue hover:bg-slate-100 transition cursor-pointer"
+                className="lg:hidden w-11 h-11 -ml-1 rounded-xl flex items-center justify-center text-slate-600 hover:text-uss-blue hover:bg-slate-100 transition cursor-pointer"
                 aria-label="Volver a la búsqueda"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -288,7 +438,7 @@ export default function App() {
               <div className="ml-auto flex items-center gap-2">
                 <a
                   href="/"
-                  className="shrink-0 h-9 px-2.5 sm:px-3 rounded-xl transition cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200"
+                  className="gex-btn shrink-0 h-11 lg:h-9 min-w-11 justify-center px-2.5 sm:px-3 rounded-xl transition cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200"
                   title="Ir al inicio"
                 >
                   <Home className="w-4 h-4 lg:w-3.5 lg:h-3.5" />
@@ -306,108 +456,24 @@ export default function App() {
               estudiante={selected}
               onBack={() => setSelected(null)}
               onOpenComoAcreditar={() => setMostrarComoAcreditar(true)}
+              planes={config.planes}
             />
           </main>
         </div>
       ) : (
-        /* VISTA 2: PANTALLA PRINCIPAL CON BUSCADOR */
-        <div className="flex-1 flex flex-col w-full">
-          {/* Portada institucional */}
-          <header className="relative overflow-hidden bg-gradient-to-br from-[#041d5f] via-uss-blue to-[#1450d8] text-white px-4 sm:px-6 pt-4 pb-16 sm:pb-20">
-            {/* Una sola ilustración grande y dos luces suaves: nada que se repita como mosaico */}
-            <div className="absolute -left-24 -top-28 w-80 h-80 rounded-full bg-sky-400/25 blur-3xl pointer-events-none" />
-            <div className="absolute right-[-6rem] bottom-[-8rem] w-96 h-96 rounded-full bg-indigo-400/20 blur-3xl pointer-events-none" />
-            <HeroIllustration className="absolute -right-8 bottom-2 w-56 sm:w-80 md:w-96 text-white/[0.09] pointer-events-none" />
-
-            <div className="relative max-w-4xl mx-auto">
-              <div className="flex items-center justify-between gap-3">
-                <a
-                  href="/"
-                  title="Ir al inicio"
-                  className="inline-flex items-center rounded-2xl bg-white px-3 py-1.5 shadow-lg shadow-black/10 hover:bg-slate-50 transition"
-                >
-                  <img
-                    src={LOGO_USS}
-                    alt="Logo Universidad Señor de Sipán"
-                    className="h-8 sm:h-10 w-auto object-contain"
-                  />
-                </a>
-                <div className="flex items-center gap-2">
-                  <a
-                    href="/"
-                    className="shrink-0 h-9 px-2.5 sm:px-3 rounded-xl transition cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/20"
-                    title="Ir al inicio"
-                  >
-                    <Home className="w-4 h-4 lg:w-3.5 lg:h-3.5" />
-                    <span className="hidden sm:inline">Inicio</span>
-                  </a>
-                  {botonSincronizar(true)}
-                </div>
-              </div>
-
-              <div className="mt-9 sm:mt-12 text-center">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 ring-1 ring-white/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-100">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#ffc53d]" />
-                  {config.badge || 'Centro de Informática • USS'}
-                </span>
-                <h1 className="mt-4 font-display text-[2.4rem] leading-[1.05] sm:text-6xl font-extrabold tracking-tight">
-                  {config.titulo}{' '}
-                  {config.palabraDestacada && (
-                    <span className="text-[#ffc53d]">{config.palabraDestacada}</span>
-                  )}
-                </h1>
-                <p className="mt-3 text-sm sm:text-base text-blue-100/90 max-w-xl mx-auto leading-relaxed">
-                  {config.subtitulo}
-                </p>
-              </div>
-            </div>
-          </header>
-
-          {/* CUERPO CON BUSCADOR: sube sobre la portada para que se vea apenas abre la página */}
-          <main className="flex-1 px-4 sm:px-6 pb-12 -mt-8 relative z-10">
-            <div className="w-full max-w-3xl mx-auto space-y-6">
-              <SearchBar
-                estudiantes={estudiantes}
-                loading={cargando}
-                config={config}
-                onSelect={(est) => setSelected(est)}
-              />
-
-              {/* Cómo buscar */}
-              <section aria-label="Cómo buscar">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5 text-center sm:text-left">
-                  Puedes buscar por
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
-                  {FORMAS_DE_BUSQUEDA.map(({ Icon, titulo, ejemplo, tono }) => (
-                    <div
-                      key={titulo}
-                      className="flex items-center gap-3 rounded-2xl bg-white p-3 sm:p-4 ring-1 ring-slate-900/5 shadow-sm"
-                    >
-                      <div className={`w-10 h-10 rounded-xl ring-1 flex items-center justify-center shrink-0 ${tono}`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-800 leading-tight">{titulo}</p>
-                        <p className="text-xs text-slate-500 truncate mt-0.5">{ejemplo}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-          </main>
-        </div>
+        null
       )}
 
-      {/* Footer compacto */}
+      {/* Footer compacto (la portada lleva su propia línea legal) */}
+      {(selected || mostrarComoAcreditar) && (
       <footer className={`${selected ? 'py-2 lg:py-1 text-[10px]' : 'py-4 text-xs'} px-4 text-center border-t border-slate-200/80 bg-white shrink-0`}>
-        <span className="text-slate-400">
+        <span className="text-slate-500">
           Universidad Señor de Sipán &bull;{' '}
           <span className="sm:hidden">CINF</span>
           <span className="hidden sm:inline">Centro de Informática (CINF)</span> &bull; Portal GEX
         </span>
       </footer>
+      )}
 
       {/* Agente CINF (Solo activo cuando se consulta un estudiante) */}
       {selected && (

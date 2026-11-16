@@ -32,3 +32,6 @@ dist-ssr
 *.sw?
 
 .claude
+
+# Salidas del checker Taste-Skill
+.taste-skill/

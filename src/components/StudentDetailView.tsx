@@ -28,13 +28,13 @@ import {
   Send,
   type LucideIcon,
 } from 'lucide-react';
-import CourseIllustration, { HeroIllustration, type Ilustracion } from './CourseIllustration';
+import CourseIllustration, { type Ilustracion } from './CourseIllustration';
 import type { EstudianteGEX } from '../types/estudiante';
 import {
   consultarSolicitudesEstudiante,
   type SolicitudEstadoEstudiante,
 } from '../services/solicitudesService';
-import { CONTACTO_CINF, PLANES_COMPUTACION } from '../data/planesComputacion';
+import { CONTACTO_CINF, PLANES_COMPUTACION, iconoPlan, type PlanOpcion } from '../data/planesComputacion';
 
 const ACADEMIC_SEAL = `${import.meta.env.BASE_URL}academic-seal.svg`;
 
@@ -42,6 +42,8 @@ interface Props {
   estudiante: EstudianteGEX;
   onBack: () => void;
   onOpenComoAcreditar?: () => void;
+  /** Planes del panel (tbl_gex_config): se resumen cuando el estudiante aún no inicia */
+  planes?: PlanOpcion[];
 }
 
 interface Curso {
@@ -117,7 +119,7 @@ function getEstadoBadgeInfo(sol: SolicitudEstadoEstudiante) {
   if (sol.estado === 'asignada' || sol.paso === 3) {
     return {
       texto: 'Asignado (Paso 3/4)',
-      estilo: 'bg-indigo-50 text-indigo-700 ring-indigo-200 hover:bg-indigo-100',
+      estilo: 'bg-blue-50 text-uss-blue ring-blue-200 hover:bg-blue-100',
       Icon: Sparkles,
     };
   }
@@ -157,7 +159,8 @@ function formatFecha(fechaIso?: string): string {
   }
 }
 
-export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcreditar }: Props) {
+export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcreditar, planes: planesPanel }: Props) {
+  const planesResumen = planesPanel && planesPanel.length > 0 ? planesPanel : PLANES_COMPUTACION;
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const [solicitudes, setSolicitudes] = useState<SolicitudEstadoEstudiante[]>([]);
   const [cargandoSolicitudes, setCargandoSolicitudes] = useState<boolean>(true);
@@ -245,7 +248,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
       estado: e.computacionIII >= 1 ? 1 : 0,
       Icon: Laptop,
       ilustracion: 'nube',
-      acento: '#4338ca',
+      acento: '#0369a1',
       tagApproved: 'Asignatura regular aprobada',
     },
   ];
@@ -288,7 +291,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
       cantidad: e.taller,
       Icon: Wrench,
       ilustracion: 'medalla',
-      acento: '#7c3aed',
+      acento: '#c2410c',
       tagApproved: e.taller > 1 ? `${e.taller} certificaciones MOS acreditadas` : 'Certificación MOS acreditada',
     },
   ];
@@ -351,14 +354,14 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
           esAprobado
             ? {
                 borderColor: `${curso.acento}40`,
-                backgroundImage: `radial-gradient(120% 130% at 100% 100%, ${curso.acento}1f 0%, transparent 55%)`,
+                backgroundColor: `${curso.acento}0a`,
               }
             : undefined
         }
         className={`rounded-xl border px-3 py-2 sm:px-3.5 sm:py-2.5 relative overflow-hidden group flex flex-col justify-center gap-1.5 min-h-[76px] grande:px-5 grande:py-4 grande:gap-2.5 grande:min-h-[128px] grande:rounded-2xl transition-shadow ${
           ocupaTodoElAncho ? 'col-span-1 sm:col-span-2' : 'col-span-1'
         } ${
-          esAprobado ? 'bg-white shadow-sm hover:shadow-md' : 'bg-white border-slate-200'
+          esAprobado ? 'shadow-sm' : 'bg-white border-slate-200'
         }`}
       >
         <CourseIllustration
@@ -388,7 +391,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
                 className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1 grande:min-w-[26px] grande:h-[26px] rounded-full text-[10px] grande:text-xs font-mono font-black ring-1 ${
                   curso.cantidad > 0
                     ? 'bg-blue-50 text-uss-blue ring-blue-200'
-                    : 'bg-slate-100 text-slate-400 ring-slate-200'
+                    : 'bg-slate-100 text-slate-500 ring-slate-200'
                 }`}
                 title="Cantidad aprobada"
               >
@@ -419,7 +422,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
           <div
             style={esAprobado ? { backgroundColor: curso.acento } : undefined}
             className={`w-8 h-8 2xl:w-9 2xl:h-9 rounded-lg grande:w-11 grande:h-11 grande:rounded-xl flex items-center justify-center shrink-0 ${
-              esAprobado ? 'text-white shadow-sm' : 'bg-slate-100 text-slate-400 ring-1 ring-slate-200'
+              esAprobado ? 'text-white shadow-sm' : 'bg-slate-100 text-slate-500 ring-1 ring-slate-200'
             }`}
           >
             <Icon className="w-4 h-4 grande:w-5 grande:h-5" />
@@ -447,10 +450,10 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
     <button
       type="button"
       onClick={onOpenComoAcreditar}
-      className="w-full sm:w-auto h-9 px-4 2xl:h-10 grande:h-11 grande:px-5 rounded-xl bg-uss-blue hover:bg-[#041d5f] text-white text-xs 2xl:text-sm font-bold inline-flex items-center justify-center gap-1.5 grande:gap-2 shadow-sm transition cursor-pointer"
+      className="gex-btn w-full sm:w-auto h-11 lg:h-9 px-4 2xl:h-10 grande:h-11 grande:px-5 rounded-xl bg-uss-blue hover:bg-[#041d5f] text-white text-xs 2xl:text-sm font-bold inline-flex items-center justify-center gap-1.5 grande:gap-2 cursor-pointer"
     >
       <LayoutGrid className="w-3.5 h-3.5 grande:w-4 grande:h-4" />
-      Menú de opciones
+      Comparar las formas de acreditar
     </button>
   );
 
@@ -505,7 +508,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
 
     return (
       <section
-        className={`lg:col-span-2 lg:row-span-2 flex flex-col lg:grid lg:grid-rows-subgrid bg-white rounded-2xl ring-1 shadow-sm overflow-hidden relative ${
+        className={`lg:col-span-2 lg:row-span-2 min-w-0 flex flex-col lg:grid lg:grid-rows-subgrid lg:grid-cols-[minmax(0,1fr)] bg-white rounded-2xl ring-1 shadow-sm overflow-hidden relative ${
           caso === 'acreditado' ? 'ring-emerald-200' : 'ring-slate-900/5'
         }`}
       >
@@ -519,12 +522,14 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
             />
           )}
 
-          {/* Gráfica circular estricta de cursos aprobados */}
-          <DonaCursos
-            total={totalMeta}
-            aprobados={aprobados}
-            className="w-24 h-24 2xl:w-28 2xl:h-28 grande:w-32 grande:h-32 mx-auto sm:mx-0 shrink-0"
-          />
+          {/* Gráfica circular de cursos aprobados: sin cursos no hay avance que mostrar */}
+          {caso !== 'sin-cursos' && (
+            <DonaCursos
+              total={totalMeta}
+              aprobados={aprobados}
+              className="w-24 h-24 2xl:w-28 2xl:h-28 grande:w-32 grande:h-32 mx-auto sm:mx-0 shrink-0"
+            />
+          )}
 
           <div className="min-w-0 flex-1 text-center sm:text-left relative">
             {encabezado}
@@ -539,28 +544,66 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
 
         {/* Cuerpo del panel */}
         {caso === 'sin-cursos' ? (
-          <div className="p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-3.5 min-h-0 flex-1">
-            <HeroIllustration className="w-32 sm:w-36 grande:w-48 text-uss-blue/30" />
-
-            {/* Botones en el medio */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full">
-              {solicitudActiva ? (
-                /* Cuando ya tiene solicitud: botón único central "Ver estado" */
-                <button
-                  type="button"
-                  onClick={() => setModalSeguimientoAbierto(true)}
-                  className="w-full sm:w-auto h-9 px-5 2xl:h-10 grande:h-11 grande:px-6 rounded-xl bg-uss-blue hover:bg-[#041d5f] text-white text-xs 2xl:text-sm font-bold inline-flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
-                  title="Ver el estado de tu trámite en un modal"
-                >
-                  <ClipboardCheck className="w-4 h-4 text-sky-200" />
-                  <span>Ver estado</span>
-                </button>
-              ) : (
-                /* Cuando no tiene solicitud: botón central "Menú de opciones" */
-                botonMenuOpciones
-              )}
+          solicitudActiva ? (
+            <div className="p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-3 min-h-0 flex-1">
+              <p className="text-sm text-slate-600 max-w-md">
+                Ya enviaste una solicitud al Centro de Informática. Revisa en qué paso va.
+              </p>
+              <button
+                type="button"
+                onClick={() => setModalSeguimientoAbierto(true)}
+                className="gex-btn w-full sm:w-auto h-11 lg:h-10 px-5 grande:h-11 grande:px-6 rounded-xl bg-uss-blue hover:bg-[#041d5f] text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <ClipboardCheck className="w-4 h-4" />
+                <span>Ver estado de mi solicitud</span>
+              </button>
             </div>
-          </div>
+          ) : (
+            /* Aún no inicia: en vez de una ilustración, las formas reales de acreditar con su precio */
+            <div className="p-3.5 sm:p-4 grande:p-6 flex flex-col gap-3 grande:gap-4 min-h-0 flex-1">
+              <h4 className="text-sm grande:text-base font-bold text-slate-800">
+                Puedes acreditar Computación de {planesResumen.length} formas
+              </h4>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 grande:gap-3">
+                {planesResumen.map((p) => {
+                  const IconPlan = iconoPlan(p.icono);
+                  return (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={onOpenComoAcreditar}
+                        className="gex-card w-full h-full text-left rounded-xl bg-white ring-1 ring-slate-200 hover:ring-uss-blue/40 hover:shadow-md p-3 grande:p-4 flex items-start gap-3 cursor-pointer"
+                      >
+                        <span
+                          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: `${p.acento}14`, color: p.acento }}
+                          aria-hidden="true"
+                        >
+                          <IconPlan className="w-5 h-5" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[11px] grande:text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            {p.etiqueta}
+                          </span>
+                          <span className="block text-sm grande:text-base font-bold text-slate-900 leading-snug">{p.nombre}</span>
+                          <span className="block text-xs grande:text-sm text-slate-600 leading-snug mt-0.5 line-clamp-2">
+                            {p.resumen}
+                          </span>
+                        </span>
+                        <span className="text-sm grande:text-base font-extrabold text-uss-blue whitespace-nowrap">{p.precio}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="mt-auto pt-1 flex flex-col sm:flex-row sm:items-center gap-2.5 sm:justify-between">
+                <p className="text-xs grande:text-sm text-slate-600">
+                  Compara requisitos, certificados y fechas antes de elegir.
+                </p>
+                {botonMenuOpciones}
+              </div>
+            </div>
+          )
         ) : (
           <div className="p-2.5 sm:p-3 grande:p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 grande:gap-3 min-h-0 flex-1">
             {cursosLista.map((c, idx) => renderCurso(c, idx, cursosLista.length))}
@@ -620,7 +663,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
       {/* 2. FICHA (A) A LA IZQUIERDA Y UN SOLO PANEL (B) A LA DERECHA              */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-[auto_auto] gap-3 grande:gap-x-4 lg:gap-y-0 w-full">
-        <aside className="lg:row-span-2 flex flex-col lg:grid lg:grid-rows-subgrid bg-white rounded-3xl lg:rounded-2xl ring-1 ring-slate-900/5 shadow-sm overflow-hidden">
+        <aside className="lg:row-span-2 min-w-0 flex flex-col lg:grid lg:grid-rows-subgrid lg:grid-cols-[minmax(0,1fr)] bg-white rounded-3xl lg:rounded-2xl ring-1 ring-slate-900/5 shadow-sm overflow-hidden">
           {/* Credencial: fondo claro con la franja azul USS arriba */}
           <div className="relative bg-[#f6f8fe] border-b border-slate-200 px-4 pt-5 pb-4 lg:px-3 lg:pt-3.5 lg:pb-3 grande:px-5 grande:pt-5 grande:pb-4 flex flex-col justify-center gap-3 lg:gap-2 grande:gap-3">
             <span className="absolute inset-x-0 top-0 h-1 bg-uss-blue" aria-hidden="true" />
@@ -690,7 +733,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
             {/* Código universitario con botón de copiar */}
             <div className="flex items-center justify-between gap-2 py-1 px-2 grande:py-1.5 grande:px-3 rounded-lg bg-white ring-1 ring-slate-200">
               <div className="flex items-center gap-1 text-xs 2xl:text-sm font-mono">
-                <Hash className="w-3 h-3 text-slate-400" />
+                <Hash className="w-3 h-3 text-slate-500" />
                 <span className="font-bold text-uss-blue tracking-wider">{e.codUniv}</span>
               </div>
               <button
@@ -719,7 +762,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
             <dl className="flex-1 flex flex-col divide-y divide-slate-100 px-4 lg:px-3.5 grande:px-5 min-h-0">
               {datos.map(({ Icon, label, valor }) => (
                 <div key={label} className="flex items-center justify-between gap-2 py-2.5 lg:py-1.5 2xl:py-2.5 grande:py-3 min-w-0">
-                  <dt className="flex items-center gap-1.5 text-[11px] lg:text-[10px] 2xl:text-[11px] grande:text-xs font-bold uppercase tracking-wider text-slate-400 shrink-0">
+                  <dt className="flex items-center gap-1.5 text-[11px] lg:text-[10px] 2xl:text-[11px] grande:text-xs font-bold uppercase tracking-wider text-slate-500 shrink-0">
                     <Icon className="w-3.5 h-3.5 lg:w-3 lg:h-3 2xl:w-3.5 2xl:h-3.5 grande:w-4 grande:h-4 text-uss-blue/70 shrink-0" />
                     {label}
                   </dt>
@@ -736,7 +779,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
                 <ShieldCheck className="w-3 h-3 text-uss-blue" />
                 Verificación CINF &bull; USS
               </span>
-              <span className="font-mono text-[9px] text-slate-400">GEX 2026</span>
+              <span className="font-mono text-[10px] text-slate-500">GEX 2026</span>
             </div>
           </div>
         </aside>
@@ -859,7 +902,7 @@ function ModalSeguimientoSolicitud({
                 <span className="text-xs font-mono font-bold text-uss-blue bg-blue-50/50 px-2 py-0.5 rounded">
                   #{e.codUniv}
                 </span>
-                <span className="text-xs text-slate-400 hidden sm:inline">&bull;</span>
+                <span className="text-xs text-slate-500 hidden sm:inline">&bull;</span>
                 <span className="text-xs font-medium text-slate-500 truncate hidden sm:inline">{e.escuela}</span>
               </div>
               <h3 className="text-base sm:text-lg font-extrabold text-slate-900 truncate mt-0.5" title={e.nombres}>
@@ -871,7 +914,7 @@ function ModalSeguimientoSolicitud({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer shrink-0"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer shrink-0"
             aria-label="Cerrar modal"
           >
             <X className="w-4 h-4" />
@@ -888,7 +931,7 @@ function ModalSeguimientoSolicitud({
             </div>
           ) : !solicitudPrincipal ? (
             <div className="py-8 flex flex-col items-center justify-center text-center gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+              <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500">
                 <Circle className="w-7 h-7 stroke-1" />
               </div>
               <div className="max-w-md">
@@ -924,7 +967,7 @@ function ModalSeguimientoSolicitud({
                     <h4 className="text-base sm:text-lg font-extrabold text-slate-900">
                       {getNombrePlan(solicitudPrincipal.plan)}
                     </h4>
-                    <span className="text-slate-300 hidden sm:inline">&bull;</span>
+                    <span className="text-slate-400 hidden sm:inline">&bull;</span>
                     <p className="text-xs text-slate-500">
                       Registrada el: <strong>{formatFecha(solicitudPrincipal.created_at)}</strong>
                     </p>
@@ -960,7 +1003,7 @@ function ModalSeguimientoSolicitud({
                             ? 'bg-emerald-50/60 border-emerald-200/90 text-emerald-900 shadow-2xs'
                             : activo
                             ? 'bg-blue-50/80 border-blue-300 ring-2 ring-blue-500/20 shadow-xs'
-                            : 'bg-slate-50/60 border-slate-200/60 text-slate-400 opacity-65'
+                            : 'bg-slate-50/60 border-slate-200/60 text-slate-500 opacity-65'
                         }`}
                       >
                         <div className="flex items-center justify-between gap-1">

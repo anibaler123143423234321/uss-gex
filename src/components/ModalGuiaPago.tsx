@@ -178,7 +178,7 @@ export default function ModalGuiaPago({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabecera institucional */}
-        <div className="px-4 sm:px-6 py-4 bg-gradient-to-r from-[#073299] via-uss-blue to-[#0051cc] text-white flex items-center justify-between gap-3 shrink-0">
+        <div className="px-4 sm:px-6 py-4 bg-uss-blue text-white flex items-center justify-between gap-3 shrink-0">
           <div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-md bg-white/15 px-2 py-0.5 text-[11px] font-bold tracking-wide uppercase text-blue-100">
@@ -197,7 +197,7 @@ export default function ModalGuiaPago({
           <button
             type="button"
             onClick={onCerrar}
-            className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer shrink-0"
+            className="gex-btn w-11 h-11 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer shrink-0"
             aria-label="Cerrar ventana"
             title="Cerrar ventana (Esc)"
           >
@@ -387,7 +387,7 @@ export default function ModalGuiaPago({
                       }`}
                     >
                       <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
                           {doc.modalidad}
                         </span>
                         <p className="text-xs font-bold text-slate-900 leading-tight mt-0.5">{doc.nombre}</p>
@@ -494,7 +494,7 @@ export default function ModalGuiaPago({
               className="max-h-[80vh] w-auto max-w-full rounded-lg shadow-2xl object-contain"
             />
           </div>
-          <p className="text-xs text-slate-400 mt-2">Haz clic fuera o presiona Esc para volver.</p>
+          <p className="text-xs text-slate-500 mt-2">Haz clic fuera o presiona Esc para volver.</p>
         </div>
       )}
     </div>

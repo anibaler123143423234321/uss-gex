@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import {
   Sparkles,
   ArrowUp,
-  X,
   ChevronRight,
   RotateCcw,
   Phone,
@@ -26,6 +25,7 @@ interface Props {
   estudiante?: EstudianteGEX | null;
   estudiantes?: EstudianteGEX[];
   onNavigateComoAcreditar?: () => void;
+  /** En el Menú de opciones el lanzador se oculta: tapaba el botón de la cuarta tarjeta */
   ocultarDock?: boolean;
   /** Planes vigentes (los del panel); el agente responde con sus precios y requisitos */
   planes?: PlanOpcion[];
@@ -45,26 +45,26 @@ interface DatosEstudiante {
   condicion: string;
 }
 
-// Logo 3D geométrico idéntico al estilo Hostinger
+// Marca del Agente CINF en azul y oro USS
 function HostingerStyleAgentLogo({ className = 'w-16 h-16' }: { className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="g1" x1="10%" y1="0%" x2="90%" y2="100%">
-          <stop offset="0%" stopColor="#818cf8" />
-          <stop offset="50%" stopColor="#6366f1" />
-          <stop offset="100%" stopColor="#4338ca" />
+          <stop offset="0%" stopColor="#2f5fe0" />
+          <stop offset="50%" stopColor="#073299" />
+          <stop offset="100%" stopColor="#041d5f" />
         </linearGradient>
         <linearGradient id="g2" x1="0%" y1="20%" x2="100%" y2="80%">
-          <stop offset="0%" stopColor="#a855f7" />
-          <stop offset="100%" stopColor="#6366f1" />
+          <stop offset="0%" stopColor="#ffd36b" />
+          <stop offset="100%" stopColor="#f2a516" />
         </linearGradient>
         <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#c084fc" />
-          <stop offset="100%" stopColor="#7e22ce" />
+          <stop offset="0%" stopColor="#4f7ff0" />
+          <stop offset="100%" stopColor="#073299" />
         </linearGradient>
         <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#6366f1" floodOpacity="0.3" />
+          <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#073299" floodOpacity="0.3" />
         </filter>
       </defs>
       <g filter="url(#glow)">
@@ -374,8 +374,6 @@ export function responderSobreAcreditacion(consulta: string, planes: PlanOpcion[
 export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDock, planes = PLANES_COMPUTACION }: Props) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [unreadCount, setUnreadCount] = useState<number>(0);
-  const [dockDismissed, setDockDismissed] = useState<boolean>(false);
-  const [bottomInputText, setBottomInputText] = useState<string>('');
   const [chatInputText, setChatInputText] = useState<string>('');
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -584,7 +582,6 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
     // Si aún está en el paso de correo, este input responde al dato 1
     if (onboardingPaso === 'correo') {
       handleIngresarCorreo(trimmed);
-      setBottomInputText('');
       setChatInputText('');
       return;
     }
@@ -598,7 +595,6 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
 
     setMessages((prev) => [...prev, userMsg]);
     setChatInputText('');
-    setBottomInputText('');
     setIsTyping(true);
 
     const query = trimmed.toLowerCase();
@@ -638,22 +634,9 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
     }, 500);
   };
 
-  const handleSubmitBottom = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!bottomInputText.trim()) {
-      abrirChat();
-      return;
-    }
-    handleSendMessage(bottomInputText);
-  };
-
   const handleSubmitChat = (e?: React.FormEvent) => {
     e?.preventDefault();
     handleSendMessage(chatInputText);
-  };
-
-  const handleKeyDownBottom = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSubmitBottom();
   };
 
   const handleKeyDownChat = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -676,68 +659,26 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
       {/* ===================================================================== */}
       {/* 1. INPUT DOCK FLOTANTE INFERIOR                                       */}
       {/* ===================================================================== */}
-      {!dockDismissed && !isOpen && !ocultarDock && (
-        <aside
-          aria-label="Asistente Virtual"
-          className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-[520px] transition-all animate-in fade-in slide-in-from-bottom-2 duration-200"
-        >
-          <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl shadow-slate-900/10 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-2">
-            <span className="text-[#6366f1] shrink-0 flex items-center">
-              <Sparkles className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#6366f1]" />
-            </span>
-
-            <input
-              type="text"
-              value={bottomInputText}
-              onChange={(e) => setBottomInputText(e.target.value)}
-              onKeyDown={handleKeyDownBottom}
-              placeholder={
-                estudiante
-                  ? `Consultar cursos de ${estudiante.nombres.split(' ')[0]}...`
-                  : 'Ingresa tu correo institucional o consulta...'
-              }
-              className="flex-1 bg-transparent border-none outline-none text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 placeholder:truncate min-w-0"
-            />
-
-            <button
-              type="button"
-              onClick={() => handleSubmitBottom()}
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#6366f1] hover:bg-[#4f46e5] active:scale-95 text-white flex items-center justify-center shrink-0 shadow-sm transition cursor-pointer"
-              title="Preguntar al agente"
-            >
-              <ArrowUp className="w-4 h-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setDockDismissed(true)}
-              className="w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-500 flex items-center justify-center shrink-0 transition cursor-pointer"
-              title="Cerrar sugerencia"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </aside>
-      )}
+      {/* Una sola pieza flotante: el lanzador de la derecha. La barra inferior tapaba la ficha en el celular */}
 
       {/* ===================================================================== */}
       {/* 2. BOTÓN LANZADOR FLOTANTE DERECHO CON CONTADOR                      */}
       {/* ===================================================================== */}
-      {!isOpen && (
+      {!isOpen && !ocultarDock && (
         <button
           type="button"
           onClick={abrirChat}
-          className="fixed bottom-3 right-3 sm:bottom-5 sm:right-5 z-40 bg-[#073299] hover:bg-[#041d5f] text-white px-3.5 py-2.5 rounded-full shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-white"
-          title="Abrir Agente CINF"
+          className="gex-btn fixed bottom-3 right-3 sm:bottom-5 sm:right-5 z-40 bg-uss-blue hover:bg-[#041d5f] text-white h-12 pl-2 pr-4 rounded-full shadow-[0_10px_24px_-8px_rgba(4,29,95,0.55)] flex items-center gap-2 cursor-pointer ring-2 ring-white"
+          aria-label={unreadCount > 0 ? `Pregúntale al Agente CINF, ${unreadCount} mensaje nuevo` : 'Pregúntale al Agente CINF'}
         >
-          <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-white" />
+          <span className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-[#ffc53d]" />
           </span>
-          <span className="text-xs font-bold tracking-wide">Agente CINF</span>
+          <span className="text-sm font-bold">Pregúntale al Agente CINF</span>
 
           {/* Contador de 1 mensaje al lado derecho */}
           {unreadCount > 0 && (
-            <span className="min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-[11px] font-black rounded-full flex items-center justify-center shadow-md animate-bounce ring-1 ring-white">
+            <span className="min-w-[20px] h-5 px-1.5 bg-[#ffc53d] text-[#0b1630] text-[11px] font-black rounded-full flex items-center justify-center ring-1 ring-white">
               {unreadCount}
             </span>
           )}
@@ -761,7 +702,7 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
                   CINF Agente
                   <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 </h3>
-                <p className="text-[10px] text-slate-400 font-medium">Asistente de Acreditación USS</p>
+                <p className="text-[10px] text-slate-500 font-medium">Asistente de Acreditación USS</p>
               </div>
             </div>
 
@@ -769,7 +710,7 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
               <button
                 type="button"
                 onClick={handleReset}
-                className="w-7 h-7 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                className="w-7 h-7 rounded-full text-slate-500 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
                 title="Reiniciar chat"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -777,7 +718,7 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                className="w-8 h-8 rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
                 title="Minimizar"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -786,7 +727,7 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
           </div>
 
           {/* Cuerpo del Agente */}
-          <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0 bg-gradient-to-b from-white via-slate-50/40 to-slate-50">
+          <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0 bg-slate-50">
             {messages.length === 0 ? (
               /* ESTADO INICIAL */
               <div className="flex flex-col items-center text-center space-y-4 pt-1 pb-2">
@@ -831,10 +772,8 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
                       responderConResumen(null, datosForm);
                     }
                   }}
-                  className="w-full text-left bg-gradient-to-br from-[#6366f1] via-[#5b5bf5] to-[#4338ca] text-white p-4 rounded-2xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer relative overflow-hidden group"
+                  className="w-full text-left gex-card bg-uss-blue hover:bg-[#041d5f] text-white p-4 rounded-2xl cursor-pointer relative overflow-hidden group"
                 >
-                  <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none" />
-
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h5 className="text-sm font-extrabold text-white leading-tight">
@@ -859,7 +798,7 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
 
                 {/* Separador "O EXPLORAR" */}
                 <div className="w-full text-left pt-1">
-                  <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                  <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">
                     O explorar
                   </span>
                 </div>
@@ -881,7 +820,7 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
                         Canales de atención del CINF
                       </span>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight className="w-4 h-4 text-slate-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
               </div>
@@ -903,7 +842,7 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
                       <FormattedMessageText text={m.text} isUser={m.sender === 'user'} />
                       <span
                         className={`block text-[9px] mt-1 text-right ${
-                          m.sender === 'user' ? 'text-blue-200' : 'text-slate-400'
+                          m.sender === 'user' ? 'text-blue-200' : 'text-slate-500'
                         }`}
                       >
                         {m.time}
@@ -928,7 +867,7 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
                       <button
                         type="button"
                         onClick={() => handleSeleccionarSede('Filial')}
-                        className="py-2 px-2.5 bg-slate-50 hover:bg-indigo-600 hover:text-white text-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="py-2 px-2.5 bg-slate-50 hover:bg-uss-blue hover:text-white text-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <span>🏢 Filiales USS</span>
                       </button>
@@ -995,18 +934,18 @@ export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDoc
                     ? 'Escribe tu correo o código...'
                     : 'Pregunta lo que quieras sobre el CINF...'
                 }
-                className="w-full bg-slate-50 border border-slate-200 focus:border-[#6366f1] focus:ring-2 focus:ring-[#6366f1]/10 rounded-full pl-4 pr-11 py-2 text-xs text-slate-800 placeholder:text-slate-400 outline-none transition"
+                className="w-full bg-slate-50 border border-slate-200 focus:border-uss-blue focus:ring-2 focus:ring-uss-blue/15 rounded-full pl-4 pr-11 py-2 text-xs text-slate-800 placeholder:text-slate-400 outline-none transition"
               />
               <button
                 type="submit"
                 disabled={!chatInputText.trim()}
-                className="absolute right-1.5 w-7 h-7 rounded-full bg-[#6366f1] disabled:bg-slate-200 disabled:cursor-not-allowed hover:bg-[#4f46e5] text-white flex items-center justify-center transition cursor-pointer"
+                className="absolute right-1.5 w-7 h-7 rounded-full bg-uss-blue disabled:bg-slate-200 disabled:cursor-not-allowed hover:bg-[#041d5f] text-white flex items-center justify-center transition cursor-pointer"
                 title="Enviar"
               >
                 <ArrowUp className="w-3.5 h-3.5" />
               </button>
             </form>
-            <p className="text-[9.5px] text-slate-400 text-center mt-1.5 tracking-tight">
+            <p className="text-[9.5px] text-slate-500 text-center mt-1.5 tracking-tight">
               La inteligencia artificial puede cometer errores.
             </p>
           </div>

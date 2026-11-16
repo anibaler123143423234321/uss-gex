@@ -3,18 +3,33 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Portal GEX — Consulta Estudiantes</title>
-  <!-- Google Font: Plus Jakarta Sans (body + display) -->
+  <title>Gente con Experiencia | Acreditación en Computación USS</title>
+  <meta name="description"
+    content="Busca tu código, correo o apellidos y revisa qué cursos de Computación ya aprobaste en el programa Gente con Experiencia de la USS y cómo acreditar los que faltan." />
+  <meta name="page-type" content="service" />
+  <meta name="site-kind" content="other" />
+  <meta name="theme-color" content="#073299" />
+  <link rel="icon" type="image/x-icon" href="/gex/favicon.ico" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Gente con Experiencia · Acreditación en Computación USS" />
+  <meta property="og:description"
+    content="Consulta tu avance en Computación y elige cómo acreditar: curso GEX, validación, convalidación o PROTECH XP." />
+  <meta property="og:image" content="/gex/campus-uss.jpg" />
+  <meta property="og:locale" content="es_PE" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Tipografía oficial USS: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
+  <!-- Entrada del hero (Taste-Skill): la animación vive en src/index.css (.gex-enter) -->
+  <script>document.documentElement.classList.add('m-enter');setTimeout(function(){document.documentElement.classList.add('m-enter-done')},700)</script>
 </head>
 
-<body class="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased min-h-screen">
+<body class="bg-white text-slate-900 antialiased min-h-screen">
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

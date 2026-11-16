@@ -104,7 +104,7 @@ export default function MenuOpciones({ titulo, subtitulo, planes, estudiante, es
           <div className="flex flex-wrap items-baseline gap-x-2">
             {nombre && (
               <span className="text-base sm:text-lg font-bold text-slate-500">
-                Hola, {nombre} <span className="text-slate-300 font-normal">·</span>
+                Hola, {nombre} <span className="text-slate-400 font-normal">·</span>
               </span>
             )}
             <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 leading-tight">
@@ -183,7 +183,7 @@ function PrecioPlan({ plan }: { plan: PlanOpcion }) {
           {precioFormateado}
         </p>
         {descuento?.precioFinal && (
-          <s className="text-base font-semibold text-slate-400">
+          <s className="text-base font-semibold text-slate-500">
             <span className="sr-only">Precio regular: </span>
             {precioRegularFormateado}
           </s>
@@ -223,7 +223,7 @@ function EtapasPlan({ plan, compacto = false }: { plan: PlanOpcion; compacto?: b
               <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: plan.acento }} />
               <span className="font-semibold text-slate-800 truncate">{etapa.periodo}</span>
               {etapa.detalle && (
-                <span className="text-[10px] text-slate-400 truncate hidden sm:inline">· {etapa.detalle}</span>
+                <span className="text-[10px] text-slate-500 truncate hidden sm:inline">· {etapa.detalle}</span>
               )}
             </div>
             <span className="font-bold text-slate-900 tabular-nums shrink-0">{etapa.costo}</span>
@@ -278,7 +278,7 @@ export function CronogramaGexPizarra({
                 <span className={`truncate ${item.esCero ? 'text-slate-500' : 'font-medium text-slate-800'}`}>
                   {item.mes}
                 </span>
-                <span className={`tabular-nums font-semibold ${item.esCero ? 'text-slate-400' : 'text-slate-900'}`}>
+                <span className={`tabular-nums font-semibold ${item.esCero ? 'text-slate-500' : 'text-slate-900'}`}>
                   {item.esCero ? '0.00' : item.monto}
                 </span>
               </div>
@@ -290,7 +290,7 @@ export function CronogramaGexPizarra({
                 <span className={`truncate ${item.esCero ? 'text-slate-500' : 'font-bold text-slate-900'}`}>
                   {item.mes}
                 </span>
-                <span className={`tabular-nums font-semibold ${item.esCero ? 'text-slate-400' : 'text-slate-900'}`}>
+                <span className={`tabular-nums font-semibold ${item.esCero ? 'text-slate-500' : 'text-slate-900'}`}>
                   {item.esCero ? '0.00' : item.monto}
                 </span>
               </div>
@@ -329,13 +329,13 @@ export function CronogramaGexPizarra({
                   {item.mes}
                 </span>
                 {!compacto && item.detalle && (
-                  <span className="text-[11px] text-slate-400 hidden sm:inline truncate">
+                  <span className="text-[11px] text-slate-500 hidden sm:inline truncate">
                     · {item.detalle}
                   </span>
                 )}
               </div>
               <span
-                className={`tabular-nums font-semibold ${item.esCero ? 'text-slate-400' : 'text-slate-900'
+                className={`tabular-nums font-semibold ${item.esCero ? 'text-slate-500' : 'text-slate-900'
                   }`}
               >
                 {item.esCero ? '0.00' : item.monto}
@@ -386,7 +386,7 @@ function DocumentosEmitidos({
             <p className={compacto ? 'text-[10px] text-slate-500 uppercase font-semibold' : 'text-xs text-slate-500'}>
               {etiqueta}
             </p>
-            <p className={`font-bold leading-snug truncate ${compacto ? 'text-xs' : 'text-sm'} ${d.emite ? 'text-slate-900' : 'text-slate-400'}`}>
+            <p className={`font-bold leading-snug truncate ${compacto ? 'text-xs' : 'text-sm'} ${d.emite ? 'text-slate-900' : 'text-slate-500'}`}>
               {textoDocumento(d)}
             </p>
           </div>
@@ -416,14 +416,14 @@ function DatosMatriz({ plan, compacto = false }: { plan: PlanOpcion; compacto?: 
     return (
       <div className="space-y-1.5 text-xs">
         <div>
-          <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Dirigido a</span>
+          <span className="text-[10px] uppercase font-bold text-slate-500 block leading-tight">Dirigido a</span>
           <span className="font-semibold text-slate-800 leading-tight block truncate" title={plan.dirigidoA}>
             {plan.dirigidoA}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Requisito</span>
+            <span className="text-[10px] uppercase font-bold text-slate-500 block leading-tight">Requisito</span>
             <span
               className={`leading-tight block truncate ${!sinRequisito ? 'font-bold' : 'font-semibold text-slate-800'}`}
               style={!sinRequisito ? { color: plan.acento } : undefined}
@@ -432,7 +432,7 @@ function DatosMatriz({ plan, compacto = false }: { plan: PlanOpcion; compacto?: 
             </span>
           </div>
           <div>
-            <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Acreditación</span>
+            <span className="text-[10px] uppercase font-bold text-slate-500 block leading-tight">Acreditación</span>
             <span className="font-semibold text-slate-800 leading-tight block truncate">
               {plan.formaAcreditacion}
             </span>
@@ -451,7 +451,7 @@ function DatosMatriz({ plan, compacto = false }: { plan: PlanOpcion; compacto?: 
     <dl className="space-y-2.5">
       {filas.map(({ Icono, etiqueta, valor, resaltar }) => (
         <div key={etiqueta} className="flex items-start gap-2.5">
-          <Icono className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
+          <Icono className="w-4 h-4 mt-0.5 shrink-0 text-slate-500" />
           <div className="min-w-0">
             <dt className="text-xs text-slate-500">{etiqueta}</dt>
             {/* Un requisito real (entrevista, título) se marca: es lo que puede descartar la opción */}
@@ -493,8 +493,7 @@ function TarjetaPlan({
     >
       {plan.insignia && (
         <span
-          className="absolute -top-2.5 right-4 z-10 rounded-full px-3 py-0.5 text-[10px] font-bold tracking-wide text-white shadow-sm"
-          style={{ backgroundColor: plan.acento }}
+          className="absolute -top-2.5 right-4 z-10 rounded-full bg-white px-3 py-0.5 text-[11px] font-bold tracking-wide text-slate-700 ring-1 ring-slate-300"
         >
           {plan.insignia}
         </span>
@@ -539,12 +538,12 @@ function TarjetaPlan({
         {items.map((fila, idx) => (
           <li
             key={idx}
-            className={`flex items-start gap-2 py-1 text-sm leading-snug ${fila.activo ? 'text-slate-700' : 'text-slate-400'}`}
+            className={`flex items-start gap-2 py-1 text-sm leading-snug ${fila.activo ? 'text-slate-700' : 'text-slate-500'}`}
           >
             {fila.activo ? (
               <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: plan.acento }} />
             ) : (
-              <Minus className="w-4 h-4 mt-0.5 shrink-0 text-slate-300" />
+              <Minus className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
             )}
             <span>
               {!fila.activo && <span className="sr-only">No incluye: </span>}
@@ -575,7 +574,7 @@ function TarjetaPlan({
             onClick={onElegir}
             className={`mt-5 h-11 w-full rounded-xl text-sm font-bold inline-flex items-center justify-center gap-1.5 transition ${
               vencido
-                ? 'bg-slate-100 text-slate-400 cursor-not-allowed ring-1 ring-slate-200'
+                ? 'bg-slate-100 text-slate-500 cursor-not-allowed ring-1 ring-slate-200'
                 : destacado
                   ? 'text-white hover:brightness-110 cursor-pointer'
                   : 'bg-white text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50 hover:ring-slate-400 cursor-pointer'
@@ -643,7 +642,7 @@ function ResumenPlan({ plan, onVerDetallesPago }: { plan: PlanOpcion; onVerDetal
             {precioFormateado}
           </span>
           {descuento?.precioFinal && (
-            <s className="text-xs font-semibold text-slate-400">
+            <s className="text-xs font-semibold text-slate-500">
               {plan.precio.replace(/^S\/(\d)/, 'S/ $1')}
             </s>
           )}
@@ -683,7 +682,7 @@ function ResumenPlan({ plan, onVerDetallesPago }: { plan: PlanOpcion; onVerDetal
       <div className="pt-2">
         <DocumentosEmitidos plan={plan} onVerDetallesPago={onVerDetallesPago} compacto />
         {(plan.certificado.requierePago || plan.constancia.requierePago) && (
-          <p className="mt-1 text-[10px] text-slate-400 text-center leading-tight">
+          <p className="mt-1 text-[10px] text-slate-500 text-center leading-tight">
             * Requiere el pago de la tasa administrativa oficial.
           </p>
         )}
@@ -813,7 +812,7 @@ function CalendarioEntrevista({
         {DIAS_SEMANA_CORTO.map((d, i) => (
           <span
             key={d}
-            className={`text-[11px] font-bold ${i === 6 ? 'text-slate-400' : 'text-slate-500'}`}
+            className={`text-[11px] font-bold ${i === 6 ? 'text-slate-500' : 'text-slate-500'}`}
           >
             {d}
           </span>
@@ -860,8 +859,8 @@ function CalendarioEntrevista({
                   ? 'bg-uss-blue text-white shadow-sm font-bold ring-2 ring-blue-300'
                   : bloqueado
                     ? esDespuesLimite
-                      ? 'text-slate-300 bg-slate-50/70 cursor-not-allowed line-through'
-                      : 'text-slate-300 cursor-not-allowed opacity-40'
+                      ? 'text-slate-400 bg-slate-50/70 cursor-not-allowed line-through'
+                      : 'text-slate-400 cursor-not-allowed opacity-40'
                     : 'text-slate-800 hover:bg-blue-50 hover:text-uss-blue cursor-pointer border border-transparent hover:border-blue-200'
               }`}
               style={seleccionado ? { backgroundColor: acento } : undefined}
@@ -1491,7 +1490,7 @@ function RegistroPlan({
                   <ol className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2 text-xs">
                     {plan.proceso.map((p, i) => (
                       <li key={p} className="flex items-start gap-2 text-slate-700 leading-snug">
-                        <span className="w-3.5 text-right font-bold text-slate-400 tabular-nums shrink-0">{i + 1}.</span>
+                        <span className="w-3.5 text-right font-bold text-slate-500 tabular-nums shrink-0">{i + 1}.</span>
                         <span>{p}</span>
                       </li>
                     ))}
