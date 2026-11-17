@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ArrowLeft, ArrowUpRight, Loader2, Home } from 'lucide-react';
+import { RefreshCw, ArrowLeft, Loader2, Home } from 'lucide-react';
+import { Header } from './components/common/Header';
+import { Footer } from './components/common/Footer';
 import SearchBar from './components/SearchBar';
 import StudentDetailView from './components/StudentDetailView';
 import MenuOpciones from './components/MenuOpciones';
@@ -227,30 +229,12 @@ export default function App() {
       >
         Saltar al contenido
       </a>
-      <header className="nav absolute inset-x-0 top-0 z-20 bg-uss-blue text-white">
-        <div className="wrap flex items-center justify-between gap-3 h-[76px]">
-          <a href="/" title="Ir al Portal CINF" className="inline-flex items-center min-h-11 shrink-0">
-            <img
-              src={LOGO_USS}
-              alt="Universidad Señor de Sipán"
-              width={851}
-              height={293}
-              className="h-9 sm:h-11 w-auto brightness-0 invert"
-            />
-          </a>
-          <div className="flex items-center gap-2">
-            {botonSincronizar(true)}
-            <a
-              href="/"
-              className="gex-btn shrink-0 h-11 px-3 sm:px-4 rounded-xl inline-flex items-center gap-1.5 text-sm font-semibold bg-white text-uss-blue hover:bg-blue-50"
-            >
-              <span className="hidden sm:inline">Ir al Portal CINF</span>
-              <span className="sm:hidden">Portal</span>
-              <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
-            </a>
-          </div>
-        </div>
-      </header>
+      <Header
+        variant="hero"
+        logoUrl={LOGO_USS}
+        portalUrl="/"
+        syncButton={botonSincronizar(true)}
+      />
 
       <main id="contenido">
         <section
@@ -429,47 +413,16 @@ export default function App() {
         </div>
       ) : selected ? (
         <div className="flex-1 flex flex-col w-full lg:h-full lg:min-h-0 lg:overflow-hidden">
-          {/* Header institucional: fijo arriba en el celular para tener siempre a mano Volver */}
-          <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 py-2 lg:py-1.5 px-3 sm:px-6 w-full shrink-0">
-            <div className="max-w-7xl 2xl:max-w-[1440px] mx-auto flex items-center gap-2.5">
-              <button
-                onClick={() => setSelected(null)}
-                type="button"
-                className="lg:hidden w-11 h-11 -ml-1 rounded-xl flex items-center justify-center text-slate-600 hover:text-uss-blue hover:bg-slate-100 transition cursor-pointer"
-                aria-label="Volver a la búsqueda"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <a
-                href="/"
-                title="Ir al inicio"
-                className="flex items-center gap-2.5 min-w-0 group hover:opacity-90 transition"
-              >
-                <img
-                  src={LOGO_USS}
-                  alt="Logo USS"
-                  className="h-7 sm:h-8 w-auto object-contain"
-                />
-                <div className="border-l border-slate-200 pl-2.5 min-w-0">
-                  <h1 className="text-sm font-bold text-uss-blue leading-tight truncate">
-                    {config.titulo} {config.palabraDestacada}
-                  </h1>
-                  <p className="text-[11px] lg:text-[10px] text-slate-500 truncate">Portal oficial de verificación</p>
-                </div>
-              </a>
-              <div className="ml-auto flex items-center gap-2">
-                <a
-                  href="/"
-                  className="gex-btn shrink-0 h-11 lg:h-9 min-w-11 justify-center px-2.5 sm:px-3 rounded-xl transition cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200"
-                  title="Ir al inicio"
-                >
-                  <Home className="w-4 h-4 lg:w-3.5 lg:h-3.5" />
-                  <span className="hidden sm:inline">Inicio</span>
-                </a>
-                {botonSincronizar(false)}
-              </div>
-            </div>
-          </header>
+          {/* Header institucional desacoplado */}
+          <Header
+            variant="compact"
+            logoUrl={LOGO_USS}
+            portalUrl="/"
+            titulo={config.titulo}
+            subtitulo={config.palabraDestacada}
+            onBack={() => setSelected(null)}
+            syncButton={botonSincronizar(false)}
+          />
 
           {/* Área principal: en escritorio cabe en 1 pantalla, en el celular fluye con scroll */}
           <main className="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-3 sm:px-6 py-3 lg:py-2.5 flex-1 min-h-0 flex flex-col">
@@ -486,15 +439,9 @@ export default function App() {
         null
       )}
 
-      {/* Footer compacto (la portada lleva su propia línea legal) */}
+      {/* Footer desacoplado */}
       {(selected || mostrarComoAcreditar) && (
-      <footer className={`${selected ? 'py-2 lg:py-1 text-[10px]' : 'py-4 text-xs'} px-4 text-center border-t border-slate-200/80 bg-white shrink-0`}>
-        <span className="text-slate-500">
-          Universidad Señor de Sipán &bull;{' '}
-          <span className="sm:hidden">CINF</span>
-          <span className="hidden sm:inline">Centro de Informática (CINF)</span> &bull; Portal GEX
-        </span>
-      </footer>
+        <Footer variant={selected ? 'compact' : 'legal'} />
       )}
 
       {/* Agente CINF (Solo activo cuando se consulta un estudiante) */}
