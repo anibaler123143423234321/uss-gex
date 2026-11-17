@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, ArrowLeft, Loader2, Home } from 'lucide-react';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
+import { HeroIntro } from './components/common/HeroIntro';
 import SearchBar from './components/SearchBar';
 import StudentDetailView from './components/StudentDetailView';
 import MenuOpciones from './components/MenuOpciones';
@@ -244,22 +245,13 @@ export default function App() {
         >
           <div className="wrap flex-1 flex flex-col">
             <div className="hero-text flex-1 grid lg:grid-cols-12 gap-x-6 gap-y-8 items-start my-auto py-8 lg:py-10">
-              <div className="lg:col-span-7 gex-enter">
-                <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.14em] text-[#ffc53d]">
-                  {config.badge || 'Centro de Informática USS'}
-                </p>
-                <h1
-                  id="portada-titulo"
-                  className="mt-4 font-display text-[2.15rem] leading-[1.06] sm:text-5xl xl:text-[3.6rem] font-extrabold tracking-tight text-balance"
-                >
-                  Acreditación en Computación para{' '}
-                  <span className="text-[#ffc53d]">
-                    {[config.titulo, config.palabraDestacada].filter(Boolean).join(' ') || 'Gente con Experiencia'}
-                  </span>
-                </h1>
-                <p className="mt-4 text-base sm:text-lg text-blue-100 max-w-xl leading-relaxed">
-                  {subtituloPortada}
-                </p>
+              <div className="lg:col-span-7">
+                <HeroIntro
+                  badge={config.badge || 'Centro de Informática • USS'}
+                  titlePrefix="Acreditación en Computación para"
+                  highlightText={[config.titulo, config.palabraDestacada].filter(Boolean).join(' ') || 'Gente con Experiencia'}
+                  lead={subtituloPortada}
+                />
 
                 <div className="mt-7">
                   <label htmlFor="buscar-estudiante" className="block text-sm font-semibold text-white mb-2">
@@ -306,7 +298,7 @@ export default function App() {
                 </dl>
               </div>
 
-              <div className="hidden lg:block lg:col-span-5 self-stretch gex-foto gex-enter-foto overflow-hidden rounded-2xl min-h-[420px]">
+              <div className="hidden lg:block lg:col-span-5 self-stretch gex-foto gex-enter-foto overflow-hidden rounded-2xl min-h-[440px] h-[min(680px,calc(100svh-76px-96px))]">
                 <img
                   src={FOTO_CAMPUS}
                   srcSet={`${FOTO_CAMPUS_800} 800w, ${FOTO_CAMPUS} 1280w`}
@@ -315,7 +307,7 @@ export default function App() {
                   width={1280}
                   height={784}
                   fetchPriority="high"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-[46%_60%]"
                 />
               </div>
             </div>
