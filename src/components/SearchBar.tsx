@@ -296,6 +296,16 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
+                    {/* Badge de Histórico si ya no figura en la hoja actual */}
+                    {est.esHistorico && (
+                      <span
+                        className="text-[9.5px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200"
+                        title={`Estudiante registrado en archivo histórico (v${est.ultimaVersionNumero || 1})`}
+                      >
+                        Histórico
+                      </span>
+                    )}
+
                     {/* Badge de Criterio de Coincidencia (Correo / Código / Nombre) */}
                     <span
                       className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${

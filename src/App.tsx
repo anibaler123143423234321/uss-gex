@@ -6,6 +6,7 @@ import MenuOpciones from './components/MenuOpciones';
 import CinfAgentChat from './components/CinfAgentChat';
 import { fetchExcelFromDrive } from './services/driveSheetService';
 import { sincronizarAutomaticoDriveASupabase, getCargaExcelVigente } from './services/cargasService';
+import { estudiantesHistoricoService } from './services/estudiantesHistoricoService';
 import { gexConfigService, DEFAULT_GEX_CONFIG, type GexPortalConfig } from './services/gexConfigService';
 import type { EstudianteGEX } from './types/estudiante';
 import type { PlanOpcionId } from './data/planesComputacion';
@@ -66,8 +67,17 @@ export default function App() {
   useEffect(() => {
     if (!restaurando || cargando) return;
     const guardado = estudiantes.find((est) => est.codUniv === sesionInicial.codUniv);
-    if (guardado) setSelected(guardado);
-    setRestaurando(false);
+    if (guardado) {
+      setSelected(guardado);
+      setRestaurando(false);
+    } else if (sesionInicial.codUniv) {
+      estudiantesHistoricoService.buscarPorCodigo(sesionInicial.codUniv).then((h) => {
+        if (h) setSelected(h);
+        setRestaurando(false);
+      });
+    } else {
+      setRestaurando(false);
+    }
   }, [restaurando, cargando, estudiantes, sesionInicial.codUniv]);
 
   useEffect(() => {
@@ -119,17 +129,29 @@ export default function App() {
     try {
       const { estudiantes: dataDrive, base64Xlsx } = await fetchExcelFromDrive();
       if (dataDrive && dataDrive.length > 0) {
-        setEstudiantes(dataDrive);
+        // 1. Códigos presentes en la hoja activa
+        const codigosPresentes = new Set(dataDrive.map((e) => e.codUniv));
 
-        // FORMA 1: Guarda automáticamente el archivo Excel .xlsx en Supabase si cambió
+        // 2. Traer estudiantes históricos archivados que ya no figuran en la hoja activa
+        const historicos = await estudiantesHistoricoService.obtenerHistoricosNoPresentes(codigosPresentes);
+
+        // 3. Nómina consolidada: hoja activa + registros históricos
+        setEstudiantes([...dataDrive, ...historicos]);
+
+        // 4. Respaldo binario en tbl_gex_cargas si el archivo cambió
         if (base64Xlsx) {
           sincronizarAutomaticoDriveASupabase(dataDrive.length, base64Xlsx);
         }
+
+        // 5. Sincronización en la tabla maestra de Supabase
+        estudiantesHistoricoService.sincronizarConTablaMaestra(dataDrive);
       } else {
         // Respaldo de Supabase si Google Drive no respondiera
         const { estudiantes: dataSupabase } = await getCargaExcelVigente();
         if (dataSupabase.length > 0) {
-          setEstudiantes(dataSupabase);
+          const codigosPresentes = new Set(dataSupabase.map((e) => e.codUniv));
+          const historicos = await estudiantesHistoricoService.obtenerHistoricosNoPresentes(codigosPresentes);
+          setEstudiantes([...dataSupabase, ...historicos]);
         }
       }
     } catch (err) {

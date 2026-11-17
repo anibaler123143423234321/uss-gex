@@ -26,4 +26,10 @@ export interface EstudianteGEX {
   telefonoTipo?: string;
   telefono?: string;
   estado?: string;
+
+  // Trazabilidad histórica
+  activoEnHojaActual?: boolean;
+  esHistorico?: boolean;
+  ultimaVersionNumero?: number;
+  ultimaFechaRegistro?: string;
 }

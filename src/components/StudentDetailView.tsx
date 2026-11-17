@@ -659,6 +659,16 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
         </div>
       </div>
 
+      {/* Aviso informativo de Registro Histórico si el estudiante ya no figura en la hoja actual */}
+      {e.esHistorico && (
+        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-purple-50/90 border border-purple-200/80 text-purple-950 text-xs shrink-0 shadow-2xs">
+          <Clock className="w-4 h-4 text-purple-600 shrink-0" />
+          <p className="leading-snug">
+            <strong className="font-bold text-purple-900">Récord Histórico Registrado:</strong> Este estudiante fue registrado en la nómina oficial (Versión {e.ultimaVersionNumero || 1}) y sus asignaturas acreditadas se mantienen vigentes en el sistema, aunque no figure en la hoja activa actual de Drive.
+          </p>
+        </div>
+      )}
+
       {/* ========================================================================= */}
       {/* 2. FICHA (A) A LA IZQUIERDA Y UN SOLO PANEL (B) A LA DERECHA              */}
       {/* ========================================================================= */}
@@ -669,10 +679,20 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
             <span className="absolute inset-x-0 top-0 h-1 bg-uss-blue" aria-hidden="true" />
 
             <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white ring-1 ring-slate-200 text-uss-blue text-[10px] lg:text-[9px] grande:text-[11px] font-mono font-bold tracking-wider uppercase">
-                <ShieldCheck className="w-3 h-3 lg:w-2.5 lg:h-2.5" />
-                Carné GEX
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white ring-1 ring-slate-200 text-uss-blue text-[10px] lg:text-[9px] grande:text-[11px] font-mono font-bold tracking-wider uppercase">
+                  <ShieldCheck className="w-3 h-3 lg:w-2.5 lg:h-2.5" />
+                  Carné GEX
+                </span>
+                {e.esHistorico && (
+                  <span
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-purple-50 ring-1 ring-purple-200 text-purple-700 text-[10px] lg:text-[9px] font-bold tracking-wider uppercase"
+                    title={`Estudiante registrado en nómina histórica (v${e.ultimaVersionNumero || 1})`}
+                  >
+                    Histórico
+                  </span>
+                )}
+              </div>
 
               {/* Insignia de estado */}
               {cargandoSolicitudes ? (
