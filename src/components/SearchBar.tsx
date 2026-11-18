@@ -12,6 +12,8 @@ interface Props {
   inputId?: string;
   /** Si viene, se muestra un botón principal al lado que abre la ficha del primer resultado */
   textoBoton?: string;
+  /** Búsqueda directa cuando no hay coincidencia local */
+  onBuscarDirecto?: (query: string) => void;
 }
 
 type CoincidenciaRazon = 'correo' | 'codigo' | 'nombre';
@@ -26,7 +28,7 @@ interface ResultadoBusqueda {
  * Aplica cascada de prioridad estricta:
  * 1° Correo institucional -> 2° Código universitario -> 3° Nombres y apellidos (si no existen en los anteriores).
  */
-export default function SearchBar({ estudiantes, loading = false, config, onSelect, inputId, textoBoton }: Props) {
+export default function SearchBar({ estudiantes, loading = false, config, onSelect, onBuscarDirecto, inputId, textoBoton }: Props) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
@@ -173,13 +175,16 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
     );
   };
 
-  // Botón principal: abre la ficha del primer resultado; sin texto suficiente, lleva al campo
+  // Botón principal: abre la ficha del primer resultado o intenta búsqueda directa
   const verPrimerResultado = () => {
     if (filtered.length > 0) {
       handleSelect(filtered[0]);
       return;
     }
-    if (query.trim().length >= 2) setOpen(true);
+    if (query.trim().length >= 2) {
+      onBuscarDirecto?.(query.trim());
+      setOpen(true);
+    }
     inputRef.current?.focus();
   };
 
@@ -202,7 +207,7 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder="Código, correo o apellidos"
+          placeholder="Código o correo @uss.edu.pe"
           className="w-full h-14 sm:h-16 pl-12 pr-24 rounded-xl border-2 border-white bg-white text-base text-slate-900 placeholder:text-slate-500 focus:border-uss-blue focus:ring-4 focus:ring-[#ffc53d] focus-visible:outline-none outline-none transition-[box-shadow,border-color]"
           role="combobox"
           aria-controls="resultados-gex"

@@ -44,6 +44,7 @@ interface Props {
   onOpenComoAcreditar?: () => void;
   /** Planes del panel (tbl_gex_config): se resumen cuando el estudiante aún no inicia */
   planes?: PlanOpcion[];
+  etiquetaAcreditacion?: string;
 }
 
 interface Curso {
@@ -159,7 +160,7 @@ function formatFecha(fechaIso?: string): string {
   }
 }
 
-export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcreditar, planes: planesPanel }: Props) {
+export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcreditar, planes: planesPanel, etiquetaAcreditacion }: Props) {
   const planesResumen = planesPanel && planesPanel.length > 0 ? planesPanel : PLANES_COMPUTACION;
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const [solicitudes, setSolicitudes] = useState<SolicitudEstadoEstudiante[]>([]);
@@ -495,7 +496,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
         <>
           <span className="inline-flex items-center gap-1 text-[10px] grande:text-xs font-bold uppercase tracking-wider text-slate-500">
             <Circle className="w-3 h-3 grande:w-3.5 grande:h-3.5" />
-            Acreditación en Computación
+            {etiquetaAcreditacion || 'Acreditación en Computación'}
           </span>
           <h3 className="text-base sm:text-lg lg:text-base 2xl:text-xl grande:text-2xl font-extrabold text-slate-900 leading-tight mt-0.5">
             Debes iniciar tu acreditación en Computación

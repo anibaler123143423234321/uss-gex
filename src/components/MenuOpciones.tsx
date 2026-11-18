@@ -55,6 +55,7 @@ interface Props {
   /** Textos editables desde el panel (config del portal) */
   titulo: string;
   subtitulo: string;
+  badge?: string;
   planes: PlanOpcion[];
   estudiante: EstudianteGEX | null;
   estudiantes: EstudianteGEX[];
@@ -63,7 +64,7 @@ interface Props {
 }
 
 /** Pantalla "Menú de opciones": los planes para acreditar Computación y el registro del elegido */
-export default function MenuOpciones({ titulo, subtitulo, planes, estudiante, estudiantes, plan, onPlan }: Props) {
+export default function MenuOpciones({ titulo, subtitulo, badge = 'Acreditación en Computación', planes, estudiante, estudiantes, plan, onPlan }: Props) {
   const elegido = planes.find((p) => p.id === plan) ?? null;
   const [modalPagoAbierto, setModalPagoAbierto] = useState(false);
   const [tabPagoInicial, setTabPagoInicial] = useState<'bancos' | 'modalidades' | 'tramites'>('bancos');
@@ -122,7 +123,7 @@ export default function MenuOpciones({ titulo, subtitulo, planes, estudiante, es
 
         <span className="self-start sm:self-center shrink-0 inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-uss-blue bg-blue-50/80 ring-1 ring-uss-blue/15 px-3 py-1 rounded-full">
           <Monitor className="w-3.5 h-3.5 text-uss-blue" />
-          Acreditación en Computación
+          {badge}
         </span>
       </div>
 

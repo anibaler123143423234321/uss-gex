@@ -14,6 +14,10 @@ export default defineConfig({
           '/spreadsheets/d/e/2PACX-1vRiENG2D1bKgoB5idcDxxa1xQwKNLwDnKnrV93Dmpb3c7lg_yRSKQlZtDmDj9D3B8edY2UoTIyrbPWs/pub?output=csv',
         followRedirects: true,
       },
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
     },
   },
 });

@@ -2,12 +2,15 @@ import { supabase } from './supabaseClient';
 import { PLANES_COMPUTACION, mezclarPlanes, type PlanOpcion } from '../data/planesComputacion';
 
 export interface GexPortalConfig {
+  prefijoTitulo: string;
   titulo: string;
   palabraDestacada: string;
   subtitulo: string;
   badge: string;
+  labelAcceso: string;
   menuTitulo: string;
   menuSubtitulo: string;
+  menuBadge: string;
   planes: PlanOpcion[];
   searchByEmail: boolean;
   searchByCode: boolean;
@@ -16,12 +19,15 @@ export interface GexPortalConfig {
 }
 
 export const DEFAULT_GEX_CONFIG: GexPortalConfig = {
+  prefijoTitulo: 'Acreditación en Computación para',
   titulo: 'Gente con',
   palabraDestacada: 'Experiencia',
   subtitulo: 'Portal oficial de consulta y verificación de estudiantes GEX — Universidad Señor de Sipán',
   badge: 'Centro de Informática • USS',
+  labelAcceso: 'Entra con tu correo institucional o código institucional',
   menuTitulo: 'Elige cómo acreditar Computación',
   menuSubtitulo: '',
+  menuBadge: 'Acreditación en Computación',
   planes: PLANES_COMPUTACION,
   searchByEmail: true,
   searchByCode: true,

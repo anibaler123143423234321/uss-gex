@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ArrowLeft, Loader2, Home } from 'lucide-react';
+import { RefreshCw, ArrowLeft, Loader2, Home, AlertCircle } from 'lucide-react';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
 import { HeroIntro } from './components/common/HeroIntro';
 import SearchBar from './components/SearchBar';
+import VerificacionCodigoGex, { type PendienteVerificacion } from './components/VerificacionCodigoGex';
 import StudentDetailView from './components/StudentDetailView';
 import MenuOpciones from './components/MenuOpciones';
 import CinfAgentChat from './components/CinfAgentChat';
 import { fetchExcelFromDrive } from './services/driveSheetService';
 import { sincronizarAutomaticoDriveASupabase, getCargaExcelVigente } from './services/cargasService';
 import { estudiantesHistoricoService } from './services/estudiantesHistoricoService';
+import { accesoService } from './services/accesoService';
 import { gexConfigService, DEFAULT_GEX_CONFIG, type GexPortalConfig } from './services/gexConfigService';
 import type { EstudianteGEX } from './types/estudiante';
 import type { PlanOpcionId } from './data/planesComputacion';
@@ -46,8 +48,7 @@ function guardarSesion(sesion: SesionGex): void {
 // Formas de búsqueda que se explican bajo el buscador
 const FORMAS_DE_BUSQUEDA = [
   { titulo: 'Código', ejemplo: '2251804844' },
-  { titulo: 'Apellidos', ejemplo: 'García Pérez' },
-  { titulo: 'Correo', ejemplo: '@uss.edu.pe' },
+  { titulo: 'Correo', ejemplo: 'tucorreo@uss.edu.pe' },
 ];
 
 /** "S/ 120" → 120. Devuelve null si el texto del panel no trae un número */
@@ -66,6 +67,30 @@ export default function App() {
   const [planElegido, setPlanElegido] = useState<PlanOpcionId | null>(sesionInicial.plan ?? null);
   // El estudiante se recupera recién cuando llega el Excel; hasta entonces no se muestra la portada
   const [restaurando, setRestaurando] = useState<boolean>(!!sesionInicial.codUniv);
+  const [pendienteVerificacion, setPendienteVerificacion] = useState<PendienteVerificacion | null>(null);
+  const [errorEnvio, setErrorEnvio] = useState<string>('');
+  const [enviandoCodigo, setEnviandoCodigo] = useState<boolean>(false);
+
+  const iniciarVerificacion = async (est: EstudianteGEX | null, identificadorDirecto?: string) => {
+    const identificador = (identificadorDirecto || est?.codUniv || est?.correoInstitucional || '').trim();
+    if (!identificador) return;
+
+    setEnviandoCodigo(true);
+    setErrorEnvio('');
+
+    try {
+      const data = await accesoService.solicitarCodigo(identificador);
+      setPendienteVerificacion({
+        ...data,
+        identificador,
+        estudiante: est || undefined,
+      });
+    } catch (e) {
+      setErrorEnvio((e as Error).message || 'No se pudo enviar el código de verificación.');
+    } finally {
+      setEnviandoCodigo(false);
+    }
+  };
 
   useEffect(() => {
     if (!restaurando || cargando) return;
@@ -248,31 +273,51 @@ export default function App() {
               <div className="lg:col-span-7">
                 <HeroIntro
                   badge={config.badge || 'Centro de Informática • USS'}
-                  titlePrefix="Acreditación en Computación para"
+                  titlePrefix={config.prefijoTitulo || 'Acreditación en Computación para'}
                   highlightText={[config.titulo, config.palabraDestacada].filter(Boolean).join(' ') || 'Gente con Experiencia'}
                   lead={subtituloPortada}
                 />
 
                 <div className="mt-7">
-                  <label htmlFor="buscar-estudiante" className="block text-sm font-semibold text-white mb-2">
-                    Busca al estudiante
-                  </label>
-                  <SearchBar
-                    estudiantes={estudiantes}
-                    loading={cargando}
-                    config={config}
-                    onSelect={(est) => setSelected(est)}
-                    inputId="buscar-estudiante"
-                    textoBoton="Ver mi avance"
-                  />
-                  <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-blue-100" aria-label="Puedes buscar por">
-                    {FORMAS_DE_BUSQUEDA.map(({ titulo, ejemplo }) => (
-                      <li key={titulo} className="inline-flex items-baseline gap-1.5">
-                        <span className="font-semibold text-white">{titulo}</span>
-                        <span className="hidden sm:inline text-blue-200">{ejemplo}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {pendienteVerificacion ? (
+                    <VerificacionCodigoGex
+                      pendiente={pendienteVerificacion}
+                      onVerificado={(est) => {
+                        setSelected(est);
+                        setPendienteVerificacion(null);
+                      }}
+                      onVolver={() => setPendienteVerificacion(null)}
+                    />
+                  ) : (
+                    <>
+                      <label htmlFor="buscar-estudiante" className="block text-sm font-semibold text-white mb-2">
+                        {config.labelAcceso || 'Entra con tu correo institucional o código institucional'}
+                      </label>
+                      <SearchBar
+                        estudiantes={estudiantes}
+                        loading={cargando || enviandoCodigo}
+                        config={config}
+                        onSelect={(est) => iniciarVerificacion(est)}
+                        onBuscarDirecto={(query) => iniciarVerificacion(null, query)}
+                        inputId="buscar-estudiante"
+                        textoBoton={enviandoCodigo ? 'Buscando…' : 'Buscar'}
+                      />
+                      {errorEnvio && (
+                        <p role="alert" className="mt-2.5 flex items-start gap-1.5 text-sm font-medium text-amber-200">
+                          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                          <span>{errorEnvio}</span>
+                        </p>
+                      )}
+                      <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-blue-100" aria-label="Puedes buscar por">
+                        {FORMAS_DE_BUSQUEDA.map(({ titulo, ejemplo }) => (
+                          <li key={titulo} className="inline-flex items-baseline gap-1.5">
+                            <span className="font-semibold text-white">{titulo}</span>
+                            <span className="hidden sm:inline text-blue-200">{ejemplo}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
                 </div>
 
                 <dl className="mt-9 grid grid-cols-3 gap-4 border-t border-white/20 pt-5">
@@ -394,6 +439,7 @@ export default function App() {
             <MenuOpciones
               titulo={config.menuTitulo}
               subtitulo={config.menuSubtitulo}
+              badge={config.menuBadge || 'Acreditación en Computación'}
               planes={config.planes}
               estudiante={selected}
               estudiantes={estudiantes}
@@ -410,8 +456,8 @@ export default function App() {
             variant="compact"
             logoUrl={LOGO_USS}
             portalUrl="/"
-            titulo={config.titulo}
-            subtitulo={config.palabraDestacada}
+            titulo={config.menuBadge || 'Acreditación en Computación'}
+            subtitulo={[config.titulo, config.palabraDestacada].filter(Boolean).join(' ') || 'GEX'}
             onBack={() => setSelected(null)}
             syncButton={botonSincronizar(false)}
           />
@@ -424,6 +470,7 @@ export default function App() {
               onBack={() => setSelected(null)}
               onOpenComoAcreditar={() => setMostrarComoAcreditar(true)}
               planes={config.planes}
+              etiquetaAcreditacion={config.menuBadge || 'Acreditación en Computación'}
             />
           </main>
         </div>
