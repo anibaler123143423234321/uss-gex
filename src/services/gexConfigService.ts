@@ -31,8 +31,8 @@ export const DEFAULT_GEX_CONFIG: GexPortalConfig = {
   planes: PLANES_COMPUTACION,
   searchByEmail: true,
   searchByCode: true,
-  searchByName: true,
-  searchPriority: ['email', 'code', 'name'],
+  searchByName: false,
+  searchPriority: ['email', 'code'],
 };
 
 const STORAGE_KEY = 'uss_gex_portal_config';
@@ -46,6 +46,7 @@ const mezclar = (parcial: Partial<GexPortalConfig> | null | undefined): GexPorta
   return {
     ...DEFAULT_GEX_CONFIG,
     ...(parcial ?? {}),
+    searchByName: false,
     menuSubtitulo,
     planes: mezclarPlanes(parcial?.planes),
   };

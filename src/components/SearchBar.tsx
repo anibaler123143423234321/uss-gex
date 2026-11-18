@@ -16,7 +16,7 @@ interface Props {
   onBuscarDirecto?: (query: string) => void;
 }
 
-type CoincidenciaRazon = 'correo' | 'codigo' | 'nombre';
+type CoincidenciaRazon = 'correo' | 'codigo';
 
 interface ResultadoBusqueda {
   est: EstudianteGEX;
@@ -25,8 +25,7 @@ interface ResultadoBusqueda {
 
 /**
  * Buscador sobre el archivo Excel cargado en memoria.
- * Aplica cascada de prioridad estricta:
- * 1° Correo institucional -> 2° Código universitario -> 3° Nombres y apellidos (si no existen en los anteriores).
+ * Solo busca por correo institucional o código universitario. Búsqueda por nombre DESACTIVADA.
  */
 export default function SearchBar({ estudiantes, loading = false, config, onSelect, onBuscarDirecto, inputId, textoBoton }: Props) {
   const [query, setQuery] = useState('');
@@ -35,36 +34,32 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
 
   const searchByEmail = config?.searchByEmail ?? true;
   const searchByCode = config?.searchByCode ?? true;
-  const searchByName = config?.searchByName ?? true;
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Filtrado con prioridad en cascada: 1° Correo -> 2° Código -> 3° Nombres si no existen anteriores
+  // Filtrado estricto: ÚNICAMENTE Correo institucional o Código universitario (NUNCA por nombres)
   const filteredWithReason: ResultadoBusqueda[] = query.trim().length >= 2
     ? (() => {
         const q = query.toLowerCase().trim();
 
-        // 1. Coincidencias por correo (Prioridad 1)
+        // 1. Coincidencias por correo institucional (debe iniciar con el texto o contener @)
         const porCorreo: ResultadoBusqueda[] = searchByEmail
           ? estudiantes
-              .filter((e) => e.correoInstitucional && e.correoInstitucional.toLowerCase().includes(q))
+              .filter((e) => {
+                if (!e.correoInstitucional) return false;
+                const emailLower = e.correoInstitucional.toLowerCase();
+                return emailLower.startsWith(q) || (q.includes('@') && emailLower.includes(q));
+              })
               .map((e) => ({ est: e, razon: 'correo' }))
           : [];
 
-        // 2. Coincidencias por código (Prioridad 2)
+        // 2. Coincidencias por código universitario (debe iniciar con el código ingresado)
         const porCodigo: ResultadoBusqueda[] = searchByCode
           ? estudiantes
-              .filter((e) => e.codUniv && e.codUniv.toLowerCase().includes(q))
+              .filter((e) => e.codUniv && e.codUniv.toLowerCase().startsWith(q))
               .map((e) => ({ est: e, razon: 'codigo' }))
-          : [];
-
-        // 3. Coincidencias por nombres (Prioridad 3)
-        const porNombres: ResultadoBusqueda[] = searchByName
-          ? estudiantes
-              .filter((e) => e.nombres && e.nombres.toLowerCase().includes(q))
-              .map((e) => ({ est: e, razon: 'nombre' }))
           : [];
 
         let acumulado: ResultadoBusqueda[] = [];
@@ -79,11 +74,6 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
           const codigosVistos = new Set(acumulado.map((item) => item.est.codUniv));
           const nuevosPorCodigo = porCodigo.filter((item) => !codigosVistos.has(item.est.codUniv));
           acumulado = [...acumulado, ...nuevosPorCodigo];
-        }
-
-        // Prioridad 3: Nombres y apellidos SOLO si no existen coincidencias por correo ni código
-        if (acumulado.length === 0 && porNombres.length > 0) {
-          acumulado = porNombres;
         }
 
         return acumulado.slice(0, 30);
@@ -114,10 +104,10 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
     }
   }, [highlightIndex]);
 
-  // Selección de un estudiante: CIERRA el dropdown y desenfoca el input
+  // Selección de un estudiante: coloca código o correo (NUNCA el nombre), CIERRA el dropdown y desenfoca
   const handleSelect = useCallback((est: EstudianteGEX) => {
     onSelect(est);
-    setQuery(est.nombres);
+    setQuery(est.codUniv || est.correoInstitucional || '');
     setOpen(false);
     setHighlightIndex(-1);
     inputRef.current?.blur();
@@ -283,7 +273,7 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
                 <div className="flex items-start sm:items-center justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2 sm:truncate">
-                      {highlight(est.nombres)}
+                      {est.nombres}
                     </p>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 mt-0.5 min-w-0">
                       <span className="text-xs text-slate-500 truncate">
@@ -293,7 +283,7 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
                         <>
                           <span className="hidden sm:inline text-slate-400">&bull;</span>
                           <span className="text-xs text-slate-500 truncate">
-                            {highlight(est.correoInstitucional)}
+                            {razon === 'correo' ? highlight(est.correoInstitucional) : est.correoInstitucional}
                           </span>
                         </>
                       )}
@@ -311,22 +301,20 @@ export default function SearchBar({ estudiantes, loading = false, config, onSele
                       </span>
                     )}
 
-                    {/* Badge de Criterio de Coincidencia (Correo / Código / Nombre) */}
+                    {/* Badge de Criterio de Coincidencia (Correo / Código) */}
                     <span
                       className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
                         razon === 'correo'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : razon === 'codigo'
-                          ? 'bg-blue-50 text-uss-blue border border-blue-200'
-                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : 'bg-blue-50 text-uss-blue border border-blue-200'
                       }`}
                       title={`Coincidencia encontrada por ${razon}`}
                     >
-                      {razon === 'correo' ? 'Correo' : razon === 'codigo' ? 'Código' : 'Nombre'}
+                      {razon === 'correo' ? 'Correo' : 'Código'}
                     </span>
 
                     <span className="text-[11px] sm:text-xs font-mono font-semibold bg-uss-blue/[0.07] text-uss-blue px-2 sm:px-2.5 py-1 rounded-lg ring-1 ring-uss-blue/15">
-                      {highlight(est.codUniv)}
+                      {razon === 'codigo' ? highlight(est.codUniv) : est.codUniv}
                     </span>
                   </div>
                 </div>
