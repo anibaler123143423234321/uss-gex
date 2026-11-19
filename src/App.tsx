@@ -1,22 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ArrowLeft, Loader2, Home, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Loader2, Home, LogOut } from 'lucide-react';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
 import { HeroIntro } from './components/common/HeroIntro';
-import SearchBar from './components/SearchBar';
-import VerificacionCodigoGex, { type PendienteVerificacion } from './components/VerificacionCodigoGex';
+import AccesoGex from './components/AccesoGex';
 import StudentDetailView from './components/StudentDetailView';
 import MenuOpciones from './components/MenuOpciones';
 import CinfAgentChat from './components/CinfAgentChat';
-import { fetchExcelFromDrive } from './services/driveSheetService';
-import { sincronizarAutomaticoDriveASupabase, getCargaExcelVigente } from './services/cargasService';
-import { estudiantesHistoricoService } from './services/estudiantesHistoricoService';
-import { accesoService } from './services/accesoService';
+import { accesoService, cerrarSesion, haySesion } from './services/accesoService';
 import { gexConfigService, DEFAULT_GEX_CONFIG, type GexPortalConfig } from './services/gexConfigService';
 import type { EstudianteGEX } from './types/estudiante';
 import type { PlanOpcionId } from './data/planesComputacion';
 
-// Consulta abierta en la pestaña: sobrevive a F5 y se borra al cerrar la pestaña
+// Vista abierta en la pestaña: sobrevive a F5 y se borra al cerrar la pestaña.
+// La identidad no va aquí: la da el token de accesoService, que solo existe tras verificar el correo.
 const CLAVE_SESION = 'gex.sesion';
 const LOGO_USS = `${import.meta.env.BASE_URL}logo-uss.png`;
 const FOTO_CAMPUS = `${import.meta.env.BASE_URL}campus-uss.jpg`;
@@ -24,7 +21,6 @@ const FOTO_CAMPUS_800 = `${import.meta.env.BASE_URL}campus-uss-800.jpg`;
 const SUBTITULO_POR_DEFECTO = DEFAULT_GEX_CONFIG.subtitulo;
 
 interface SesionGex {
-  codUniv?: string;
   opciones?: boolean;
   plan?: PlanOpcionId | null;
 }
@@ -45,11 +41,11 @@ function guardarSesion(sesion: SesionGex): void {
   }
 }
 
-// Formas de búsqueda que se explican bajo el buscador
-const FORMAS_DE_BUSQUEDA = [
-  { titulo: 'Código', ejemplo: '2251804844' },
-  { titulo: 'Correo', ejemplo: 'tucorreo@uss.edu.pe' },
-];
+// Formas de entrar que se explican bajo el campo. Nunca por nombres: mostraba a otros estudiantes.
+const FORMAS_DE_ENTRAR = [
+  { clave: 'codigo', titulo: 'Código', ejemplo: '2251804844' },
+  { clave: 'correo', titulo: 'Correo', ejemplo: 'tucorreo@uss.edu.pe' },
+] as const;
 
 /** "S/ 120" → 120. Devuelve null si el texto del panel no trae un número */
 function montoDe(precio: string): number | null {
@@ -58,60 +54,43 @@ function montoDe(precio: string): number | null {
 }
 
 export default function App() {
-  const [estudiantes, setEstudiantes] = useState<EstudianteGEX[]>([]);
-  const [cargando, setCargando] = useState<boolean>(true);
+  const [total, setTotal] = useState<number | null>(null);
   const [selected, setSelected] = useState<EstudianteGEX | null>(null);
   const [config, setConfig] = useState<GexPortalConfig>(DEFAULT_GEX_CONFIG);
   const [sesionInicial] = useState<SesionGex>(leerSesion);
   const [mostrarComoAcreditar, setMostrarComoAcreditar] = useState<boolean>(!!sesionInicial.opciones);
   const [planElegido, setPlanElegido] = useState<PlanOpcionId | null>(sesionInicial.plan ?? null);
-  // El estudiante se recupera recién cuando llega el Excel; hasta entonces no se muestra la portada
-  const [restaurando, setRestaurando] = useState<boolean>(!!sesionInicial.codUniv);
-  const [pendienteVerificacion, setPendienteVerificacion] = useState<PendienteVerificacion | null>(null);
-  const [errorEnvio, setErrorEnvio] = useState<string>('');
-  const [enviandoCodigo, setEnviandoCodigo] = useState<boolean>(false);
-
-  const iniciarVerificacion = async (est: EstudianteGEX | null, identificadorDirecto?: string) => {
-    const identificador = (identificadorDirecto || est?.codUniv || est?.correoInstitucional || '').trim();
-    if (!identificador) return;
-
-    setEnviandoCodigo(true);
-    setErrorEnvio('');
-
-    try {
-      const data = await accesoService.solicitarCodigo(identificador);
-      setPendienteVerificacion({
-        ...data,
-        identificador,
-        estudiante: est || undefined,
-      });
-    } catch (e) {
-      setErrorEnvio((e as Error).message || 'No se pudo enviar el código de verificación.');
-    } finally {
-      setEnviandoCodigo(false);
-    }
-  };
+  // Con un acceso vigente en la pestaña, la ficha se pide a la API; hasta entonces no se muestra la portada
+  const [restaurando, setRestaurando] = useState<boolean>(haySesion);
 
   useEffect(() => {
-    if (!restaurando || cargando) return;
-    const guardado = estudiantes.find((est) => est.codUniv === sesionInicial.codUniv);
-    if (guardado) {
-      setSelected(guardado);
-      setRestaurando(false);
-    } else if (sesionInicial.codUniv) {
-      estudiantesHistoricoService.buscarPorCodigo(sesionInicial.codUniv).then((h) => {
-        if (h) setSelected(h);
-        setRestaurando(false);
-      });
-    } else {
-      setRestaurando(false);
-    }
-  }, [restaurando, cargando, estudiantes, sesionInicial.codUniv]);
+    if (!restaurando) return;
+    accesoService
+      .estudiante()
+      .then(setSelected)
+      .catch(() => cerrarSesion())
+      .finally(() => setRestaurando(false));
+  }, [restaurando]);
 
   useEffect(() => {
     if (restaurando) return;
-    guardarSesion({ codUniv: selected?.codUniv, opciones: mostrarComoAcreditar, plan: planElegido });
-  }, [restaurando, selected, mostrarComoAcreditar, planElegido]);
+    guardarSesion({ opciones: mostrarComoAcreditar, plan: planElegido });
+  }, [restaurando, mostrarComoAcreditar, planElegido]);
+
+  // Cifra de la portada: solo el total, la nómina no sale del servidor
+  useEffect(() => {
+    accesoService
+      .resumen()
+      .then((r) => setTotal(r.total))
+      .catch(() => setTotal(null));
+  }, []);
+
+  const salir = () => {
+    cerrarSesion();
+    setSelected(null);
+    setMostrarComoAcreditar(false);
+    setPlanElegido(null);
+  };
 
   const cerrarOpciones = () => {
     setMostrarComoAcreditar(false);
@@ -151,86 +130,15 @@ export default function App() {
     };
   }, []);
 
-  // Consulta directa a Google Drive y respaldo automático del archivo Excel en Supabase
-  const cargarDesdeDrive = useCallback(async (silencioso = false) => {
-    if (!silencioso) setCargando(true);
-    try {
-      const { estudiantes: dataDrive, base64Xlsx } = await fetchExcelFromDrive();
-      if (dataDrive && dataDrive.length > 0) {
-        // 1. Códigos presentes en la hoja activa
-        const codigosPresentes = new Set(dataDrive.map((e) => e.codUniv));
-
-        // 2. Traer estudiantes históricos archivados que ya no figuran en la hoja activa
-        const historicos = await estudiantesHistoricoService.obtenerHistoricosNoPresentes(codigosPresentes);
-
-        // 3. Nómina consolidada: hoja activa + registros históricos
-        setEstudiantes([...dataDrive, ...historicos]);
-
-        // 4. Respaldo binario en tbl_gex_cargas si el archivo cambió
-        if (base64Xlsx) {
-          sincronizarAutomaticoDriveASupabase(dataDrive.length, base64Xlsx);
-        }
-
-        // 5. Sincronización en la tabla maestra de Supabase
-        estudiantesHistoricoService.sincronizarConTablaMaestra(dataDrive);
-      } else {
-        // Respaldo de Supabase si Google Drive no respondiera
-        const { estudiantes: dataSupabase } = await getCargaExcelVigente();
-        if (dataSupabase.length > 0) {
-          const codigosPresentes = new Set(dataSupabase.map((e) => e.codUniv));
-          const historicos = await estudiantesHistoricoService.obtenerHistoricosNoPresentes(codigosPresentes);
-          setEstudiantes([...dataSupabase, ...historicos]);
-        }
-      }
-    } catch (err) {
-      console.error('[GEX] Error al consultar Google Drive:', err);
-    } finally {
-      if (!silencioso) setCargando(false);
-    }
-  }, []);
-
-  // Carga inicial al abrir la página
-  useEffect(() => {
-    cargarDesdeDrive(false);
-  }, [cargarDesdeDrive]);
-
-  // Sincronización en tiempo real (con debouncing para evitar múltiples llamadas al cambiar de ventana)
-  useEffect(() => {
-    let focusTimer: number;
-    const handleFocus = () => {
-      window.clearTimeout(focusTimer);
-      focusTimer = window.setTimeout(() => {
-        cargarDesdeDrive(true);
-      }, 800);
-    };
-
-    window.addEventListener('focus', handleFocus);
-    const interval = window.setInterval(() => {
-      cargarDesdeDrive(true);
-    }, 60000);
-
-    return () => {
-      window.clearTimeout(focusTimer);
-      window.removeEventListener('focus', handleFocus);
-      window.clearInterval(interval);
-    };
-  }, [cargarDesdeDrive]);
-
-  // Va dentro de cada encabezado: flotando fijo tapaba las tarjetas al hacer scroll en el celular
-  const botonSincronizar = (sobreAzul: boolean) => (
+  const botonSalir = (
     <button
-      onClick={() => cargarDesdeDrive(false)}
-      disabled={cargando}
-      className={`gex-btn shrink-0 min-w-11 justify-center px-2.5 sm:px-3 rounded-xl disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5 font-semibold ${
-        sobreAzul
-          ? 'h-11 text-sm bg-white/10 hover:bg-white/20 text-white ring-1 ring-white/30'
-          : 'h-11 lg:h-9 text-xs bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200'
-      }`}
-      title="Sincronizar con Google Sheets en tiempo real"
-      aria-label="Sincronizar con Google Sheets"
+      onClick={salir}
+      type="button"
+      className="gex-btn shrink-0 h-11 lg:h-9 min-w-11 justify-center px-2.5 sm:px-3 rounded-xl cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-600 hover:text-uss-blue ring-1 ring-slate-200"
+      title="Salir de tu ficha"
     >
-      <RefreshCw className={`w-4 h-4 lg:w-3.5 lg:h-3.5 ${cargando ? 'animate-spin' : ''}`} />
-      <span className="hidden sm:inline">Sincronizar</span>
+      <LogOut className="w-4 h-4 lg:w-3.5 lg:h-3.5" aria-hidden="true" />
+      <span className="hidden sm:inline">Salir</span>
     </button>
   );
 
@@ -238,7 +146,11 @@ export default function App() {
   const subtituloPortada =
     config.subtitulo && config.subtitulo !== SUBTITULO_POR_DEFECTO
       ? config.subtitulo
-      : 'Escribe tu código, correo o apellidos y ve qué cursos de Computación ya aprobaste y cómo acreditar los que faltan.';
+      : 'Entra con tu código universitario o tu correo institucional y ve qué cursos de Computación ya aprobaste y cómo acreditar los que faltan.';
+  const ambasApagadas = config.searchByCode === false && config.searchByEmail === false;
+  const formasDeEntrar = FORMAS_DE_ENTRAR.filter(
+    ({ clave }) => ambasApagadas || (clave === 'codigo' ? config.searchByCode !== false : config.searchByEmail !== false)
+  );
   const planMasBarato = config.planes
     .map((p) => ({ nombre: p.nombre, monto: montoDe(p.precio) }))
     .filter((p): p is { nombre: string; monto: number } => p.monto !== null)
@@ -259,7 +171,6 @@ export default function App() {
         variant="hero"
         logoUrl={LOGO_USS}
         portalUrl="/"
-        syncButton={botonSincronizar(true)}
       />
 
       <main id="contenido">
@@ -279,52 +190,22 @@ export default function App() {
                 />
 
                 <div className="mt-7">
-                  {pendienteVerificacion ? (
-                    <VerificacionCodigoGex
-                      pendiente={pendienteVerificacion}
-                      onVerificado={(est) => {
-                        setSelected(est);
-                        setPendienteVerificacion(null);
-                      }}
-                      onVolver={() => setPendienteVerificacion(null)}
-                    />
-                  ) : (
-                    <>
-                      <label htmlFor="buscar-estudiante" className="block text-sm font-semibold text-white mb-2">
-                        {config.labelAcceso || 'Entra con tu correo institucional o código institucional'}
-                      </label>
-                      <SearchBar
-                        estudiantes={estudiantes}
-                        loading={cargando || enviandoCodigo}
-                        config={config}
-                        onSelect={(est) => iniciarVerificacion(est)}
-                        onBuscarDirecto={(query) => iniciarVerificacion(null, query)}
-                        inputId="buscar-estudiante"
-                        textoBoton={enviandoCodigo ? 'Buscando…' : 'Buscar'}
-                      />
-                      {errorEnvio && (
-                        <p role="alert" className="mt-2.5 flex items-start gap-1.5 text-sm font-medium text-amber-200">
-                          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-                          <span>{errorEnvio}</span>
-                        </p>
-                      )}
-                      <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-blue-100" aria-label="Puedes buscar por">
-                        {FORMAS_DE_BUSQUEDA.map(({ titulo, ejemplo }) => (
-                          <li key={titulo} className="inline-flex items-baseline gap-1.5">
-                            <span className="font-semibold text-white">{titulo}</span>
-                            <span className="hidden sm:inline text-blue-200">{ejemplo}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
+                  <AccesoGex variante="portada" config={config} onEntrar={setSelected} inputId="acceso-estudiante" />
+                  <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-blue-100" aria-label="Puedes entrar con">
+                    {formasDeEntrar.map(({ titulo, ejemplo }) => (
+                      <li key={titulo} className="inline-flex items-baseline gap-1.5">
+                        <span className="font-semibold text-white">{titulo}</span>
+                        <span className="text-blue-200">{ejemplo}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 <dl className="mt-9 grid grid-cols-3 gap-4 border-t border-white/20 pt-5">
                   <div>
                     <dt className="sr-only">Estudiantes GEX registrados</dt>
                     <dd className="text-2xl sm:text-3xl font-extrabold tabular-nums">
-                      {cargando && estudiantes.length === 0 ? '—' : estudiantes.length.toLocaleString('es-PE')}
+                      {total === null ? '—' : total.toLocaleString('es-PE')}
                     </dd>
                     <dd className="text-xs sm:text-sm text-blue-100 mt-1">estudiantes GEX</dd>
                   </div>
@@ -424,7 +305,7 @@ export default function App() {
                   <Home className="w-4 h-4 lg:w-3.5 lg:h-3.5" />
                   <span className="hidden sm:inline">Inicio</span>
                 </a>
-                {botonSincronizar(false)}
+                {selected && botonSalir}
               </div>
             </div>
           </header>
@@ -442,7 +323,8 @@ export default function App() {
               badge={config.menuBadge || 'Acreditación en Computación'}
               planes={config.planes}
               estudiante={selected}
-              estudiantes={estudiantes}
+              onEntrar={setSelected}
+              config={config}
               plan={planElegido}
               onPlan={setPlanElegido}
             />
@@ -458,8 +340,7 @@ export default function App() {
             portalUrl="/"
             titulo={config.menuBadge || 'Acreditación en Computación'}
             subtitulo={[config.titulo, config.palabraDestacada].filter(Boolean).join(' ') || 'GEX'}
-            onBack={() => setSelected(null)}
-            syncButton={botonSincronizar(false)}
+            onBack={salir}
           />
 
           {/* Área principal: en escritorio cabe en 1 pantalla, en el celular fluye con scroll */}
@@ -467,7 +348,7 @@ export default function App() {
             <StudentDetailView
               key={selected.codUniv}
               estudiante={selected}
-              onBack={() => setSelected(null)}
+              onBack={salir}
               onOpenComoAcreditar={() => setMostrarComoAcreditar(true)}
               planes={config.planes}
               etiquetaAcreditacion={config.menuBadge || 'Acreditación en Computación'}
@@ -487,7 +368,6 @@ export default function App() {
       {selected && (
         <CinfAgentChat
           estudiante={selected}
-          estudiantes={estudiantes}
           planes={config.planes}
           onNavigateComoAcreditar={() => setMostrarComoAcreditar(true)}
           ocultarDock={mostrarComoAcreditar}

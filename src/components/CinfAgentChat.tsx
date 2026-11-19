@@ -23,7 +23,6 @@ import type { EstudianteGEX } from '../types/estudiante';
 
 interface Props {
   estudiante?: EstudianteGEX | null;
-  estudiantes?: EstudianteGEX[];
   onNavigateComoAcreditar?: () => void;
   /** En el Menú de opciones el lanzador se oculta: tapaba el botón de la cuarta tarjeta */
   ocultarDock?: boolean;
@@ -371,7 +370,10 @@ export function responderSobreAcreditacion(consulta: string, planes: PlanOpcion[
   return null;
 }
 
-export default function CinfAgentChat({ estudiante, estudiantes = [], ocultarDock, planes = PLANES_COMPUTACION }: Props) {
+export default function CinfAgentChat({ estudiante, ocultarDock, planes = PLANES_COMPUTACION }: Props) {
+  // El agente solo conoce al estudiante que verificó su correo: escribir el correo o el
+  // código de otro ya no devuelve su ficha
+  const estudiantes = estudiante ? [estudiante] : [];
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [chatInputText, setChatInputText] = useState<string>('');

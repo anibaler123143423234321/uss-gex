@@ -40,7 +40,9 @@ import {
   type PlanOpcion,
   type PlanOpcionId,
 } from '../data/planesComputacion';
-import { registrarSolicitud, revisarAdjunto, subirAdjunto, type Adjunto } from '../services/solicitudesService';
+import { registrarSolicitud, revisarAdjunto, subirAdjunto, type AdjuntoSolicitud } from '../services/solicitudesService';
+import AccesoGex from './AccesoGex';
+import type { GexPortalConfig } from '../services/gexConfigService';
 import {
   GEX_DRIVE_FOLDER_ID,
   GEX_DRIVE_FOLDER_NAME,
@@ -58,13 +60,15 @@ interface Props {
   badge?: string;
   planes: PlanOpcion[];
   estudiante: EstudianteGEX | null;
-  estudiantes: EstudianteGEX[];
+  /** Al verificar el correo desde el registro, el estudiante queda en la sesión del portal */
+  onEntrar: (estudiante: EstudianteGEX) => void;
+  config?: GexPortalConfig;
   plan: PlanOpcionId | null;
   onPlan: (plan: PlanOpcionId | null) => void;
 }
 
 /** Pantalla "Menú de opciones": los planes para acreditar Computación y el registro del elegido */
-export default function MenuOpciones({ titulo, subtitulo, badge = 'Acreditación en Computación', planes, estudiante, estudiantes, plan, onPlan }: Props) {
+export default function MenuOpciones({ titulo, subtitulo, badge = 'Acreditación en Computación', planes, estudiante, onEntrar, config, plan, onPlan }: Props) {
   const elegido = planes.find((p) => p.id === plan) ?? null;
   const [modalPagoAbierto, setModalPagoAbierto] = useState(false);
   const [tabPagoInicial, setTabPagoInicial] = useState<'bancos' | 'modalidades' | 'tramites'>('bancos');
@@ -87,7 +91,8 @@ export default function MenuOpciones({ titulo, subtitulo, badge = 'Acreditación
         key={elegido.id}
         plan={elegido}
         estudiante={estudiante}
-        estudiantes={estudiantes}
+        onEntrar={onEntrar}
+        config={config}
         onVolver={() => onPlan(null)}
       />
     );
@@ -919,16 +924,17 @@ function yaEnviada(cod: string | undefined, plan: PlanOpcionId): boolean {
 function RegistroPlan({
   plan,
   estudiante,
-  estudiantes,
+  onEntrar,
+  config,
   onVolver,
 }: {
   plan: PlanOpcion;
   estudiante: EstudianteGEX | null;
-  estudiantes: EstudianteGEX[];
+  onEntrar: (estudiante: EstudianteGEX) => void;
+  config?: GexPortalConfig;
   onVolver: () => void;
 }) {
   const [pasoTab, setPasoTab] = useState<1 | 2>(1);
-  const [codigo, setCodigo] = useState(estudiante?.codUniv ?? '');
   const [celular, setCelular] = useState('');
   const [correoPersonal, setCorreoPersonal] = useState('');
   const [declara, setDeclara] = useState(false);
@@ -948,8 +954,8 @@ function RegistroPlan({
     setModalPago(true);
   };
 
-  // Sin estudiante elegido (se entró desde la portada) se identifica por su código en el Excel GEX
-  const alumno = estudiante ?? estudiantes.find((e) => e.codUniv === codigo.trim()) ?? null;
+  // Solo registra quien verificó su correo: sin eso, cualquiera podía registrar a nombre de otro
+  const alumno = estudiante;
   const esExamen = plan.id !== 'convalidacion';
   const accion = ACCION_PLAN[plan.id];
   const declaracion = DECLARACION[plan.id];
@@ -986,7 +992,7 @@ function RegistroPlan({
         : 'Adjuntar documentos';
 
   const validarPaso1 = (): string => {
-    if (!alumno) return 'Ingresa un código universitario registrado en GEX.';
+    if (!alumno) return 'Primero verifica tu correo con el código que te enviamos.';
     if (!/^9\d{8}$/.test(celular.trim())) return 'El celular debe tener 9 dígitos y empezar con 9.';
     return '';
   };
@@ -1036,7 +1042,7 @@ function RegistroPlan({
 
     try {
       // Se suben uno por uno: se respalda en Supabase y se prepara para Google Drive
-      const adjuntos: (Adjunto & { clave: string; etiqueta: string })[] = [];
+      const adjuntos: AdjuntoSolicitud[] = [];
       const archivosParaDrive: ArchivoAdjuntoDrive[] = [];
 
       for (const doc of documentos) {
@@ -1046,7 +1052,7 @@ function RegistroPlan({
 
         // Respaldo en Supabase Storage
         try {
-          const resSubida = await subirAdjunto(alumno.codUniv, archivo);
+          const resSubida = await subirAdjunto(archivo);
           adjuntos.push({ clave: doc.clave, etiqueta: doc.etiqueta, ...resSubida });
         } catch (errSubida) {
           console.warn('[GEX] Advertencia al subir adjunto a Supabase:', errSubida);
@@ -1069,7 +1075,7 @@ function RegistroPlan({
       }
 
       // La tabla guarda un archivo en columnas (el primero); la lista completa viaja en datos.adjuntos
-      const adjunto: Adjunto | undefined = adjuntos[0];
+      const adjunto = adjuntos[0];
       // En el Excel van todos los nombres en la misma celda
       const adjuntoFila = adjunto && { ...adjunto, nombre: adjuntos.map((a) => `${a.etiqueta}: ${a.nombre}`).join(' | ') };
 
@@ -1090,10 +1096,6 @@ function RegistroPlan({
       // 2. Registrar en Supabase (tbl_gex_solicitudes)
       setEnviando('registrando');
       await registrarSolicitud({
-        codUniv: alumno.codUniv,
-        nombres: alumno.nombres,
-        escuela: alumno.escuela,
-        correoInstitucional: alumno.correoInstitucional,
         celular: celular.trim(),
         plan: plan.id,
         datos: {
@@ -1103,14 +1105,12 @@ function RegistroPlan({
           ...(cronograma ? { cronograma } : {}),
           ...(declaracion ? { noMatriculado: true } : {}),
           ...(correoPersonal.trim() ? { correoPersonal: correoPersonal.trim() } : {}),
-          // Nombres recortados: datos tiene un tope de 4 KB en la tabla
-          ...(adjuntos.length ? { adjuntos: adjuntos.map((a) => ({ ...a, nombre: a.nombre.slice(0, 80) })) } : {}),
           autorizaDatos: true,
           carpetaDriveId: GEX_DRIVE_FOLDER_ID,
           carpetaDriveNombre: GEX_DRIVE_FOLDER_NAME,
           marcaTemporal: fila['Fecha y Hora'],
         },
-        adjunto,
+        adjuntos,
       });
 
       // 3. Agregar la fila a la hoja de Drive del centro. No bloquea: la solicitud ya quedó en el
@@ -1306,22 +1306,8 @@ function RegistroPlan({
                 {/* 1. DATOS */}
                 <PasoRegistro numero={1} titulo="DATOS" nota="Del padrón oficial GEX" color={plan.acento}>
                   {!estudiante && (
-                    <div className="mb-3">
-                      <label htmlFor="gex-codigo" className="block text-sm font-semibold text-slate-800 mb-1">
-                        Código universitario
-                      </label>
-                      <input
-                        id="gex-codigo"
-                        value={codigo}
-                        onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ''))}
-                        inputMode="numeric"
-                        maxLength={12}
-                        placeholder="Ej. 2251804844"
-                        className={INPUT}
-                      />
-                      {codigo.trim().length >= 10 && !alumno && (
-                        <p className="mt-1.5 text-sm text-amber-700">Ese código no está registrado en GEX.</p>
-                      )}
+                    <div className="mb-3 rounded-xl bg-slate-50 px-4 py-3">
+                      <AccesoGex variante="clara" config={config} onEntrar={onEntrar} inputId="gex-registro-acceso" />
                     </div>
                   )}
 
@@ -1406,22 +1392,8 @@ function RegistroPlan({
                 {/* 1. Datos del padrón */}
                 <PasoRegistro numero={1} titulo="Tus datos" nota="Del padrón oficial GEX" color={plan.acento}>
                   {!estudiante && (
-                    <div className="mb-2.5">
-                      <label htmlFor="gex-codigo" className="block text-xs font-semibold text-slate-800 mb-1">
-                        Código universitario
-                      </label>
-                      <input
-                        id="gex-codigo"
-                        value={codigo}
-                        onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ''))}
-                        inputMode="numeric"
-                        maxLength={12}
-                        placeholder="Ej. 2251804844"
-                        className={INPUT}
-                      />
-                      {codigo.trim().length >= 10 && !alumno && (
-                        <p className="mt-1 text-xs text-amber-700">Ese código no está registrado en GEX.</p>
-                      )}
+                    <div className="mb-2.5 rounded-xl bg-slate-50 px-4 py-3">
+                      <AccesoGex variante="clara" config={config} onEntrar={onEntrar} inputId="gex-registro-acceso" />
                     </div>
                   )}
 

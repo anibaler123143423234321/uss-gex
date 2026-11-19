@@ -646,7 +646,7 @@ export default function StudentDetailView({ estudiante: e, onBack, onOpenComoAcr
           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg ring-1 ring-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-uss-blue text-xs 2xl:text-sm font-semibold transition cursor-pointer group"
         >
           <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-          <span>Volver a la búsqueda</span>
+          <span>Salir de mi ficha</span>
         </button>
 
         <div className="flex items-center gap-1.5 text-xs 2xl:text-sm text-slate-500 min-w-0">

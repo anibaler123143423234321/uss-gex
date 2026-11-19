@@ -5,15 +5,9 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   base: '/gex/',
   plugins: [react()],
+  // En desarrollo, /api va al backend local (ecosistema-cinf en :4000). La nómina ya no pasa por aquí.
   server: {
     proxy: {
-      '/api/gex-csv': {
-        target: 'https://docs.google.com',
-        changeOrigin: true,
-        rewrite: () =>
-          '/spreadsheets/d/e/2PACX-1vRiENG2D1bKgoB5idcDxxa1xQwKNLwDnKnrV93Dmpb3c7lg_yRSKQlZtDmDj9D3B8edY2UoTIyrbPWs/pub?output=csv',
-        followRedirects: true,
-      },
       '/api': {
         target: 'http://localhost:4000',
         changeOrigin: true,

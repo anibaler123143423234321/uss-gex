@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { accesoService } from './accesoService';
 import type { PlanOpcionId } from '../data/planesComputacion';
 
 // Límites del bucket gex-solicitudes (migración v23): se revisan antes de subir
@@ -13,17 +14,18 @@ export interface Adjunto {
   tamano: number;
 }
 
+export interface AdjuntoSolicitud extends Adjunto {
+  clave: string;
+  etiqueta: string;
+}
+
 export interface NuevaSolicitud {
-  codUniv: string;
-  nombres: string;
-  escuela: string;
-  correoInstitucional: string;
-  celular: string;
   plan: PlanOpcionId;
+  celular: string;
   /** Respuestas propias de cada plan (declaraciones, correo personal…) */
   datos: Record<string, unknown>;
-  /** El primero de los documentos: la tabla guarda uno en columnas; la lista completa va en datos.adjuntos */
-  adjunto?: Adjunto;
+  /** Archivos ya subidos; el servidor guarda el primero en columnas y la lista en datos.adjuntos */
+  adjuntos: AdjuntoSolicitud[];
 }
 
 /** Valida el archivo antes de subirlo. Devuelve el problema o '' si está bien. */
@@ -35,52 +37,25 @@ export function revisarAdjunto(archivo: File): string {
 }
 
 /**
- * Sube el archivo del estudiante al bucket privado. Con la anon key solo se puede
- * subir a convalidacion/ (política de la migración v23): nadie puede listarlo ni descargarlo
- * desde la portada. Los adjuntos de validación van a la misma carpeta para no depender de otra
- * migración; el panel los distingue por el plan de la solicitud, no por la ruta.
+ * Sube el archivo al bucket privado con una URL firmada por el backend: la ruta la elige el
+ * servidor dentro de la carpeta del estudiante verificado. La anon key ya no puede subir nada (v34).
  */
-export async function subirAdjunto(codUniv: string, archivo: File): Promise<Adjunto> {
-  const extension = archivo.type === 'application/pdf' ? 'pdf' : archivo.type === 'image/png' ? 'png' : 'jpg';
-  // Nombre propio: el del estudiante podría repetirse o traer caracteres que Storage rechaza
-  const path = `convalidacion/${codUniv}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
-
+export async function subirAdjunto(archivo: File): Promise<Adjunto> {
+  const { path, token } = await accesoService.prepararAdjunto(archivo.type, archivo.size);
   const { error } = await supabase.storage
     .from('gex-solicitudes')
-    .upload(path, archivo, { contentType: archivo.type, upsert: false });
+    .uploadToSignedUrl(path, token, archivo, { contentType: archivo.type });
 
   if (error) throw new Error('No se pudo subir el archivo.');
-  return { path, nombre: archivo.name.slice(0, 200), tipo: archivo.type, tamano: archivo.size };
+  return { path, nombre: archivo.name.slice(0, 80), tipo: archivo.type, tamano: archivo.size };
 }
 
 /**
- * Registra la solicitud en tbl_gex_solicitudes (v21 y v23). Nace en el paso 1
- * ("solicitada"); el Centro de Informática la atiende, la asigna y la resuelve.
- * La anon key solo puede insertar: nadie puede leer las solicitudes desde la portada.
+ * Registra la solicitud por la API. El código, los nombres, la escuela y el correo los pone
+ * el servidor desde la nómina del estudiante verificado: el navegador no puede cambiarlos.
  */
 export async function registrarSolicitud(s: NuevaSolicitud): Promise<void> {
-  const { error } = await supabase.from('tbl_gex_solicitudes').insert({
-    cod_univ: s.codUniv,
-    nombres: s.nombres,
-    escuela: s.escuela || null,
-    correo_institucional: s.correoInstitucional || null,
-    celular: s.celular,
-    plan: s.plan,
-    datos: s.datos,
-    archivo_path: s.adjunto?.path ?? null,
-    archivo_nombre: s.adjunto?.nombre ?? null,
-    archivo_tipo: s.adjunto?.tipo ?? null,
-    archivo_tamano: s.adjunto?.tamano ?? null,
-  });
-
-  if (error) {
-    // PGRST205 o 42703: falta ejecutar la migración de la tabla o de sus columnas
-    throw new Error(
-      error.code === 'PGRST205' || error.code === '42703' || error.code === 'PGRST204'
-        ? 'El registro todavía no está habilitado.'
-        : 'No se pudo registrar la solicitud.'
-    );
-  }
+  await accesoService.registrarSolicitud({ plan: s.plan, celular: s.celular, datos: s.datos, adjuntos: s.adjuntos });
 }
 
 export type EstadoSolicitudGex = 'solicitada' | 'en_atencion' | 'asignada' | 'aprobada' | 'rechazada';
@@ -97,46 +72,20 @@ export interface SolicitudEstadoEstudiante {
 }
 
 /**
- * Consulta el estado en vivo de las solicitudes de un estudiante por su código universitario.
- * Prueba en cascada:
- *   1. Supabase directo (tbl_gex_solicitudes)
- *   2. Backend CINF si está disponible (/api/gex/solicitudes/estado/:cod)
- *   3. Memoria local de la sesión (sessionStorage)
+ * Estado en vivo de las solicitudes del estudiante verificado (la API solo devuelve las suyas).
+ * Sin conexión, muestra lo que el estudiante envió en esta pestaña.
  */
 export async function consultarSolicitudesEstudiante(codUniv: string): Promise<SolicitudEstadoEstudiante[]> {
   const codigo = codUniv.trim();
   if (!codigo) return [];
 
-  // 1. Intentar consultar directamente a Supabase
   try {
-    const { data, error } = await supabase
-      .from('tbl_gex_solicitudes')
-      .select('id, cod_univ, plan, estado, paso, comentario, created_at, actualizado_en')
-      .eq('cod_univ', codigo)
-      .order('created_at', { ascending: false });
-
-    if (!error && Array.isArray(data) && data.length > 0) {
-      return data as SolicitudEstadoEstudiante[];
-    }
+    return await accesoService.solicitudes<SolicitudEstadoEstudiante>();
   } catch (err) {
-    console.warn('[solicitudesService] Consulta directa no disponible:', err);
+    console.warn('[solicitudesService] No se pudo consultar el estado:', (err as Error).message);
   }
 
-  // 2. Intentar consultar al backend CINF si estuviera configurado
-  const backendUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL;
-  if (backendUrl) {
-    try {
-      const res = await fetch(`${String(backendUrl).replace(/\/+$/, '')}/api/gex/solicitudes/estado/${codigo}`);
-      const json = await res.json();
-      if (json?.success && Array.isArray(json.data) && json.data.length > 0) {
-        return json.data as SolicitudEstadoEstudiante[];
-      }
-    } catch {
-      // Ignorar fallback
-    }
-  }
-
-  // 3. Fallback a sessionStorage si el alumno envió una solicitud recientemente
+  // Respaldo: lo que se envió en esta pestaña
   try {
     const cacheDetalle = sessionStorage.getItem(`gex.solicitud_detalle.${codigo}`);
     if (cacheDetalle) {
